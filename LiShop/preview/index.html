@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiShop 预览</title>
+  <style>
+    :root {
+      --jd-red: #e1251b;
+      --tb-orange: #ff5500;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f7f7f7;
+    }
+
+    /* 登录页预览样式 */
+    .lp-page {
+      min-height: 100vh;
+      padding: 60px 24px;
+      background: linear-gradient(180deg, #fff4f2 0%, #f7f7f7 40%, #f7f7f7 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lp-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lp-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .06);
+    }
+
+    .lp-name {
+      margin-top: 8px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: .5px;
+    }
+
+    .lp-form {
+      width: 420px;
+      max-width: 92vw;
+      margin-top: 16px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 12px 40px rgba(225, 37, 27, .08);
+    }
+
+    .lp-input {
+      width: 100%;
+      height: 40px;
+      line-height: 40px;
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 0 12px;
+    }
+
+    .lp-btn {
+      width: 100%;
+      height: 48px;
+      background: linear-gradient(90deg, #ff6b4b, #e1251b);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      margin-top: 6px;
+      font-weight: 600;
+      box-shadow: 0 6px 18px rgba(225, 37, 27, .25);
+    }
+
+    .search {
+      display: flex;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .search .box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #f5f5f5;
+      border-radius: 999px;
+      padding: 8px 12px;
+    }
+
+    .search .btn {
+      margin-left: 12px;
+      background: var(--jd-red);
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    .banner {
+      padding: 0 12px;
+    }
+
+    .banner .img {
+      height: 160px;
+      width: 100%;
+      border-radius: 12px;
+      background: #eee;
+      display: block;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .grid .item {
+      text-align: center;
+    }
+
+    .grid .icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background: #f0f0f0;
+      margin: 0 auto;
+    }
+
+    .block {
+      margin-top: 12px;
+      background: #fff;
+    }
+
+    .block .title {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      font-weight: 600;
+    }
+
+    .seckill {
+      white-space: nowrap;
+      padding: 0 12px 12px;
+    }
+
+    .sk-item {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      width: 140px;
+      margin-right: 8px;
+    }
+
+    .sk-item .img {
+      width: 140px;
+      height: 140px;
+      border-radius: 8px;
+      background: #eee;
+    }
+
+    .sk-item .price {
+      color: var(--jd-red);
+      margin-top: 4px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+    }
+
+    .card .cover {
+      height: 160px;
+      background: #eee;
+    }
+
+    .card .info {
+      padding: 8px;
+    }
+
+    .card .price {
+      color: var(--jd-red);
+      font-weight: 600;
+    }
+
+    .card .btn {
+      background: var(--tb-orange);
+      color: #fff;
+      border: none;
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+
+    .tabbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 56px;
+      background: #fff;
+      display: flex;
+      border-top: 1px solid #eee;
+    }
+
+    .tabbar .tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+    }
+
+    .tabbar .tab.active {
+      color: var(--jd-red);
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 登录页预览（用于快速验证居中+品牌样式） -->
+  <section id="login-preview" class="lp-page">
+    <div class="lp-brand">
+      <img class="lp-logo" src="../static/logo.png" alt="logo" />
+      <div class="lp-name">LiShop</div>
+    </div>
+    <div class="lp-form">
+      <div style="margin-bottom:12px">
+        <div style="font-size:13px;color:#666;margin-bottom:6px">账号</div><input class="lp-input" placeholder="请输入账号" />
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:13px;color:#666;margin-bottom:6px">密码</div><input class="lp-input" type="password"
+          placeholder="请输入密码" />
+      </div>
+      <button class="lp-btn">登录</button>
+    </div>
+  </section>
+  <div class="search">
+    <div class="box">🔍 <input style="flex:1;border:none;background:transparent;outline:none;margin-left:8px"
+        placeholder="搜索商品、店铺" /></div>
+    <button class="btn">搜索</button>
+  </div>
+
+  <div class="banner">
+    <div class="img"></div>
+  </div>
+
+  <div class="grid">
+    <div class="item">
+      <div class="icon"></div>
+      <div>手机数码</div>
+    </div>
+    <div class="item">
+      <div class="icon"></div>
+      <div>家用电器</div>
+    </div>
+    <div class="item">
+      <div class="icon"></div>
+      <div>美妆个护</div>
+    </div>
+    <div class="item">
+      <div class="icon"></div>
+      <div>运动户外</div>
+    </div>
+    <div class="item">
+      <div class="icon"></div>
+      <div>服饰鞋包</div>
+    </div>
+    <div class="item">
+      <div class="icon"></div>
+      <div>生鲜食品</div>
+    </div>
+    <div class="item">
+      <div class="icon"></div>
+      <div>母婴玩具</div>
+    </div>
+    <div class="item">
+      <div class="icon"></div>
+      <div>图书文娱</div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="title"><span>京东秒杀</span><span style="color:#999">更多</span></div>
+    <div class="seckill">
+      <div class="sk-item">
+        <div class="img"></div>
+        <div class="price">¥99</div>
+      </div>
+      <div class="sk-item">
+        <div class="img"></div>
+        <div class="price">¥129</div>
+      </div>
+      <div class="sk-item">
+        <div class="img"></div>
+        <div class="price">¥59</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="title">猜你喜欢</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="cover"></div>
+        <div class="info">
+          <div>店铺热销商品 A 旗舰款</div>
+          <div class="price">¥299</div><button class="btn">加入购物车</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cover"></div>
+        <div class="info">
+          <div>人气爆款 B 限时优惠</div>
+          <div class="price">¥89</div><button class="btn">加入购物车</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active">首页</div>
+    <div class="tab">分类</div>
+    <div class="tab">购物车</div>
+    <div class="tab">我的</div>
+  </div>
+
+  <!-- 右侧悬浮导航 -->
+  <style>
+    .float {
+      position: fixed;
+      right: 12px;
+      bottom: 90px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .float .item {
+      width: 56px;
+      height: 56px;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .float .badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      min-width: 22px;
+      height: 22px;
+      background: #e1251b;
+      color: #fff;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .float .txt {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+  </style>
+  <div class="float">
+    <div class="item" title="首页">🏠<div class="txt">首页</div>
+    </div>
+    <div class="item" title="分类">🏷️<div class="txt">分类</div>
+    </div>
+    <div class="item" title="购物车" style="position:relative">🛒<div class="txt">购物车</div>
+      <div class="badge">2</div>
+    </div>
+    <div class="item" title="我的">👤<div class="txt">我的</div>
+    </div>
+    <div class="item" title="客服">💬<div class="txt">客服</div>
+    </div>
+    <div class="item" title="回到顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️<div class="txt">顶部</div>
+    </div>
+  </div>
+</body>
+
+</html>

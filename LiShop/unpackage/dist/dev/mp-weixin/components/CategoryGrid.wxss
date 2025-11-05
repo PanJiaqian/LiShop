@@ -1,0 +1,25 @@
+
+.grid.data-v-0f220ffa {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-row-gap: 24rpx;
+  grid-column-gap: 12rpx;
+  padding: 20rpx;
+  background: #ffffff;
+}
+.item.data-v-0f220ffa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.icon.data-v-0f220ffa {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 20rpx;
+  background: #f5f5f5;
+}
+.name.data-v-0f220ffa {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #333;
+}

@@ -1,0 +1,1 @@
+<view class="grid data-v-0f220ffa"><view wx:for="{{a}}" wx:for-item="cat" wx:key="c" class="item data-v-0f220ffa" bindtap="{{cat.d}}"><image class="icon data-v-0f220ffa" src="{{cat.a}}" mode="aspectFill"/><text class="name data-v-0f220ffa">{{cat.b}}</text></view></view>

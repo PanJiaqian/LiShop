@@ -1,0 +1,48 @@
+
+.float.data-v-378faae9 {
+  position: fixed;
+  right: 20rpx;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+.item.data-v-378faae9 {
+  position: relative;
+  width: 90rpx;
+  height: 90rpx;
+  border-radius: 12rpx;
+  background: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, .08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ico.data-v-378faae9 {
+  font-size: 36rpx;
+  line-height: 1;
+}
+.txt.data-v-378faae9 {
+  font-size: 22rpx;
+  color: #666;
+  margin-top: 6rpx;
+}
+.badge.data-v-378faae9 {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 8rpx;
+  border-radius: 36rpx;
+  background: #e1251b;
+  color: #fff;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.to-top.data-v-378faae9 {
+  background: #fffbf2;
+}
