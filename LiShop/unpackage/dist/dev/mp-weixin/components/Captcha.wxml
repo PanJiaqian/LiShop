@@ -1,1 +1,0 @@
-<view class="captcha data-v-bff8b02f"><image class="img data-v-bff8b02f" src="{{a}}" bindtap="{{b}}" mode="widthFix"/><text class="link data-v-bff8b02f" bindtap="{{c}}">看不清，换一张</text></view>

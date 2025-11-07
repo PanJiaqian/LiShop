@@ -33,8 +33,11 @@ export default {
       try { uni.setStorageSync('user', user) } catch (e) { }
       uni.showToast({ title: '登录成功', icon: 'success' })
       setTimeout(() => {
-        if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
-        else uni.navigateTo({ url: '/pages/profile/index' })
+        // 返回上一页（一般为首页），由首页头像再进入“我的”
+        try { uni.navigateBack() } catch (e) {
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+        }
       }, 300)
     }
   }

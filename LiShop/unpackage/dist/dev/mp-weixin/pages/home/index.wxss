@@ -3,6 +3,8 @@
   background: #f7f7f7;
   min-height: 100vh;
 }
+
+/* H5 三栏布局样式 */
 .block.data-v-4978fed5 {
   margin-top: 20rpx;
   background: #fff;

@@ -4,18 +4,10 @@
       <text class="ico">🏠</text>
       <text class="txt">首页</text>
     </view>
-    <view class="item" @click="goCategory">
-      <text class="ico">🏷️</text>
-      <text class="txt">分类</text>
-    </view>
     <view class="item" @click="goCart">
       <text class="ico">🛒</text>
       <text class="txt">购物车</text>
       <view v-if="cartCount > 0" class="badge">{{ cartCount }}</view>
-    </view>
-    <view class="item" @click="goProfile">
-      <text class="ico">👤</text>
-      <text class="txt">我的</text>
     </view>
     <view class="item" @click="contact">
       <text class="ico">💬</text>
@@ -50,9 +42,7 @@ export default {
       try { const c = uni.getStorageSync('cart') || []; this.cartCount = c.reduce((s, it) => s + (it.quantity || 1), 0) } catch (e) { }
     },
     goHome() { uni.switchTab ? uni.switchTab({ url: '/pages/home/index' }) : uni.navigateTo({ url: '/pages/home/index' }) },
-    goCategory() { uni.switchTab ? uni.switchTab({ url: '/pages/category/index' }) : uni.navigateTo({ url: '/pages/category/index' }) },
     goCart() { uni.switchTab ? uni.switchTab({ url: '/pages/cart/index' }) : uni.navigateTo({ url: '/pages/cart/index' }) },
-    goProfile() { uni.switchTab ? uni.switchTab({ url: '/pages/profile/index' }) : uni.navigateTo({ url: '/pages/profile/index' }) },
     contact() { uni.showToast({ title: '客服暂未接入', icon: 'none' }) },
     toTop() { uni.pageScrollTo({ scrollTop: 0, duration: 300 }) }
   }

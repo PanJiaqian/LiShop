@@ -18,7 +18,7 @@
     }
   },
   "compileType": "miniprogram",
-  "libVersion": "3.11.1",
+  "libVersion": "3.11.0",
   "appid": "wxb01c76212b0f4218",
   "projectname": "LiShop",
   "condition": {},

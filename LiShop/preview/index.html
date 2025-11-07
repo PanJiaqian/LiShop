@@ -260,6 +260,539 @@
     <button class="btn">搜索</button>
   </div>
 
+  <!-- 购物车（H5预览） -->
+  <div class="block">
+    <div class="title">购物车（H5预览）</div>
+    <style>
+      .cart-preview {
+        display: grid;
+        grid-template-columns: 1fr 520px;
+        gap: 16px;
+      }
+
+      .cart-preview .cart-main {
+        background: #fff;
+        border-radius: 12px;
+      }
+
+      .cart-preview .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .cart-preview .chk {
+        display: flex;
+        align-items: center;
+      }
+
+      .cart-preview .chk-ico {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid #ccc;
+      }
+
+      .cart-preview .chk-ico.on {
+        background: #ff5500;
+        border-color: #ff5500;
+      }
+
+      .cart-preview .chk-txt {
+        margin-left: 6px;
+        color: #333;
+        font-size: 14px;
+      }
+
+      .cart-preview .list .item {
+        display: flex;
+        align-items: flex-start;
+        padding: 16px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .cart-preview .cover {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        background: #f5f5f5;
+      }
+
+      .cart-preview .meta {
+        flex: 1;
+        margin-left: 12px;
+      }
+
+      .cart-preview .title {
+        font-size: 14px;
+        color: #333;
+      }
+
+      .cart-preview .attr {
+        color: #888;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+
+      .cart-preview .price {
+        color: #e1251b;
+        font-weight: 600;
+        margin-top: 6px;
+      }
+
+      .cart-preview .qty {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .cart-preview .mini {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+
+      .cart-preview .cart-aside {}
+
+      .cart-preview .summary-card {
+        position: relative;
+        background: #fff;
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
+        border: 1px solid #eee;
+      }
+
+      .cart-preview .sum-title {
+        font-weight: 700;
+        color: #333;
+        font-size: 18px;
+      }
+
+      .cart-preview .sum-hint {
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        color: #999;
+        font-size: 12px;
+      }
+
+      .cart-preview .thumbs {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .cart-preview .thumb {
+        width: 96px;
+        height: 96px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        border: 1px solid #eee;
+      }
+
+      .cart-preview .rows {
+        margin-top: 12px;
+      }
+
+      .cart-preview .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+      }
+
+      .cart-preview .row.small {
+        color: #666;
+      }
+
+      .cart-preview .value.reduce {
+        color: #ff5500;
+      }
+
+      .cart-preview .coupon-bar {
+        margin-top: 10px;
+        background: #ffe9ee;
+        color: #e1242b;
+        border-radius: 8px;
+        padding: 10px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .cart-preview .row.total {
+        margin-top: 10px;
+      }
+
+      .cart-preview .total-box {
+        text-align: right;
+      }
+
+      .cart-preview .pay {
+        color: #e1251b;
+        font-weight: 700;
+        font-size: 20px;
+      }
+
+      .cart-preview .total-reduce {
+        display: block;
+        color: #999;
+        font-size: 12px;
+      }
+
+      .cart-preview .checkout {
+        width: 100%;
+        margin-top: 12px;
+        background: linear-gradient(90deg, #ff7b2b, #ff5500);
+        color: #fff;
+        border-radius: 12px;
+        padding: 12px 0;
+        box-shadow: 0 8px 16px rgba(255, 85, 0, .24);
+      }
+
+      .cart-preview .sum-row {
+        margin-top: 10px;
+        color: #555;
+      }
+
+      .cart-preview .sum {
+        color: #e1251b;
+        font-weight: 600;
+      }
+
+      .cart-preview .checkout {
+        width: 100%;
+        margin-top: 12px;
+        background: #ff5500;
+        color: #fff;
+        border-radius: 8px;
+        padding: 10px 0;
+      }
+    </style>
+    <div class="cart-preview">
+      <div class="cart-main">
+        <div class="toolbar">
+          <div class="chk">
+            <div class="chk-ico on"></div>
+            <div class="chk-txt">全选</div>
+          </div>
+          <button class="mini">删除选中</button>
+        </div>
+        <div class="list">
+          <div class="item">
+            <div class="chk" style="margin-right:8px">
+              <div class="chk-ico on"></div>
+            </div>
+            <div class="cover"></div>
+            <div class="meta">
+              <div class="title">店铺热销商品 A 旗舰款</div>
+              <div class="attr">默认规格</div>
+              <div class="price">¥299.00</div>
+              <div class="qty"><button class="mini">-</button><span class="count">1</span><button
+                  class="mini">+</button><button class="mini">删除</button></div>
+            </div>
+          </div>
+          <div class="item">
+            <div class="chk" style="margin-right:8px">
+              <div class="chk-ico"></div>
+            </div>
+            <div class="cover"></div>
+            <div class="meta">
+              <div class="title">人气爆款 B 限时优惠</div>
+              <div class="attr">黑色 / M</div>
+              <div class="price">¥89.00</div>
+              <div class="qty"><button class="mini">-</button><span class="count">2</span><button
+                  class="mini">+</button><button class="mini">删除</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cart-aside">
+        <div class="summary-card">
+          <div class="sum-title">结算明细</div>
+          <div class="sum-hint">实际优惠金额以下单页为准</div>
+          <div class="thumbs">
+            <div class="thumb"></div>
+            <div class="thumb"></div>
+          </div>
+          <div class="rows">
+            <div class="row">
+              <div>商品总价</div>
+              <div>¥135.76</div>
+            </div>
+            <div class="row">
+              <div>共减</div>
+              <div class="value reduce">减 ¥20.40</div>
+            </div>
+            <div class="row small">
+              <div>官方立减</div>
+              <div class="value reduce">减 ¥20.40</div>
+            </div>
+            <div class="row small">
+              <div>红包</div>
+              <div class="value reduce">减 ¥0.00</div>
+            </div>
+          </div>
+          <div class="coupon-bar">
+            <div>消费券｜再实付684.64享满800减80</div>
+            <div>凑单›</div>
+          </div>
+          <div class="row total">
+            <div>合计：</div>
+            <div class="total-box">
+              <div class="pay">¥115.36</div>
+              <div class="total-reduce">共减 ¥20.40</div>
+            </div>
+          </div>
+          <button class="checkout">结算(2)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 商品详情（H5预览） -->
+  <div class="block">
+    <div class="title">商品详情（H5预览）</div>
+    <style>
+      .pd-preview {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        height: 60vh;
+        align-items: start;
+      }
+
+      .pd-preview .pd-left,
+      .pd-preview .pd-right {
+        height: 100%;
+      }
+
+      .pd-preview .pd-left {
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-right: 6px;
+      }
+
+      .pd-preview .pd-gallery {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        position: relative;
+      }
+
+      .pd-preview .pd-main {
+        width: 100%;
+        height: 340px;
+        border-radius: 8px;
+        background: #f5f5f5;
+      }
+
+      .pd-preview .pd-thumbs {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .pd-preview .pd-thumb {
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        border: 1px solid #eee;
+      }
+
+      .pd-preview .pd-thumb.active {
+        outline: 3px solid #ff5500;
+      }
+
+      .pd-preview .pd-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      .pd-preview .pd-section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 8px;
+      }
+
+      .pd-preview .pd-param-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+
+      .pd-preview .pd-param-item {
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      .pd-preview .pd-param-item .key {
+        color: #666;
+        font-size: 12px;
+      }
+
+      .pd-preview .pd-param-item .val {
+        color: #333;
+        font-size: 14px;
+        margin-top: 4px;
+      }
+
+      .pd-preview .pd-detail-img {
+        width: 100%;
+        height: 200px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        margin-top: 8px;
+      }
+
+      .pd-preview .pd-info {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        height: 100%;
+      }
+
+      .pd-preview .pd-title {
+        font-size: 18px;
+        color: #333;
+      }
+
+      .pd-preview .pd-price-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .pd-preview .pd-price {
+        color: #e1251b;
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .pd-preview .pd-coupon {
+        background: #fff2e8;
+        color: #ff7b2b;
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+      }
+
+      .pd-preview .pd-qty {
+        display: flex;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      .pd-preview .label {
+        margin-right: 8px;
+      }
+
+      .pd-preview .qty-stepper {
+        display: flex;
+        align-items: center;
+      }
+
+      .pd-preview .step {
+        width: 32px;
+        height: 32px;
+        background: #f5f5f5;
+        border-radius: 6px;
+      }
+
+      .pd-preview .count {
+        width: 48px;
+        text-align: center;
+      }
+
+      .pd-preview .pd-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .pd-preview .btn-buy {
+        background: #ff5500;
+        color: #fff;
+        border-radius: 8px;
+        padding: 10px 16px;
+      }
+
+      .pd-preview .btn-cart {
+        background: #ff7b2b;
+        color: #fff;
+        border-radius: 8px;
+        padding: 10px 16px;
+      }
+    </style>
+    <div class="pd-preview">
+      <div class="pd-left">
+        <div class="pd-gallery">
+          <div class="pd-main"></div>
+          <div class="pd-thumbs">
+            <div class="pd-thumb active"></div>
+            <div class="pd-thumb"></div>
+            <div class="pd-thumb"></div>
+          </div>
+        </div>
+        <div class="pd-card pd-params">
+          <div class="pd-section-title">参数信息</div>
+          <div class="pd-param-grid">
+            <div class="pd-param-item">
+              <div class="key">品牌</div>
+              <div class="val">LiShop</div>
+            </div>
+            <div class="pd-param-item">
+              <div class="key">型号</div>
+              <div class="val">X01</div>
+            </div>
+            <div class="pd-param-item">
+              <div class="key">游戏人数</div>
+              <div class="val">2人</div>
+            </div>
+            <div class="pd-param-item">
+              <div class="key">时长</div>
+              <div class="val">30分钟以下</div>
+            </div>
+          </div>
+        </div>
+        <div class="pd-card pd-detail">
+          <div class="pd-section-title">图文详情</div>
+          <div class="pd-detail-img"></div>
+          <div class="pd-detail-img"></div>
+        </div>
+      </div>
+      <div class="pd-right">
+        <div class="pd-info">
+          <div class="pd-title">英文So Cards Conversation Starter 开始家庭对话游戏桌游卡牌</div>
+          <div class="pd-price-row">
+            <div class="pd-price">¥16</div>
+            <div class="pd-coupon">券后更低</div>
+          </div>
+          <div class="pd-qty">
+            <div class="label">数量</div>
+            <div class="qty-stepper"><button class="step">-</button>
+              <div class="count">1</div><button class="step">+</button>
+            </div>
+          </div>
+          <div class="pd-actions"><button class="btn-buy">立即购买</button><button class="btn-cart">加入购物车</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="banner">
     <div class="img"></div>
   </div>
@@ -392,12 +925,8 @@
   <div class="float">
     <div class="item" title="首页">🏠<div class="txt">首页</div>
     </div>
-    <div class="item" title="分类">🏷️<div class="txt">分类</div>
-    </div>
     <div class="item" title="购物车" style="position:relative">🛒<div class="txt">购物车</div>
       <div class="badge">2</div>
-    </div>
-    <div class="item" title="我的">👤<div class="txt">我的</div>
     </div>
     <div class="item" title="客服">💬<div class="txt">客服</div>
     </div>

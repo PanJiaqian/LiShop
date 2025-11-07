@@ -18,10 +18,14 @@ const _sfc_main = {
       }
       common_vendor.index.showToast({ title: "登录成功", icon: "success" });
       setTimeout(() => {
-        if (common_vendor.index.switchTab)
-          common_vendor.index.switchTab({ url: "/pages/profile/index" });
-        else
-          common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+        try {
+          common_vendor.index.navigateBack();
+        } catch (e) {
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/home/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+        }
       }, 300);
     }
   }

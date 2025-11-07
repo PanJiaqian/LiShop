@@ -10,6 +10,7 @@ const _sfc_main = {
   data() {
     return {
       keyword: "",
+      user: null,
       banners: ["/static/logo.png", "/static/logo.png", "/static/logo.png"],
       categoryList: [
         { name: "手机数码" },
@@ -30,6 +31,10 @@ const _sfc_main = {
         { id: "p1", title: "店铺热销商品 A 旗舰款", price: 299, sales: 1234, image: "/static/logo.png" },
         { id: "p2", title: "人气爆款 B 限时优惠", price: 89, sales: 5678, image: "/static/logo.png" },
         { id: "p3", title: "超值 C 套装", price: 179, sales: 345, image: "/static/logo.png" },
+        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" },
+        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" },
+        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" },
+        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" },
         { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" }
       ]
     };
@@ -57,6 +62,19 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
       } catch (e) {
         console.error(e);
+      }
+    },
+    goLogin() {
+      common_vendor.index.navigateTo({ url: "/pages/login/index" });
+    },
+    onAvatarClick() {
+      if (this.user) {
+        if (common_vendor.index.switchTab)
+          common_vendor.index.switchTab({ url: "/pages/profile/index" });
+        else
+          common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+      } else {
+        common_vendor.index.navigateTo({ url: "/pages/login/index" });
       }
     }
   }
