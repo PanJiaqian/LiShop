@@ -7,7 +7,10 @@ if (!Math) {
   "./pages/cart/index.js";
   "./pages/profile/index.js";
   "./pages/product/index.js";
+  "./pages/order/index.js";
   "./pages/login/index.js";
+  "./pages/settings/index.js";
+  "./pages/messages/index.js";
 }
 const _sfc_main = {
   onLaunch: function() {

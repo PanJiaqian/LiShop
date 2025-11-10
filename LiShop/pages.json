@@ -33,9 +33,28 @@
 		}
 		,
 		{
+			"path": "pages/order/index",
+			"style": {
+				"navigationBarTitleText": "我的订单"
+			}
+		}
+		,
+		{
 			"path": "pages/login/index",
 			"style": {
 				"navigationBarTitleText": "登录"
+			}
+		},
+		{
+			"path": "pages/settings/index",
+			"style": {
+				"navigationBarTitleText": "设置"
+			}
+		},
+		{
+			"path": "pages/messages/index",
+			"style": {
+				"navigationBarTitleText": "消息"
 			}
 		}
 	],

@@ -7,11 +7,18 @@ const _sfc_main = {
     return {
       activeIndex: 0,
       categories: [
-        { name: "手机数码", children: [{ name: "手机", icon: "" }, { name: "耳机" }, { name: "充电器" }] },
-        { name: "家用电器", children: [{ name: "冰箱" }, { name: "洗衣机" }, { name: "电视" }] },
-        { name: "美妆个护", children: [{ name: "面膜" }, { name: "口红" }, { name: "洗发水" }] },
-        { name: "服饰鞋包", children: [{ name: "男装" }, { name: "女装" }, { name: "运动鞋" }] },
-        { name: "生鲜食品", children: [{ name: "水果" }, { name: "肉类" }, { name: "海鲜" }] }
+        {
+          name: "灯光",
+          children: [
+            { name: "嵌入式灯光" },
+            { name: "后口层板灯" },
+            { name: "玻璃层板灯" },
+            { name: "明装层板灯" },
+            { name: "电源" },
+            { name: "开关" },
+            { name: "配件" }
+          ]
+        }
       ]
     };
   },

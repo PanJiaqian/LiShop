@@ -627,8 +627,8 @@
       }
 
       .pd-preview .pd-param-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        display: flex;
+        flex-direction: column;
         gap: 8px;
       }
 
@@ -637,6 +637,10 @@
         border: 1px solid #eee;
         border-radius: 8px;
         padding: 10px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
       }
 
       .pd-preview .pd-param-item .key {
@@ -647,7 +651,7 @@
       .pd-preview .pd-param-item .val {
         color: #333;
         font-size: 14px;
-        margin-top: 4px;
+        margin-top: 0px;
       }
 
       .pd-preview .pd-detail-img {
@@ -664,6 +668,9 @@
         padding: 16px;
         height: 100%;
       }
+      .pd-preview .pd-form { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px; }
+      .pd-preview .pd-field { display:flex; align-items:center; gap:8px; }
+      .pd-preview .pd-input { flex:1; height:36px; line-height:36px; background:#f7f7f7; border:1px solid #eee; border-radius:6px; padding:0 8px; }
 
       .pd-preview .pd-title {
         font-size: 18px;
@@ -751,22 +758,11 @@
         <div class="pd-card pd-params">
           <div class="pd-section-title">参数信息</div>
           <div class="pd-param-grid">
-            <div class="pd-param-item">
-              <div class="key">品牌</div>
-              <div class="val">LiShop</div>
-            </div>
-            <div class="pd-param-item">
-              <div class="key">型号</div>
-              <div class="val">X01</div>
-            </div>
-            <div class="pd-param-item">
-              <div class="key">游戏人数</div>
-              <div class="val">2人</div>
-            </div>
-            <div class="pd-param-item">
-              <div class="key">时长</div>
-              <div class="val">30分钟以下</div>
-            </div>
+            <div class="pd-param-item"><div class="key">型号</div><div class="val">X01</div></div>
+            <div class="pd-param-item"><div class="key">名称</div><div class="val">英文So Cards …</div></div>
+            <div class="pd-param-item"><div class="key">规格</div><div class="val">默认规格</div></div>
+            <div class="pd-param-item"><div class="key">单位</div><div class="val">件</div></div>
+            <div class="pd-param-item"><div class="key">单位价格</div><div class="val">¥16.00</div></div>
           </div>
         </div>
         <div class="pd-card pd-detail">
@@ -781,6 +777,10 @@
           <div class="pd-price-row">
             <div class="pd-price">¥16</div>
             <div class="pd-coupon">券后更低</div>
+          </div>
+          <div class="pd-form">
+            <div class="pd-field"><div class="label">色温</div><input class="pd-input" placeholder="如 3000K"/></div>
+            <div class="pd-field"><div class="label">长度</div><input class="pd-input" placeholder="如 2m"/></div>
           </div>
           <div class="pd-qty">
             <div class="label">数量</div>

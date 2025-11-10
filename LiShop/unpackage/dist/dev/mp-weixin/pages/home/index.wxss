@@ -49,3 +49,29 @@
   padding: 0 20rpx 20rpx;
 }
 .grid2-item.data-v-4978fed5 {}
+
+/* 首页隐藏商品卡片中的加入购物车按钮 */
+.data-v-4978fed5 .actions,.data-v-4978fed5 .btn-cart {
+  display: none !important;
+}
+
+/* 房间名输入样式（H5和小程序通用） */
+.room-block.data-v-4978fed5 {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  background: #ffffff;
+}
+.room-label.data-v-4978fed5 {
+  color: #333;
+}
+.room-input.data-v-4978fed5 {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  background: #f7f7f7;
+  border: 1rpx solid #e6e6e6;
+  border-radius: 12rpx;
+  padding: 0 16rpx;
+}

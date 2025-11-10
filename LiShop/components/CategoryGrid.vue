@@ -15,7 +15,11 @@ export default {
   },
   methods: {
     go(cat) {
-      uni.navigateTo({ url: '/pages/category/index?active=' + encodeURIComponent(cat.name) })
+      if (uni.switchTab) {
+        uni.switchTab({ url: '/pages/category/index' })
+      } else {
+        uni.navigateTo({ url: '/pages/category/index' })
+      }
     }
   }
 }

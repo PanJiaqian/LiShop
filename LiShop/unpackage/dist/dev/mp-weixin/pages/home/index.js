@@ -10,17 +10,18 @@ const _sfc_main = {
   data() {
     return {
       keyword: "",
+      roomName: "",
       user: null,
       banners: ["/static/logo.png", "/static/logo.png", "/static/logo.png"],
-      categoryList: [
-        { name: "手机数码" },
-        { name: "家用电器" },
-        { name: "美妆个护" },
-        { name: "母婴玩具" },
-        { name: "服饰鞋包" },
-        { name: "运动户外" },
-        { name: "生鲜食品" },
-        { name: "图书文娱" }
+      topCategories: [{ name: "灯光" }],
+      subCategoryList: [
+        { name: "嵌入式灯光" },
+        { name: "后口层板灯" },
+        { name: "玻璃层板灯" },
+        { name: "明装层板灯" },
+        { name: "电源" },
+        { name: "开关" },
+        { name: "配件" }
       ],
       seckillList: [
         { id: "s1", title: "爆款秒杀1", price: 99, image: "/static/logo.png" },
@@ -50,6 +51,13 @@ const _sfc_main = {
     onSearch(val) {
       common_vendor.index.showToast({ title: "搜索：" + (val || this.keyword), icon: "none" });
     },
+    openCategory(cat) {
+      if (common_vendor.index.switchTab) {
+        common_vendor.index.switchTab({ url: "/pages/category/index" });
+      } else {
+        common_vendor.index.navigateTo({ url: "/pages/category/index" });
+      }
+    },
     addToCart(product) {
       try {
         const cart = common_vendor.index.getStorageSync("cart") || [];
@@ -76,6 +84,21 @@ const _sfc_main = {
       } else {
         common_vendor.index.navigateTo({ url: "/pages/login/index" });
       }
+    },
+    saveRoom() {
+      try {
+        const name = (this.roomName || "").trim();
+        if (!name)
+          return;
+        common_vendor.index.setStorageSync("currentRoom", name);
+        const rooms = common_vendor.index.getStorageSync("rooms") || [];
+        if (!rooms.includes(name)) {
+          rooms.push(name);
+          common_vendor.index.setStorageSync("rooms", rooms);
+        }
+        common_vendor.index.showToast({ title: "房间名已保存", icon: "success" });
+      } catch (e) {
+      }
     }
   }
 };
@@ -97,7 +120,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       images: $data.banners
     }),
     e: common_vendor.p({
-      categories: $data.categoryList
+      categories: $data.subCategoryList
     }),
     f: common_vendor.f($data.seckillList, (item, idx, i0) => {
       return {
@@ -108,12 +131,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     g: common_vendor.f($data.recommendList, (p, idx, i0) => {
       return {
-        a: common_vendor.o($options.addToCart, idx),
-        b: "4978fed5-3-" + i0,
-        c: common_vendor.p({
+        a: "4978fed5-3-" + i0,
+        b: common_vendor.p({
           product: p
         }),
-        d: idx
+        c: idx
       };
     })
   };

@@ -6,7 +6,7 @@
       <view class="side-cate">
         <view class="cate-title">全部分类</view>
         <view class="cate-list">
-          <view class="cate-item" v-for="(c, i) in categoryList" :key="i">
+          <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @click="openCategory(c)">
             <text class="dot">•</text>
             <text class="cate-name">{{ c.name }}</text>
           </view>
@@ -20,7 +20,7 @@
         <view class="block">
           <view class="block-title">
             <text>京东秒杀</text>
-            <navigator url="/pages/category/index" class="more">更多</navigator>
+            <navigator url="/pages/category/index" open-type="switchTab" class="more">更多</navigator>
           </view>
           <scroll-view class="seckill" scroll-x>
             <view class="sk-item" v-for="(item, idx) in seckillList" :key="idx">
@@ -36,7 +36,7 @@
           </view>
           <view class="grid2">
             <view class="grid2-item" v-for="(p, idx) in recommendList" :key="idx">
-              <ProductCard :product="p" @add-to-cart="addToCart" />
+              <ProductCard :product="p" />
             </view>
           </view>
         </view>
@@ -50,14 +50,10 @@
             <button v-if="!user" class="u-btn" size="mini" @click="goLogin">去登录</button>
           </view>
           <view class="u-links">
-            <navigator class="u-link" url="/pages/cart/index">我的购物车</navigator>
-            <navigator class="u-link" url="/pages/profile/index">我的订单</navigator>
-          </view>
-          <view class="u-shortcuts">
-            <view class="sc-item"><text class="sc-ico">🧭</text><text class="sc-txt">足迹</text></view>
-            <view class="sc-item"><text class="sc-ico">⭐</text><text class="sc-txt">收藏</text></view>
-            <view class="sc-item"><text class="sc-ico">🔔</text><text class="sc-txt">消息</text></view>
-            <view class="sc-item"><text class="sc-ico">⚙️</text><text class="sc-txt">设置</text></view>
+            <navigator class="u-link" url="/pages/cart/index" open-type="switchTab">我的购物车</navigator>
+            <navigator class="u-link" url="/pages/order/index">我的订单</navigator>
+            <navigator class="u-link" url="/pages/messages/index">消息</navigator>
+            <navigator class="u-link" url="/pages/settings/index">设置</navigator>
           </view>
         </view>
       </view>
@@ -69,12 +65,12 @@
     <!-- #ifndef H5 -->
     <SearchBar v-model="keyword" @search="onSearch" />
     <BannerSwiper :images="banners" />
-    <CategoryGrid :categories="categoryList" />
+    <CategoryGrid :categories="subCategoryList" />
 
     <view class="block">
       <view class="block-title">
         <text>京东秒杀</text>
-        <navigator url="/pages/category/index" class="more">更多</navigator>
+        <navigator url="/pages/category/index" open-type="switchTab" class="more">更多</navigator>
       </view>
       <scroll-view class="seckill" scroll-x>
         <view class="sk-item" v-for="(item, idx) in seckillList" :key="idx">
@@ -90,7 +86,7 @@
       </view>
       <view class="grid2">
         <view class="grid2-item" v-for="(p, idx) in recommendList" :key="idx">
-          <ProductCard :product="p" @add-to-cart="addToCart" />
+          <ProductCard :product="p" />
         </view>
       </view>
     </view>
@@ -110,11 +106,18 @@ export default {
   data() {
     return {
       keyword: '',
+      roomName: '',
       user: null,
       banners: ['/static/logo.png', '/static/logo.png', '/static/logo.png'],
-      categoryList: [
-        { name: '手机数码' }, { name: '家用电器' }, { name: '美妆个护' }, { name: '母婴玩具' },
-        { name: '服饰鞋包' }, { name: '运动户外' }, { name: '生鲜食品' }, { name: '图书文娱' }
+      topCategories: [{ name: '灯光' }],
+      subCategoryList: [
+        { name: '嵌入式灯光' },
+        { name: '后口层板灯' },
+        { name: '玻璃层板灯' },
+        { name: '明装层板灯' },
+        { name: '电源' },
+        { name: '开关' },
+        { name: '配件' }
       ],
       seckillList: [
         { id: 's1', title: '爆款秒杀1', price: 99, image: '/static/logo.png' },
@@ -137,6 +140,7 @@ export default {
     // #ifdef H5
     try { uni.hideTabBar({ animation: false }) } catch (e) { }
     try { this.user = uni.getStorageSync('user') || null } catch (e) { }
+    try { this.roomName = uni.getStorageSync('currentRoom') || '' } catch (e) { }
     // #endif
   },
   onPullDownRefresh() {
@@ -145,6 +149,13 @@ export default {
   methods: {
     onSearch(val) {
       uni.showToast({ title: '搜索：' + (val || this.keyword), icon: 'none' })
+    },
+    openCategory(cat) {
+      if (uni.switchTab) {
+        uni.switchTab({ url: '/pages/category/index' })
+      } else {
+        uni.navigateTo({ url: '/pages/category/index' })
+      }
     },
     addToCart(product) {
       try {
@@ -168,6 +179,16 @@ export default {
       } else {
         uni.navigateTo({ url: '/pages/login/index' })
       }
+    },
+    saveRoom() {
+      try {
+        const name = (this.roomName || '').trim()
+        if (!name) return
+        uni.setStorageSync('currentRoom', name)
+        const rooms = uni.getStorageSync('rooms') || []
+        if (!rooms.includes(name)) { rooms.push(name); uni.setStorageSync('rooms', rooms) }
+        uni.showToast({ title: '房间名已保存', icon: 'success' })
+      } catch (e) { }
     }
   }
 }
@@ -269,31 +290,6 @@ export default {
 }
 
 /* 右侧快捷入口与 H5 专属布局优化 */
-.u-shortcuts {
-  margin-top: 16rpx;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-gap: 12rpx;
-}
-
-.sc-item {
-  background: #fafafa;
-  border-radius: 12rpx;
-  padding: 16rpx 0;
-  text-align: center;
-}
-
-.sc-ico {
-  font-size: 28rpx;
-  line-height: 1;
-}
-
-.sc-txt {
-  display: block;
-  margin-top: 6rpx;
-  color: #666;
-  font-size: 24rpx;
-}
 
 .main .grid2 {
   display: grid;
@@ -377,4 +373,33 @@ export default {
 }
 
 .grid2-item {}
+
+/* 首页隐藏商品卡片中的加入购物车按钮 */
+:deep(.actions),
+:deep(.btn-cart) {
+  display: none !important;
+}
+
+/* 房间名输入样式（H5和小程序通用） */
+.room-block {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  background: #ffffff;
+}
+
+.room-label {
+  color: #333;
+}
+
+.room-input {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  background: #f7f7f7;
+  border: 1rpx solid #e6e6e6;
+  border-radius: 12rpx;
+  padding: 0 16rpx;
+}
 </style>

@@ -7,7 +7,11 @@ const _sfc_main = {
   },
   methods: {
     go(cat) {
-      common_vendor.index.navigateTo({ url: "/pages/category/index?active=" + encodeURIComponent(cat.name) });
+      if (common_vendor.index.switchTab) {
+        common_vendor.index.switchTab({ url: "/pages/category/index" });
+      } else {
+        common_vendor.index.navigateTo({ url: "/pages/category/index" });
+      }
     }
   }
 };

@@ -8,13 +8,33 @@
       </view>
     </view>
 
+    <!-- 信息卡片：公司信息与账号信息（H5/小程序通用） -->
+    <view class="info-card">
+      <view class="info-row"><text class="label">公司名称</text><text class="value">{{ profile.companyName }}</text></view>
+      <view class="info-row"><text class="label">联系人姓名</text><text class="value">{{ profile.contactName }}</text></view>
+      <view class="info-row"><text class="label">电源</text><text class="value">{{ profile.power }}</text></view>
+      <view class="info-row"><text class="label">地址（收货地址）</text><text class="value">{{ profile.address }}</text></view>
+      <view class="info-row"><text class="label">等级</text><text class="value">{{ profile.level }}</text></view>
+      <view class="info-row"><text class="label">价格分组</text><text class="value">{{ profile.priceGroup }}</text></view>
+      <view class="info-row"><text class="label">账号状态</text><text class="value">{{ profile.status }}</text></view>
+      <view class="info-row"><text class="label">经销商地区</text><text class="value">{{ profile.region }}</text></view>
+    </view>
+
     <view class="menu">
-      <navigator url="/pages/profile/index" class="menu-item">
+      <navigator url="/pages/order/index" class="menu-item">
         <text>我的订单</text>
         <text class="arrow">›</text>
       </navigator>
-      <navigator url="/pages/cart/index" class="menu-item">
+      <navigator url="/pages/cart/index" open-type="switchTab" class="menu-item">
         <text>我的购物车</text>
+        <text class="arrow">›</text>
+      </navigator>
+      <navigator url="/pages/settings/index" class="menu-item">
+        <text>设置</text>
+        <text class="arrow">›</text>
+      </navigator>
+      <navigator url="/pages/messages/index" class="menu-item">
+        <text>消息</text>
         <text class="arrow">›</text>
       </navigator>
       <view class="menu-item">
@@ -33,6 +53,23 @@ import FloatingNav from '@/components/FloatingNav.vue'
 export default {
   components: { FloatingNav },
   data() { return { loggedIn: false, displayName: '' } },
+  computed: {
+    profile() {
+      try {
+        const u = uni.getStorageSync('user') || null
+        return {
+          companyName: u?.companyName || '未设置',
+          contactName: u?.contactName || u?.username || '未设置',
+          power: u?.power || '未设置',
+          address: u?.address || '未设置',
+          level: u?.level || '未设置',
+          priceGroup: u?.priceGroup || '未设置',
+          status: u?.status || (this.loggedIn ? '正常' : '未登录'),
+          region: u?.region || '未设置'
+        }
+      } catch (e) { return { companyName: '未设置', contactName: '未设置', power: '未设置', address: '未设置', level: '未设置', priceGroup: '未设置', status: this.loggedIn ? '正常' : '未登录', region: '未设置' } }
+    }
+  },
   onShow() {
     // #ifdef H5
     try { uni.hideTabBar({ animation: false }) } catch (e) { }
@@ -101,6 +138,35 @@ export default {
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
+}
+
+.info-card {
+  margin: 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: #666;
+}
+
+.value {
+  color: #333;
+  font-weight: 600;
 }
 
 .menu-item {

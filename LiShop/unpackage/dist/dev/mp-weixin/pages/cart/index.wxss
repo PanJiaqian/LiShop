@@ -70,6 +70,45 @@
   color: #fff;
 }
 
+/* 小程序端勾选样式 */
+.actions-left.data-v-8039fbf1 {
+  display: flex;
+  align-items: center;
+}
+.chk.data-v-8039fbf1 {
+  width: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chk-ico.data-v-8039fbf1 {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  border: 2rpx solid #ccc;
+}
+.chk-ico.on.data-v-8039fbf1 {
+  background: #ff5500;
+  border-color: #ff5500;
+}
+.chk-txt.data-v-8039fbf1 {
+  margin-left: 8rpx;
+  color: #333;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

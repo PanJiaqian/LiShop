@@ -43,6 +43,30 @@
   overflow: hidden;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
 }
+.info-card.data-v-201c0da5 {
+  margin: 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
+}
+.info-row.data-v-201c0da5 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  border-bottom: 1px solid #f0f0f0;
+}
+.info-row.data-v-201c0da5:last-child {
+  border-bottom: none;
+}
+.label.data-v-201c0da5 {
+  color: #666;
+}
+.value.data-v-201c0da5 {
+  color: #333;
+  font-weight: 600;
+}
 .menu-item.data-v-201c0da5 {
   display: flex;
   justify-content: space-between;

@@ -16,20 +16,25 @@
         </view>
 
         <view v-if="cart.length" class="list h5">
-          <view class="item" v-for="(it, idx) in cart" :key="it.id">
-            <view class="chk" @click="toggle(idx)">
-              <view class="chk-ico" :class="{ on: it.selected }"></view>
+          <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
+            <view class="group-header">
+              <text class="room">{{ grp.name }}</text>
             </view>
-            <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
-            <view class="meta">
-              <text class="title">{{ it.title }}</text>
-              <text class="attr" v-if="it.attr">{{ it.attr }}</text>
-              <text class="price">¥{{ it.price.toFixed(2) }}</text>
-              <view class="qty">
-                <button size="mini" @click="dec(idx)">-</button>
-                <text class="count">{{ it.quantity }}</text>
-                <button size="mini" @click="inc(idx)">+</button>
-                <button size="mini" class="del" @click="remove(idx)">删除</button>
+            <view class="item" v-for="it in grp.items" :key="it.id">
+              <view class="chk" @click="toggleById(it.id)">
+                <view class="chk-ico" :class="{ on: it.selected }"></view>
+              </view>
+              <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
+              <view class="meta">
+                <text class="title">{{ it.title }}</text>
+                <text class="attr" v-if="it.attr">{{ it.attr }}</text>
+                <text class="price">¥{{ it.price.toFixed(2) }}</text>
+                <view class="qty">
+                  <button size="mini" @click="decById(it.id)">-</button>
+                  <text class="count">{{ it.quantity }}</text>
+                  <button size="mini" @click="incById(it.id)">+</button>
+                  <button size="mini" class="del" @click="removeById(it.id)">删除</button>
+                </view>
               </view>
             </view>
           </view>
@@ -94,16 +99,24 @@
 
     <!-- #ifndef H5 -->
     <view v-if="cart.length" class="list">
-      <view class="item" v-for="(it, idx) in cart" :key="it.id">
-        <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
-        <view class="meta">
-          <text class="title">{{ it.title }}</text>
-          <text class="price">¥{{ it.price.toFixed(2) }}</text>
-          <view class="qty">
-            <button size="mini" @click="dec(idx)">-</button>
-            <text class="count">{{ it.quantity }}</text>
-            <button size="mini" @click="inc(idx)">+</button>
-            <button size="mini" class="del" @click="remove(idx)">删除</button>
+      <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
+        <view class="group-header">
+          <text class="room">{{ grp.name }}</text>
+        </view>
+        <view class="item" v-for="it in grp.items" :key="it.id">
+          <view class="chk" @click="toggleById(it.id)">
+            <view class="chk-ico" :class="{ on: it.selected }"></view>
+          </view>
+          <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
+          <view class="meta">
+            <text class="title">{{ it.title }}</text>
+            <text class="price">¥{{ it.price.toFixed(2) }}</text>
+            <view class="qty">
+              <button size="mini" @click="decById(it.id)">-</button>
+              <text class="count">{{ it.quantity }}</text>
+              <button size="mini" @click="incById(it.id)">+</button>
+              <button size="mini" class="del" @click="removeById(it.id)">删除</button>
+            </view>
           </view>
         </view>
       </view>
@@ -111,10 +124,17 @@
     <view v-else class="empty">购物车空空如也~</view>
 
     <view class="footer">
-      <text>合计：<text class="sum">¥{{ total.toFixed(2) }}</text></text>
+      <view class="actions-left" @click="toggleAll">
+        <view class="chk">
+          <view class="chk-ico" :class="{ on: isAllSelected }"></view>
+          <text class="chk-txt">全选</text>
+        </view>
+      </view>
+      <text>合计：<text class="sum">¥{{ selectedTotal.toFixed(2) }}</text></text>
       <view class="actions">
         <button size="mini" @click="clear">清空</button>
-        <button size="mini" class="checkout" @click="checkout">去结算</button>
+        <button size="mini" class="checkout" :disabled="selectedCount === 0" @click="checkout">去结算({{ selectedCount
+          }})</button>
       </view>
     </view>
     <!-- #endif -->
@@ -143,7 +163,21 @@ export default {
     extraReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.reduce || 0) : 0), 0) },
     totalReduce() { return this.officialReduce + this.redReduce + this.extraReduce },
     payable() { return Math.max(0, this.selectedTotal - this.totalReduce) },
-    needForCoupon() { const need = Math.max(0, 800 - this.payable); return need.toFixed(2) }
+    needForCoupon() { const need = Math.max(0, 800 - this.payable); return need.toFixed(2) },
+    groups: function () {
+      try {
+        const map = {};
+        (this.cart || []).forEach(it => {
+          const key = it.roomName || '默认房间'
+          if (!map[key]) map[key] = []
+          map[key].push(it)
+        })
+        return Object.keys(map).map(name => ({ name, items: map[name] }))
+      } catch (e) {
+        console.error('groups computed error', e)
+        return []
+      }
+    }
   },
   onShow() {
     this.load()
@@ -161,11 +195,12 @@ export default {
       }))
     },
     sync() { uni.setStorageSync('cart', this.cart) },
-    inc(i) { this.cart[i].quantity += 1; this.sync() },
-    dec(i) { this.cart[i].quantity = Math.max(1, (this.cart[i].quantity || 1) - 1); this.sync() },
-    remove(i) { this.cart.splice(i, 1); this.sync() },
+    findIndexById(id) { return this.cart.findIndex(it => it.id === id) },
+    incById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart[i].quantity += 1; this.sync() } },
+    decById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart[i].quantity = Math.max(1, (this.cart[i].quantity || 1) - 1); this.sync() } },
+    removeById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart.splice(i, 1); this.sync() } },
     removeSelected() { this.cart = this.cart.filter(it => !it.selected); this.sync() },
-    toggle(i) { this.cart[i].selected = !this.cart[i].selected; this.sync() },
+    toggleById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart[i].selected = !this.cart[i].selected; this.sync() } },
     toggleAll() {
       const makeSelected = !(this.selectedCount === this.cart.length && this.cart.length > 0)
       this.cart.forEach(it => it.selected = makeSelected)
@@ -173,11 +208,62 @@ export default {
     },
     clear() { this.cart = []; this.sync() },
     checkout() {
-      if (this.selectedCount === 0) {
-        uni.showToast({ title: '请选择商品', icon: 'none' })
-        return
-      }
-      uni.showToast({ title: '暂未接入支付', icon: 'none' })
+      if (this.selectedCount === 0) { uni.showToast({ title: '请选择商品', icon: 'none' }); return }
+      // 生成订单
+      const selected = this.cart.filter(it => it.selected)
+      const groupMap = {}
+      selected.forEach(it => {
+        const key = it.roomName || '默认房间'
+        if (!groupMap[key]) groupMap[key] = []
+        groupMap[key].push({
+          id: it.id, title: it.title, price: it.price, quantity: it.quantity,
+          specTemp: it.specTemp || '', specLength: it.specLength || '', roomName: key
+        })
+      })
+      const rooms = Object.keys(groupMap).map(name => {
+        const items = groupMap[name]
+        const roomTotal = items.reduce((s, x) => s + x.price * x.quantity, 0)
+        return { name, items, roomTotal }
+      })
+      const now = new Date()
+      const id = Date.now()
+      const orderNo = `JD${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(id).slice(-6)}`
+      const waybillNo = `WB${Math.floor(Math.random() * 1e10).toString().padStart(10, '0')}`
+      const baseTime = now.getTime()
+      const tracking = [
+        { time: new Date(baseTime).toISOString(), status: '已下单', desc: '订单已提交，等待商家处理', place: '系统' },
+        { time: new Date(baseTime + 5 * 60 * 1000).toISOString(), status: '拣货中', desc: '商家正在为您拣货', place: '仓库' },
+        { time: new Date(baseTime + 30 * 60 * 1000).toISOString(), status: '已揽收', desc: '快递已揽收包裹', place: '揽收点' }
+      ]
+      const order = { id, orderNo, waybillNo, createdAt: now.toISOString(), rooms, total: rooms.reduce((s, r) => s + r.roomTotal, 0), tracking }
+      try {
+        const orders = uni.getStorageSync('orders') || []
+        uni.setStorageSync('orders', [order, ...orders])
+        // 移除已选商品
+        this.cart = this.cart.filter(it => !it.selected); this.sync()
+        // 导出Excel（H5端下载）
+        this.exportExcel(order)
+        uni.showToast({ title: '已生成订单', icon: 'success' })
+        uni.navigateTo({ url: '/pages/order/index?id=' + order.id })
+      } catch (e) { console.error(e) }
+    },
+    exportExcel(order) {
+      // 生成简单的Excel（HTML表格）
+      try {
+        const header = ['房间', '商品', '型号', '色温', '长度', '单价', '数量', '金额']
+        let html = '<table border="1" cellspacing="0" cellpadding="4"><tr>' + header.map(h => `<th>${h}</th>`).join('') + '</tr>'
+        order.rooms.forEach(r => {
+          r.items.forEach(x => {
+            const row = [r.name, x.title, x.id, x.specTemp || '', x.specLength || '', x.price.toFixed(2), x.quantity, (x.price * x.quantity).toFixed(2)]
+            html += '<tr>' + row.map(v => `<td>${v}</td>`).join('') + '</tr>'
+          })
+        })
+        html += '</table>'
+        const blob = new Blob([`\ufeff${html}`], { type: 'application/vnd.ms-excel' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url; a.download = `订单_${order.id}.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url)
+      } catch (e) { /* 非H5端或环境不支持下载忽略 */ }
     }
   }
 }
@@ -268,6 +354,36 @@ export default {
   color: #fff;
 }
 
+/* 小程序端勾选样式 */
+.actions-left {
+  display: flex;
+  align-items: center;
+}
+
+.chk {
+  width: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chk-ico {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  border: 2rpx solid #ccc;
+}
+
+.chk-ico.on {
+  background: #ff5500;
+  border-color: #ff5500;
+}
+
+.chk-txt {
+  margin-left: 8rpx;
+  color: #333;
+}
+
 /* #ifdef H5 */
 .footer {
   display: none;
@@ -352,6 +468,19 @@ export default {
   padding: 24rpx;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
   border: 1rpx solid #eee;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 20rpx;
+  background: #fff9f5;
+  color: #ff7b2b;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.group-header .room {
+  font-weight: 600;
 }
 
 .sum-title {
