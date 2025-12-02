@@ -75,6 +75,9 @@
   display: flex;
   align-items: center;
 }
+.actions-left .chk-ico.data-v-8039fbf1 {
+  display: none;
+}
 .chk.data-v-8039fbf1 {
   width: 40rpx;
   display: flex;
@@ -344,4 +347,159 @@
 
 
 
+
+
+
+/* 新版商品卡片样式 */
+.row-title.data-v-8039fbf1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 26rpx;
+  line-height: 36rpx;
+  color: #333;
+}
+.tag.data-v-8039fbf1 {
+  display: inline-block;
+  background: #00c853;
+  color: #fff;
+  font-size: 20rpx;
+  padding: 0 6rpx;
+  border-radius: 4rpx;
+  margin-right: 8rpx;
+  vertical-align: middle;
+}
+.title.data-v-8039fbf1 { vertical-align: middle;
+}
+.row-attr.data-v-8039fbf1 {
+  background: #f7f7f7;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+  margin-top: 12rpx;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  max-width: 100%;
+}
+.attr-txt.data-v-8039fbf1 { font-size: 22rpx; color: #666; margin-right: 8rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.attr-icon.data-v-8039fbf1 { font-size: 20rpx; color: #999;
+}
+.row-main.data-v-8039fbf1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16rpx;
+}
+.price-box.data-v-8039fbf1 { flex: 1;
+}
+.price.data-v-8039fbf1 { color: #e1251b; font-size: 32rpx; font-weight: 700;
+}
+.qty-box.data-v-8039fbf1 {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 6rpx;
+  height: 44rpx;
+}
+.qty-btn.data-v-8039fbf1 { width: 44rpx; height: 44rpx; display: flex; align-items: center; justify-content: center; color: #333;
+}
+.qty-num.data-v-8039fbf1 { padding: 0 12rpx; font-size: 24rpx; color: #333;
+}
+.actions-col.data-v-8039fbf1 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 20rpx;
+}
+.act-txt.data-v-8039fbf1 { font-size: 22rpx; color: #666; margin-bottom: 8rpx;
+}
+.act-txt.del.data-v-8039fbf1 { margin-bottom: 0;
+}
+.row-service.data-v-8039fbf1 {
+  margin-top: 12rpx;
+  display: flex;
+  align-items: center;
+}
+.svc-tag.data-v-8039fbf1 { color: #e1251b; font-size: 20rpx; border: 1rpx solid #e1251b; padding: 0 4rpx; border-radius: 4rpx; margin-right: 8rpx;
+}
+.svc-txt.data-v-8039fbf1 { color: #666; font-size: 22rpx;
+}
+
+/* 规格弹窗样式 */
+.spec-modal-mask.data-v-8039fbf1 {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.spec-modal.data-v-8039fbf1 {
+  width: 600rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+.spec-header.data-v-8039fbf1 {
+  padding: 24rpx;
+  display: flex;
+  gap: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  position: relative;
+}
+.spec-img.data-v-8039fbf1 { width: 120rpx; height: 120rpx; border-radius: 8rpx; background: #f5f5f5;
+}
+.spec-info.data-v-8039fbf1 { display: flex; flex-direction: column; justify-content: center;
+}
+.spec-price.data-v-8039fbf1 { color: #e1251b; font-size: 32rpx; font-weight: 700; margin-bottom: 8rpx;
+}
+.spec-selected.data-v-8039fbf1 { color: #666; font-size: 24rpx;
+}
+.spec-close.data-v-8039fbf1 {
+  position: absolute;
+  top: 20rpx; right: 24rpx;
+  font-size: 36rpx; color: #999; padding: 10rpx;
+}
+.spec-body.data-v-8039fbf1 {
+  padding: 24rpx;
+  flex: 1;
+  overflow-y: auto;
+}
+.spec-group.data-v-8039fbf1 { margin-bottom: 32rpx;
+}
+.spec-title.data-v-8039fbf1 { font-size: 28rpx; color: #333; font-weight: 700; margin-bottom: 16rpx; display: block;
+}
+.spec-list.data-v-8039fbf1 { display: flex; flex-wrap: wrap; gap: 16rpx;
+}
+.spec-opt.data-v-8039fbf1 {
+  padding: 10rpx 24rpx;
+  background: #f7f7f7;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #333;
+  border: 1rpx solid transparent;
+}
+.spec-opt.active.data-v-8039fbf1 {
+  background: #fff5f5;
+  color: #e1251b;
+  border-color: #e1251b;
+}
+.spec-footer.data-v-8039fbf1 {
+  padding: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+  display: flex;
+  gap: 20rpx;
+}
+.spec-btn.data-v-8039fbf1 { flex: 1; font-size: 28rpx; border-radius: 999rpx;
+}
+.spec-btn.cancel.data-v-8039fbf1 { background: #fff; border: 1rpx solid #ddd; color: #333;
+}
+.spec-btn.confirm.data-v-8039fbf1 { background: #e1251b; color: #fff; border: none;
+}
 

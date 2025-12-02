@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_index = require("../../api/index.js");
 const SearchBar = () => "../../components/SearchBar.js";
 const BannerSwiper = () => "../../components/BannerSwiper.js";
 const CategoryGrid = () => "../../components/CategoryGrid.js";
@@ -13,34 +14,48 @@ const _sfc_main = {
       roomName: "",
       user: null,
       banners: ["/static/logo.png", "/static/logo.png", "/static/logo.png"],
-      topCategories: [{ name: "灯光" }],
-      subCategoryList: [
-        { name: "嵌入式灯光" },
-        { name: "后口层板灯" },
-        { name: "玻璃层板灯" },
-        { name: "明装层板灯" },
-        { name: "电源" },
-        { name: "开关" },
-        { name: "配件" }
-      ],
+      topCategories: [],
+      activeCateId: "",
+      activeCateName: "",
+      leftChildren: [],
+      subCategoryList: [],
       seckillList: [
         { id: "s1", title: "爆款秒杀1", price: 99, image: "/static/logo.png" },
         { id: "s2", title: "爆款秒杀2", price: 129, image: "/static/logo.png" },
         { id: "s3", title: "爆款秒杀3", price: 59, image: "/static/logo.png" }
       ],
-      recommendList: [
-        { id: "p1", title: "店铺热销商品 A 旗舰款", price: 299, sales: 1234, image: "/static/logo.png" },
-        { id: "p2", title: "人气爆款 B 限时优惠", price: 89, sales: 5678, image: "/static/logo.png" },
-        { id: "p3", title: "超值 C 套装", price: 179, sales: 345, image: "/static/logo.png" },
-        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" },
-        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" },
-        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" },
-        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" },
-        { id: "p4", title: "家电 D 新品", price: 999, sales: 98, image: "/static/logo.png" }
-      ]
+      recommendList: []
     };
   },
   onShow() {
+    try {
+      api_index.getVisibleCategories({ page: 1, page_size: 20, sort_by: "id" }).then((res) => {
+        var _a;
+        const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+        const mapped = items.map((it, i) => ({
+          name: (it == null ? void 0 : it.name) || "分类" + (i + 1),
+          icon: "",
+          categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || ""
+        }));
+        this.topCategories = mapped;
+        this.subCategoryList = mapped;
+      }).catch(() => {
+      });
+      api_index.getRecommendedProducts({ page: 1, page_size: 20 }).then((res) => {
+        var _a;
+        const carousel = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.carousel) ? res.data.carousel : [];
+        const mapped = carousel.map((it, i) => ({
+          id: (it == null ? void 0 : it.available_product_id) || "p" + i,
+          title: (it == null ? void 0 : it.name) || "推荐商品 " + (i + 1),
+          price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
+          sales: 0,
+          image: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || "/static/logo.png"
+        }));
+        this.recommendList = mapped;
+      }).catch(() => {
+      });
+    } catch (e) {
+    }
   },
   onPullDownRefresh() {
     setTimeout(() => {
@@ -49,14 +64,33 @@ const _sfc_main = {
   },
   methods: {
     onSearch(val) {
-      common_vendor.index.showToast({ title: "搜索：" + (val || this.keyword), icon: "none" });
+      const q = (val || this.keyword || "").trim();
+      if (!q) {
+        common_vendor.index.showToast({ title: "请输入关键字", icon: "none" });
+        return;
+      }
+      common_vendor.index.navigateTo({ url: "/pages/search/index?q=" + encodeURIComponent(q) });
     },
     openCategory(cat) {
+      const aid = encodeURIComponent((cat == null ? void 0 : cat.categories_id) || "");
+      const aname = encodeURIComponent((cat == null ? void 0 : cat.name) || "");
+      const url = `/pages/category/index?active=${aname}&active_id=${aid}`;
       if (common_vendor.index.switchTab) {
-        common_vendor.index.switchTab({ url: "/pages/category/index" });
+        common_vendor.index.switchTab({ url });
       } else {
-        common_vendor.index.navigateTo({ url: "/pages/category/index" });
+        common_vendor.index.navigateTo({ url });
       }
+    },
+    goSubList(sub) {
+      const pid = encodeURIComponent(this.activeCateId || "");
+      const cid = encodeURIComponent((sub == null ? void 0 : sub.categories_id) || "");
+      const pname = encodeURIComponent(this.activeCateName || "");
+      if (!cid) {
+        common_vendor.index.showToast({ title: "子分类缺少ID", icon: "none" });
+        return;
+      }
+      const url = `/pages/category/list?parent_id=${pid}&category_id=${cid}&active=${pname}`;
+      common_vendor.index.navigateTo({ url });
     },
     addToCart(product) {
       try {
@@ -99,6 +133,14 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "房间名已保存", icon: "success" });
       } catch (e) {
       }
+    },
+    logout() {
+      try {
+        common_vendor.index.removeStorageSync("user");
+      } catch (e) {
+      }
+      this.user = null;
+      common_vendor.index.showToast({ title: "已退出登录", icon: "success" });
     }
   }
 };
@@ -122,14 +164,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.p({
       categories: $data.subCategoryList
     }),
-    f: common_vendor.f($data.seckillList, (item, idx, i0) => {
-      return {
-        a: item.image || "/static/logo.png",
-        b: common_vendor.t(item.price),
-        c: idx
-      };
-    }),
-    g: common_vendor.f($data.recommendList, (p, idx, i0) => {
+    f: common_vendor.f($data.recommendList, (p, idx, i0) => {
       return {
         a: "4978fed5-3-" + i0,
         b: common_vendor.p({

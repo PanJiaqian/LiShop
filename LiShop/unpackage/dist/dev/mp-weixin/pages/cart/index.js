@@ -1,10 +1,19 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_index = require("../../api/index.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
 const _sfc_main = {
   components: { FloatingNav },
   data() {
-    return { cart: [] };
+    return {
+      cart: [],
+      showSpecModal: false,
+      editingItem: {},
+      // 房间选择相关
+      rooms: [],
+      showRoomModal: false,
+      targetGroup: null
+    };
   },
   computed: {
     total() {
@@ -62,16 +71,50 @@ const _sfc_main = {
   },
   methods: {
     load() {
-      try {
-        this.cart = common_vendor.index.getStorageSync("cart") || [];
-      } catch (e) {
-        this.cart = [];
-      }
-      this.cart = (this.cart || []).map((it) => ({
-        ...it,
-        quantity: it.quantity || 1,
-        selected: !!it.selected
-      }));
+      api_index.getCartItems().then((res) => {
+        const isEmpty = typeof res === "string" && (res.includes("空") || res === "当前购物车为空");
+        if (isEmpty) {
+          this.cart = [];
+          return;
+        }
+        const payload = res && res.data && typeof res.data === "object" ? res.data : res;
+        const groups = Array.isArray(payload == null ? void 0 : payload.groups) ? payload.groups : [];
+        const list = [];
+        for (const g of groups) {
+          const roomName = g && g.room_name ? g.room_name : "";
+          const items = Array.isArray(g && g.items) ? g.items : [];
+          for (const x of items) {
+            list.push({
+              id: x && x.id ? x.id : "",
+              title: x && x.product_id ? x.product_id : "",
+              productId: x && x.product_id ? x.product_id : "",
+              price: Number((x && x.price) !== void 0 ? x.price : 0) || 0,
+              quantity: Number((x && x.quantity) !== void 0 ? x.quantity : 1) || 1,
+              image: "/static/logo.png",
+              roomName: roomName || "默认房间",
+              roomId: g.room_id || "",
+              length: x.length || 1,
+              color: x.color || "暖白",
+              note: x.note || "",
+              attr: (x && x.length ? "长度 " + x.length : "") + (x && x.note ? " ｜ " + x.note : ""),
+              selected: false
+            });
+          }
+        }
+        this.cart = list;
+      }).catch((err) => {
+        console.error("Get cart failed", err);
+        try {
+          this.cart = common_vendor.index.getStorageSync("cart") || [];
+        } catch (e) {
+          this.cart = [];
+        }
+        this.cart = (this.cart || []).map((it) => ({
+          ...it,
+          quantity: it.quantity || 1,
+          selected: !!it.selected
+        }));
+      });
     },
     sync() {
       common_vendor.index.setStorageSync("cart", this.cart);
@@ -82,27 +125,73 @@ const _sfc_main = {
     incById(id) {
       const i = this.findIndexById(id);
       if (i >= 0) {
-        this.cart[i].quantity += 1;
-        this.sync();
+        const item = this.cart[i];
+        this.updateItemQuantity(item, item.quantity + 1);
       }
     },
     decById(id) {
       const i = this.findIndexById(id);
       if (i >= 0) {
-        this.cart[i].quantity = Math.max(1, (this.cart[i].quantity || 1) - 1);
-        this.sync();
+        const item = this.cart[i];
+        if (item.quantity > 1) {
+          this.updateItemQuantity(item, item.quantity - 1);
+        }
       }
     },
+    updateItemQuantity(item, quantity) {
+      api_index.updateCartItem({
+        id: item.id,
+        room_id: item.roomId,
+        product_id: item.productId,
+        length: item.length,
+        quantity,
+        color: item.color,
+        note: item.note
+      }).then((res) => {
+        if (res && res.success) {
+          item.quantity = quantity;
+          this.sync();
+        } else {
+          common_vendor.index.showToast({ title: "更新失败", icon: "none" });
+        }
+      }).catch((err) => {
+        console.error(err);
+        common_vendor.index.showToast({ title: "更新出错", icon: "none" });
+      });
+    },
     removeById(id) {
-      const i = this.findIndexById(id);
-      if (i >= 0) {
-        this.cart.splice(i, 1);
-        this.sync();
-      }
+      api_index.deleteCartItem({ id }).then(() => {
+        const i = this.findIndexById(id);
+        if (i >= 0) {
+          this.cart.splice(i, 1);
+          this.sync();
+        }
+        common_vendor.index.showToast({ title: "已删除", icon: "success" });
+      }).catch(() => {
+        const i = this.findIndexById(id);
+        if (i >= 0) {
+          this.cart.splice(i, 1);
+          this.sync();
+        }
+        common_vendor.index.showToast({ title: "本地删除", icon: "none" });
+      });
     },
     removeSelected() {
       this.cart = this.cart.filter((it) => !it.selected);
       this.sync();
+    },
+    clearRemote() {
+      api_index.clearCart().then((res) => {
+        if (res && res.success) {
+          this.cart = [];
+          this.sync();
+          common_vendor.index.showToast({ title: "已清空", icon: "success" });
+        } else {
+          common_vendor.index.showToast({ title: res && res.message ? res.message : "清空失败", icon: "none" });
+        }
+      }).catch(() => {
+        common_vendor.index.showToast({ title: "清空失败", icon: "none" });
+      });
     },
     toggleById(id) {
       const i = this.findIndexById(id);
@@ -191,6 +280,67 @@ const _sfc_main = {
         URL.revokeObjectURL(url);
       } catch (e) {
       }
+    },
+    openSpecPopup(item) {
+      this.editingItem = item;
+      this.showSpecModal = true;
+    },
+    closeSpecPopup() {
+      this.showSpecModal = false;
+      this.editingItem = {};
+    },
+    // 房间选择逻辑
+    loadRooms() {
+      api_index.getRooms().then((res) => {
+        var _a;
+        const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+        this.rooms = items.map((r) => ({
+          id: r.room_id,
+          name: r.name
+        }));
+      }).catch((err) => {
+        console.error("Get rooms failed", err);
+        this.rooms = (common_vendor.index.getStorageSync("rooms") || []).map((n) => ({ id: n, name: n }));
+      });
+    },
+    openRoomPopup(group) {
+      this.targetGroup = group;
+      this.showRoomModal = true;
+      if (this.rooms.length === 0) {
+        this.loadRooms();
+      }
+    },
+    closeRoomPopup() {
+      this.showRoomModal = false;
+      this.targetGroup = null;
+    },
+    selectRoom(room) {
+      if (!this.targetGroup || !this.targetGroup.items)
+        return;
+      const items = this.targetGroup.items;
+      common_vendor.index.showLoading({ title: "移动中" });
+      const promises = items.map((item) => {
+        return api_index.updateCartItem({
+          id: item.id,
+          room_id: room.id,
+          product_id: item.productId,
+          length: item.length,
+          quantity: item.quantity,
+          color: item.color,
+          note: item.note
+        });
+      });
+      Promise.all(promises).then(() => {
+        common_vendor.index.hideLoading();
+        common_vendor.index.showToast({ title: "已移动到 " + room.name, icon: "success" });
+        this.closeRoomPopup();
+        this.load();
+      }).catch(() => {
+        common_vendor.index.hideLoading();
+        common_vendor.index.showToast({ title: "移动部分失败", icon: "none" });
+        this.closeRoomPopup();
+        this.load();
+      });
     }
   }
 };
@@ -201,21 +351,23 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: common_vendor.f($options.groups, (grp, gi, i0) => {
       return {
         a: common_vendor.t(grp.name),
-        b: common_vendor.f(grp.items, (it, k1, i1) => {
+        b: common_vendor.o(($event) => $options.openRoomPopup(grp), grp.name),
+        c: common_vendor.f(grp.items, (it, k1, i1) => {
           return {
             a: it.selected ? 1 : "",
             b: common_vendor.o(($event) => $options.toggleById(it.id), it.id),
             c: it.image || "/static/logo.png",
             d: common_vendor.t(it.title),
-            e: common_vendor.t(it.price.toFixed(2)),
-            f: common_vendor.o(($event) => $options.decById(it.id), it.id),
-            g: common_vendor.t(it.quantity),
-            h: common_vendor.o(($event) => $options.incById(it.id), it.id),
-            i: common_vendor.o(($event) => $options.removeById(it.id), it.id),
-            j: it.id
+            e: common_vendor.t(it.attr),
+            f: common_vendor.t(it.price.toFixed(2)),
+            g: common_vendor.o(($event) => $options.decById(it.id), it.id),
+            h: common_vendor.t(it.quantity),
+            i: common_vendor.o(($event) => $options.incById(it.id), it.id),
+            j: common_vendor.o(($event) => $options.removeById(it.id), it.id),
+            k: it.id
           };
         }),
-        c: grp.name
+        d: grp.name
       };
     })
   } : {}, {
@@ -225,8 +377,34 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
     g: common_vendor.t($options.selectedCount),
     h: $options.selectedCount === 0,
-    i: common_vendor.o((...args) => $options.checkout && $options.checkout(...args))
-  });
+    i: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
+    j: $data.showRoomModal
+  }, $data.showRoomModal ? {
+    k: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
+    l: common_vendor.f($data.rooms, (r, k0, i0) => {
+      return {
+        a: common_vendor.t(r.name),
+        b: r.id,
+        c: $data.targetGroup && $data.targetGroup.name === r.name ? 1 : "",
+        d: common_vendor.o(($event) => $options.selectRoom(r), r.id)
+      };
+    }),
+    m: common_vendor.o(() => {
+    }),
+    n: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
+  } : {}, {
+    o: $data.showSpecModal
+  }, $data.showSpecModal ? {
+    p: $data.editingItem.image || "/static/logo.png",
+    q: common_vendor.t($data.editingItem.price),
+    r: common_vendor.t($data.editingItem.attr),
+    s: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    t: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    v: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    w: common_vendor.o(() => {
+    }),
+    x: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
+  } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-8039fbf1"]]);
 wx.createPage(MiniProgramPage);

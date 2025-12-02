@@ -1,0 +1,84 @@
+
+.page {
+  padding-bottom: 100rpx;
+  background-color: #f7f7f7;
+  min-height: 100vh;
+}
+.address-list {
+  padding: 20rpx;
+}
+.address-item {
+  background-color: #fff;
+  border-radius: 10rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.info {
+  flex: 1;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+.name {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-right: 20rpx;
+}
+.phone {
+  color: #666;
+  font-size: 28rpx;
+  margin-right: 20rpx;
+}
+.tag {
+  background-color: #e1251b;
+  color: #fff;
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 4rpx;
+  margin-left: 10rpx;
+}
+.address-detail {
+  color: #333;
+  font-size: 28rpx;
+  line-height: 1.4;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  margin-left: 20rpx;
+  align-items: flex-end;
+}
+.btn-edit, .btn-delete {
+  padding: 10rpx 20rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+.btn-delete {
+  color: #e1251b;
+  margin-top: 10rpx;
+}
+.empty-state {
+  padding: 100rpx;
+  text-align: center;
+  color: #999;
+}
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx;
+  background-color: #fff;
+  box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
+}
+.btn-add {
+  background-color: #e1251b;
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 32rpx;
+}

@@ -13,12 +13,13 @@
         <text class="label">密码</text>
         <input class="input" type="password" v-model="password" placeholder="请输入密码" />
       </view>
-      <button class="btn" @click="login">登录</button>
+      <button class="btn" @tap="login">登录</button>
     </view>
   </view>
 </template>
 
 <script>
+import { loginAdmin } from '../../api/index.js'
 export default {
   data() {
     return { username: '', password: '' }
@@ -29,16 +30,27 @@ export default {
         uni.showToast({ title: '请输入账号和密码', icon: 'none' })
         return
       }
-      const user = { username: this.username, token: 'mock-' + Date.now() }
-      try { uni.setStorageSync('user', user) } catch (e) { }
-      uni.showToast({ title: '登录成功', icon: 'success' })
-      setTimeout(() => {
-        // 返回上一页（一般为首页），由首页头像再进入“我的”
-        try { uni.navigateBack() } catch (e) {
-          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
-          else uni.navigateTo({ url: '/pages/home/index' })
-        }
-      }, 300)
+      const payload = { phone: this.username, password: this.password }
+      uni.showLoading({ title: '登录中...', mask: true })
+      loginAdmin(payload)
+        .then((dataRaw) => {
+          let data = dataRaw
+          if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) {} }
+          const user = { username: this.username, ...(data || {}) }
+          try { uni.setStorageSync('user', user) } catch (e) { }
+          uni.showToast({ title: '登录成功', icon: 'success' })
+          setTimeout(() => {
+            try { uni.navigateBack() } catch (e) {
+              if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+              else uni.navigateTo({ url: '/pages/home/index' })
+            }
+          }, 300)
+        })
+        .catch((err) => {
+          console.error('login error', err)
+          uni.showToast({ title: '登录失败', icon: 'none' })
+        })
+        .finally(() => { try { uni.hideLoading() } catch (e) {} })
     }
   }
 }

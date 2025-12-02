@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_index = require("../../api/index.js");
 const common_assets = require("../../common/assets.js");
 const _sfc_main = {
   data() {
@@ -11,22 +12,41 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "请输入账号和密码", icon: "none" });
         return;
       }
-      const user = { username: this.username, token: "mock-" + Date.now() };
-      try {
-        common_vendor.index.setStorageSync("user", user);
-      } catch (e) {
-      }
-      common_vendor.index.showToast({ title: "登录成功", icon: "success" });
-      setTimeout(() => {
-        try {
-          common_vendor.index.navigateBack();
-        } catch (e) {
-          if (common_vendor.index.switchTab)
-            common_vendor.index.switchTab({ url: "/pages/home/index" });
-          else
-            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+      const payload = { phone: this.username, password: this.password };
+      common_vendor.index.showLoading({ title: "登录中...", mask: true });
+      api_index.loginAdmin(payload).then((dataRaw) => {
+        let data = dataRaw;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
         }
-      }, 300);
+        const user = { username: this.username, ...data || {} };
+        try {
+          common_vendor.index.setStorageSync("user", user);
+        } catch (e) {
+        }
+        common_vendor.index.showToast({ title: "登录成功", icon: "success" });
+        setTimeout(() => {
+          try {
+            common_vendor.index.navigateBack();
+          } catch (e) {
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/home/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          }
+        }, 300);
+      }).catch((err) => {
+        console.error("login error", err);
+        common_vendor.index.showToast({ title: "登录失败", icon: "none" });
+      }).finally(() => {
+        try {
+          common_vendor.index.hideLoading();
+        } catch (e) {
+        }
+      });
     }
   }
 };

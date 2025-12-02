@@ -18,6 +18,7 @@
             <view class="pd-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text>
             </view>
             <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
+            <view class="pd-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—' }}</text></view>
             <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
             <view class="pd-param-item"><text class="key">单位</text><text class="val">件</text></view>
             <view class="pd-param-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
@@ -43,10 +44,30 @@
             <text>包邮 ｜ 48小时内发货 ｜ 七天无理由</text>
           </view>
 
+          <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
+          <view>
+            <text class="pd-section-title">规格明细</text>
+            <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
+            <view v-else-if="specs && specs.length" class="specs-list">
+              <view class="spec-item" v-for="(it,i) in specs" :key="'h5sp'+i" :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
+                <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
+                <view class="spec-info">
+                  <text class="spec-name">{{ it.name }}</text>
+                  <view class="spec-price-row">
+                    <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
+                    <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{ Number(it.original_price).toFixed(2) }}</text>
+                  </view>
+                  <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
+                </view>
+              </view>
+            </view>
+            <view v-else><text class="pd-meta">暂无规格数据</text></view>
+          </view>
+
           <view class="pd-form">
-            <view class="pd-field">
+            <view class="pd-field inline">
               <text class="label">房间名</text>
-              <input class="pd-input" v-model="roomName" placeholder="请输入或选择房间名，如 客厅A" />
+              <view class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
             </view>
             <view class="pd-field">
               <text class="label">色温</text>
@@ -71,6 +92,27 @@
             <button class="btn-buy" @click="buyNow">立即购买</button>
             <button class="btn-cart" @click="addToCartWithQty">加入购物车</button>
           </view>
+
+          <!-- 房间选择弹窗（H5） -->
+          <view v-if="roomSheet" class="h5-mask" @click="closeRoomSheet">
+            <view class="h5-sheet" @click.stop>
+              <view class="h5-title">选择房间</view>
+              <view class="pd-field inline">
+                <text class="label">新房间名</text>
+                <input class="pd-input" v-model="roomInput" placeholder="输入新的房间名" />
+              </view>
+              <view class="rooms-list" v-if="roomsList && roomsList.length">
+                <text class="rooms-title">已保存房间</text>
+                <view class="room-item" v-for="(name,i) in roomsList" :key="'r'+i" @click="roomInput = name">
+                  <text class="room-name">{{ name }}</text>
+                </view>
+              </view>
+              <view class="h5-actions">
+                <button class="h5-btn ghost" @click="closeRoomSheet">取消</button>
+                <button class="h5-btn primary" @click="confirmRoomSelect">确定</button>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
     </view>
@@ -89,6 +131,7 @@
       <view class="mp-param-grid">
         <view class="mp-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text></view>
         <view class="mp-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
+        <view class="mp-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—' }}</text></view>
         <view class="mp-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
         <view class="mp-param-item"><text class="key">单位</text><text class="val">件</text></view>
         <view class="mp-param-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
@@ -109,10 +152,37 @@
     </view>
 
     <!-- #ifdef MP-WEIXIN -->
-    <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet">
+    <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet" @touchmove.stop.prevent="() => {}">
       <view class="mp-sheet" @click.stop>
         <view class="mp-title">填写规格</view>
-        <view class="mp-field"><text class="label">房间名</text><input class="mp-input" v-model="mpRoom" placeholder="如 客厅A" /></view>
+        <scroll-view scroll-y class="mp-scroll-view">
+        <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
+        <view class="mp-title">规格明细</view>
+        <view v-if="specsLoading" class="mp-param-grid">
+          <view class="mp-param-item"><text class="key">加载中...</text><text class="val"></text></view>
+        </view>
+        <view v-else-if="specs && specs.length" class="specs-list">
+          <view class="spec-item" v-for="(it,i) in (isSpecsCollapsed ? specs.slice(0, 2) : specs)" :key="'mpsp'+i" :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
+            <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
+            <view class="spec-info">
+              <text class="spec-name">{{ it.name }}</text>
+              <view class="spec-price-row">
+                <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
+                <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{ Number(it.original_price).toFixed(2) }}</text>
+              </view>
+              <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
+            </view>
+          </view>
+          <!-- 展开/收起按钮 -->
+          <view v-if="specs.length > 3" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
+            <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
+            <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
+          </view>
+        </view>
+        <view v-else class="mp-param-grid">
+          <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
+        </view>
+        <view class="mp-field"><text class="label">房间名</text><view class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view></view>
         <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
             placeholder="如 3000K" /></view>
         <view class="mp-field"><text class="label">长度</text><input class="mp-input" v-model="mpLength"
@@ -125,9 +195,32 @@
             <button class="step" @click="mpQty = mpQty + 1">+</button>
           </view>
         </view>
+        </scroll-view>
         <view class="mp-actions">
           <button class="mp-btn ghost" @click="closeSpecSheet">取消</button>
           <button class="mp-btn primary" @click="confirmSpecToCart">确定加入</button>
+        </view>
+      </view>
+    </view>
+    <!-- MP Room Selection Modal -->
+    <view v-if="mpRoomSheet" class="mp-mask" style="z-index: 10000;" @click="closeMpRoomSheet" @touchmove.stop.prevent="() => {}">
+      <view class="mp-sheet room-sheet" @click.stop>
+        <view class="mp-title">选择房间</view>
+        <view class="mp-field">
+            <text class="label">新房间名</text>
+            <input class="mp-input" v-model="roomInput" placeholder="输入新的房间名" />
+        </view>
+        <scroll-view scroll-y class="mp-scroll-view">
+            <view class="rooms-list" v-if="roomsList && roomsList.length">
+                <text class="rooms-title">已保存房间</text>
+                <view class="room-item" v-for="(name,i) in roomsList" :key="'mpr'+i" @click="roomInput = name">
+                    <text class="room-name">{{ name }}</text>
+                </view>
+            </view>
+        </scroll-view>
+        <view class="mp-actions">
+          <button class="mp-btn ghost" @click="closeMpRoomSheet">取消</button>
+          <button class="mp-btn primary" @click="confirmMpRoomSelect">确定</button>
         </view>
       </view>
     </view>
@@ -137,13 +230,37 @@
 </template>
 
 <script>
+import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem } from '../../api/index.js'
 export default {
-  data() { return { product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', mpSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1 } },
+  data() { return { product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
-    // 简单模拟数据，真实项目中应从接口获取
-    const base = { id, title: '商品 ' + (id || 'X'), price: 199, sales: 100, image: '/static/logo.png', images: ['/static/logo.png', '/static/logo.png', '/static/logo.png'] }
-    this.product = base
+    if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
+    getProductDetail({ available_product_id: id })
+      .then((res) => {
+        const d = res?.data || {}
+        const clean = (u) => typeof u === 'string' ? u.replace(/`/g, '').trim() : ''
+        const arr = (x) => Array.isArray(x) ? x.map(clean).filter(Boolean) : []
+        const main = arr(d.main_image)
+        const imgs = arr(d.images)
+        const price = Number(d.price ?? 0) || 0
+        const base = {
+          id: d.available_product_id || id,
+          title: d.name || ('商品 ' + id),
+          price,
+          sales: 0,
+          shipping_origin: clean(d.shipping_origin) || '',
+          image: main[0] || '/static/logo.png',
+          images: imgs.length ? imgs : (main.length ? main : ['/static/logo.png'])
+        }
+        this.product = base
+        this.fetchSpecs(base.id)
+      })
+      .catch(() => {
+        // 接口失败时保底展示
+        this.product = { id, title: '商品 ' + id, price: 0, sales: 0, shipping_origin: '', image: '/static/logo.png', images: ['/static/logo.png'] }
+        this.fetchSpecs(id)
+      })
   },
   computed: {
     images() {
@@ -156,65 +273,165 @@ export default {
     }
   },
   methods: {
+    // 获取规格明细（按产品ID），适配返回 data.children
+    fetchSpecs(availId) {
+      if (!availId) return
+      this.specsLoading = true
+      const clean = (u) => typeof u === 'string' ? u.replace(/`/g, '').trim() : ''
+      getProductSpecs({ available_product_id: availId })
+        .then((res) => {
+          const children = (res && res.data && Array.isArray(res.data.children)) ? res.data.children : (Array.isArray(res?.children) ? res.children : [])
+          this.specs = (children || []).map((it) => ({
+            product_id: it.product_id || '',
+            name: it.name || '',
+            unit: it.unit || '',
+            price: Number(it.price ?? 0) || 0,
+            original_price: Number(it.original_price ?? 0) || 0,
+            image_url: clean(it.image_url) || ''
+          }))
+        })
+        .catch(() => { this.specs = [] })
+        .finally(() => { this.specsLoading = false; this.selectedSpecIndex = -1 })
+    },
+    selectSpec(index) {
+      if (this.selectedSpecIndex === index) return
+      this.selectedSpecIndex = index
+    },
     addToCart() {
-      try {
-        const cart = uni.getStorageSync('cart') || []
-        const i = cart.findIndex(it => it.id === this.product.id)
-        if (i >= 0) cart[i].quantity = (cart[i].quantity || 1) + 1
-        else cart.push({ ...this.product, quantity: 1 })
-        uni.setStorageSync('cart', cart)
-        uni.showToast({ title: '已加入购物车', icon: 'success' })
-      } catch (e) { console.error(e) }
+      const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
+      const pid = spec ? spec.product_id : (this.product?.id || '')
+      addCartItem({ product_id: pid, quantity: 1 })
+        .then((res) => {
+          if (res && res.success) uni.showToast({ title: '已加入购物车', icon: 'success' })
+          else uni.showToast({ title: res?.message || '加入失败', icon: 'none' })
+        })
+        .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
     },
     incQty() { this.qty += 1 },
     decQty() { this.qty = Math.max(1, this.qty - 1) },
     addToCartWithQty() {
       const chosen = (this.roomName || '').trim()
       if (!chosen) { uni.showToast({ title: '请先填写房间名', icon: 'none' }); return }
-      try {
-        const cart = uni.getStorageSync('cart') || []
-        const i = cart.findIndex(it => it.id === this.product.id)
-        if (i >= 0) {
-          cart[i].quantity = (cart[i].quantity || 1) + this.qty
-          cart[i].specTemp = this.specTemp
-          cart[i].specLength = this.specLength
-          cart[i].roomName = chosen
-        } else {
-          cart.push({ ...this.product, quantity: this.qty, specTemp: this.specTemp, specLength: this.specLength, roomName: chosen })
-        }
-        const rooms = uni.getStorageSync('rooms') || []
-        if (!rooms.includes(chosen)) { rooms.push(chosen); uni.setStorageSync('rooms', rooms) }
-        uni.setStorageSync('cart', cart)
-        uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
-      } catch (e) { console.error(e) }
+      const lengthNum = (this.specLength || '').replace(/[^0-9.]/g, '')
+      const lengthVal = lengthNum ? Number(lengthNum) : undefined
+      const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
+      const pid = spec ? spec.product_id : (this.product?.id || '')
+      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthVal, quantity: this.qty, color: this.specTemp || '', note: '' })
+        .then((res) => {
+          if (res && res.success) uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
+          else uni.showToast({ title: res?.message || '加入失败', icon: 'none' })
+        })
+        .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
     },
     buyNow() { uni.showToast({ title: '暂未接入下单', icon: 'none' }) },
     // MP-WEIXIN 规格填写
-    openSpecSheet() { this.mpSheet = true },
+    openSpecSheet() {
+      this.mpSheet = true
+      const pid = this.product?.id || ''
+      this.fetchSpecs(pid)
+    },
     closeSpecSheet() { this.mpSheet = false },
+    // H5 房间选择弹窗
+    openRoomSheet() {
+      this.roomInput = (this.roomName || '')
+      this.roomSheet = true
+      // 通过接口获取房间列表
+      getRooms()
+        .then((res) => {
+          const raw = Array.isArray(res?.data?.items) ? res.data.items
+            : (Array.isArray(res?.items) ? res.items
+            : (Array.isArray(res?.data?.children) ? res.data.children
+            : (Array.isArray(res?.data?.list) ? res.data.list
+            : (Array.isArray(res?.data) ? res.data : []))))
+          this.roomsRaw = (raw || []).map((it) => (typeof it === 'string') ? { id: '', name: it } : { id: (it?.id || it?.room_id || ''), name: (it?.name || it?.room_name || '') })
+          this.roomsList = this.roomsRaw.map(it => it.name).filter((x) => !!x)
+        })
+        .catch(() => { this.roomsList = [] })
+    },
+    closeRoomSheet() { this.roomSheet = false },
+    confirmRoomSelect() {
+      const name = (this.roomInput || '').trim()
+      if (!name) { uni.showToast({ title: '请填写房间名', icon: 'none' }); return }
+      const isNew = !this.roomsList.includes(name)
+      if (isNew) {
+        // 输入了新的房间名：调用创建接口
+        createRoom({ name })
+          .then(() => {
+            this.roomName = name
+            this.roomSheet = false
+            uni.showToast({ title: '房间已创建', icon: 'success' })
+          })
+          .catch(() => {
+            uni.showToast({ title: '创建房间失败', icon: 'none' })
+          })
+      } else {
+        // 已存在：直接选择
+        this.roomName = name
+        const found = (this.roomsRaw || []).find(it => it.name === name)
+        this.roomId = found ? found.id : ''
+        this.roomSheet = false
+      }
+    },
     confirmSpecToCart() {
       if (!this.mpRoom || !this.mpTemp || !this.mpLength || !this.mpQty) {
         uni.showToast({ title: '请填写房间名、色温、长度、数量', icon: 'none' })
         return
       }
       const chosen = (this.mpRoom || '').trim()
-      try {
-        const cart = uni.getStorageSync('cart') || []
-        const i = cart.findIndex(it => it.id === this.product.id)
-        if (i >= 0) {
-          cart[i].quantity = (cart[i].quantity || 1) + this.mpQty
-          cart[i].specTemp = this.mpTemp
-          cart[i].specLength = this.mpLength
-          cart[i].roomName = chosen
-        } else {
-          cart.push({ ...this.product, quantity: this.mpQty, specTemp: this.mpTemp, specLength: this.mpLength, roomName: chosen })
-        }
-        const rooms = uni.getStorageSync('rooms') || []
-        if (!rooms.includes(chosen)) { rooms.push(chosen); uni.setStorageSync('rooms', rooms) }
-        uni.setStorageSync('cart', cart)
-        this.mpSheet = false
-        uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
-      } catch (e) { console.error(e) }
+      const found = (this.roomsRaw || []).find(it => it.name === chosen)
+      const rid = found ? found.id : ''
+
+      const lengthNum = (this.mpLength || '').replace(/[^0-9.]/g, '')
+      const lengthVal = lengthNum ? Number(lengthNum) : undefined
+      const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
+      const pid = spec ? spec.product_id : (this.product?.id || '')
+      addCartItem({ room_id: rid, room_name: chosen, product_id: pid, length: lengthVal, quantity: this.mpQty, color: this.mpTemp || '', note: '' })
+        .then((res) => {
+          if (res && res.success) {
+            this.mpSheet = false
+            uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
+          } else {
+            uni.showToast({ title: res?.message || '加入失败', icon: 'none' })
+          }
+        })
+        .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
+    },
+    // MP Room Sheet Methods
+    openMpRoomSheet() {
+      this.roomInput = (this.mpRoom || '')
+      this.mpRoomSheet = true
+      // Reuse fetch rooms logic
+      getRooms()
+        .then((res) => {
+          const raw = Array.isArray(res?.data?.items) ? res.data.items
+            : (Array.isArray(res?.items) ? res.items
+            : (Array.isArray(res?.data?.children) ? res.data.children
+            : (Array.isArray(res?.data?.list) ? res.data.list
+            : (Array.isArray(res?.data) ? res.data : []))))
+          this.roomsRaw = (raw || []).map((it) => (typeof it === 'string') ? { id: '', name: it } : { id: (it?.id || it?.room_id || ''), name: (it?.name || it?.room_name || '') })
+          this.roomsList = this.roomsRaw.map(it => it.name).filter((x) => !!x)
+        })
+        .catch(() => { this.roomsList = [] })
+    },
+    closeMpRoomSheet() { this.mpRoomSheet = false },
+    confirmMpRoomSelect() {
+      const name = (this.roomInput || '').trim()
+      if (!name) { uni.showToast({ title: '请填写房间名', icon: 'none' }); return }
+      const isNew = !this.roomsList.includes(name)
+      if (isNew) {
+        createRoom({ name })
+          .then(() => {
+            this.mpRoom = name
+            this.mpRoomSheet = false
+            uni.showToast({ title: '房间已创建', icon: 'success' })
+          })
+          .catch(() => {
+            uni.showToast({ title: '创建房间失败', icon: 'none' })
+          })
+      } else {
+        this.mpRoom = name
+        this.mpRoomSheet = false
+      }
     }
   }
 }
@@ -272,6 +489,103 @@ export default {
   background: #ff5500;
   color: #fff;
 }
+
+/* 通用：规格列表（H5 与 MP 共用） */
+.specs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.spec-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx;
+  border: 1rpx solid #eee;
+  border-radius: 12rpx;
+  background: #fafafa;
+  transition: all .2s;
+}
+
+.spec-item.active {
+  border-color: #ff5500;
+  background: #fff5f0;
+}
+
+.spec-thumb {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 10rpx;
+  background: #f5f5f5;
+}
+
+.spec-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.spec-name {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.4;
+}
+
+.spec-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+}
+
+.spec-price {
+  color: #e1251b;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.spec-oprice {
+  color: #999;
+  font-size: 24rpx;
+  text-decoration: line-through;
+}
+
+.spec-unit {
+  color: #666;
+  font-size: 24rpx;
+}
+
+.specs-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx;
+  font-size: 24rpx;
+  color: #666;
+  background: #fafafa;
+  border-radius: 0 0 12rpx 12rpx;
+}
+.toggle-icon { margin-left: 8rpx; font-size: 20rpx; }
+
+.rooms-list {
+  margin-top: 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+.rooms-title {
+  color: #666;
+  font-size: 26rpx;
+  margin-bottom: 8rpx;
+}
+.room-item {
+  padding: 12rpx 14rpx;
+  border: 1rpx solid #eee;
+  border-radius: 10rpx;
+  background: #fafafa;
+}
+.room-name { color: #333; font-size: 28rpx; }
 
 /* #ifdef H5 */
 .footer {
@@ -416,6 +730,23 @@ export default {
   gap: 8rpx;
 }
 
+.pd-field.inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker-display {
+  flex: 1;
+  min-height: 64rpx;
+  line-height: 64rpx;
+  background: #f7f7f7;
+  border: 1rpx solid #e5e5e5;
+  border-radius: 10rpx;
+  padding: 0 14rpx;
+  color: #666;
+}
+
 .pd-input {
   width: 100%;
   height: 64rpx;
@@ -515,6 +846,40 @@ export default {
   border-radius: 10rpx;
 }
 
+/* H5 房间选择弹窗 */
+.h5-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.h5-sheet {
+  width: 820rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 12rpx 28rpx rgba(0,0,0,0.12);
+}
+.h5-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 16rpx;
+}
+.h5-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+.h5-btn { flex: 1; height: 72rpx; border-radius: 999rpx; font-size: 28rpx; }
+.h5-btn.ghost { background: #f7f7f7; color: #333; border: 1rpx solid #e6e6e6; }
+.h5-btn.primary { background: linear-gradient(135deg, #ff6a00, #ff2d55); color: #fff; box-shadow: 0 6rpx 16rpx rgba(255,106,0,0.35); }
+
 /* #endif */
 
 /* #ifdef MP-WEIXIN */
@@ -541,9 +906,16 @@ export default {
   box-shadow: 0 -8rpx 24rpx rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
-  max-height: 72vh;
+  max-height: 80vh;
+  overflow: hidden;
   animation: mpSlideUp .22s ease-out;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+}
+
+.mp-scroll-view {
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 16rpx;
 }
 
 .mp-title {

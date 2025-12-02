@@ -17,7 +17,19 @@
         <SearchBar v-model="keyword" @search="onSearch" />
         <BannerSwiper :images="banners" />
 
-        <view class="block">
+        <!-- #ifdef H5 -->
+        <view v-if="activeCateId" class="sub-panel">
+          <view class="panel-title">
+            <text>{{ activeCateName || '二级分类' }}</text>
+          </view>
+          <view class="panel-columns">
+            <view class="panel-link" v-for="(s, si) in leftChildren" :key="si" @click="goSubList(s)">{{ s.name }}</view>
+          </view>
+          <view v-if="!leftChildren || leftChildren.length === 0" class="sub-empty">暂无子分类</view>
+        </view>
+        <!-- #endif -->
+
+        <!-- <view class="block">
           <view class="block-title">
             <text>京东秒杀</text>
             <navigator url="/pages/category/index" open-type="switchTab" class="more">更多</navigator>
@@ -28,7 +40,7 @@
               <text class="sk-price">¥{{ item.price }}</text>
             </view>
           </scroll-view>
-        </view>
+        </view> -->
 
         <view class="block">
           <view class="block-title">
@@ -54,6 +66,7 @@
             <navigator class="u-link" url="/pages/order/index">我的订单</navigator>
             <navigator class="u-link" url="/pages/messages/index">消息</navigator>
             <navigator class="u-link" url="/pages/settings/index">设置</navigator>
+            <view class="u-link" v-if="user" @click="logout">退出登录</view>
           </view>
         </view>
       </view>
@@ -66,7 +79,8 @@
     <SearchBar v-model="keyword" @search="onSearch" />
     <BannerSwiper :images="banners" />
     <CategoryGrid :categories="subCategoryList" />
-
+    <!-- 京东秒杀模块（非 H5，小程序端）已按要求注释 -->
+    <!--
     <view class="block">
       <view class="block-title">
         <text>京东秒杀</text>
@@ -79,6 +93,7 @@
         </view>
       </scroll-view>
     </view>
+    -->
 
     <view class="block">
       <view class="block-title">
@@ -100,6 +115,7 @@ import BannerSwiper from '@/components/BannerSwiper.vue'
 import CategoryGrid from '@/components/CategoryGrid.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
+import { getRecommendedProducts, getVisibleCategories, searchProducts } from '../../api/index.js'
 
 export default {
   components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav },
@@ -109,31 +125,17 @@ export default {
       roomName: '',
       user: null,
       banners: ['/static/logo.png', '/static/logo.png', '/static/logo.png'],
-      topCategories: [{ name: '灯光' }],
-      subCategoryList: [
-        { name: '嵌入式灯光' },
-        { name: '后口层板灯' },
-        { name: '玻璃层板灯' },
-        { name: '明装层板灯' },
-        { name: '电源' },
-        { name: '开关' },
-        { name: '配件' }
-      ],
+      topCategories: [],
+      activeCateId: '',
+      activeCateName: '',
+      leftChildren: [],
+      subCategoryList: [],
       seckillList: [
         { id: 's1', title: '爆款秒杀1', price: 99, image: '/static/logo.png' },
         { id: 's2', title: '爆款秒杀2', price: 129, image: '/static/logo.png' },
         { id: 's3', title: '爆款秒杀3', price: 59, image: '/static/logo.png' }
       ],
-      recommendList: [
-        { id: 'p1', title: '店铺热销商品 A 旗舰款', price: 299, sales: 1234, image: '/static/logo.png' },
-        { id: 'p2', title: '人气爆款 B 限时优惠', price: 89, sales: 5678, image: '/static/logo.png' },
-        { id: 'p3', title: '超值 C 套装', price: 179, sales: 345, image: '/static/logo.png' },
-        { id: 'p4', title: '家电 D 新品', price: 999, sales: 98, image: '/static/logo.png' },
-        { id: 'p4', title: '家电 D 新品', price: 999, sales: 98, image: '/static/logo.png' },
-        { id: 'p4', title: '家电 D 新品', price: 999, sales: 98, image: '/static/logo.png' },
-        { id: 'p4', title: '家电 D 新品', price: 999, sales: 98, image: '/static/logo.png' },
-        { id: 'p4', title: '家电 D 新品', price: 999, sales: 98, image: '/static/logo.png' }
-      ]
+      recommendList: []
     }
   },
   onShow() {
@@ -142,20 +144,94 @@ export default {
     try { this.user = uni.getStorageSync('user') || null } catch (e) { }
     try { this.roomName = uni.getStorageSync('currentRoom') || '' } catch (e) { }
     // #endif
+    // 拉取分类与推荐商品（最小接入，不影响现有交互）
+    try {
+      getVisibleCategories({ page: 1, page_size: 20, sort_by: 'id' })
+        .then((res) => {
+          const items = Array.isArray(res?.data?.items) ? res.data.items : []
+          const mapped = items.map((it, i) => ({
+            name: it?.name || ('分类' + (i + 1)),
+            icon: '',
+            categories_id: it?.categories_id || it?.id || ''
+          }))
+          this.topCategories = mapped
+          this.subCategoryList = mapped
+        })
+        .catch(() => {})
+      getRecommendedProducts({ page: 1, page_size: 20 })
+        .then((res) => {
+          const carousel = Array.isArray(res?.data?.carousel) ? res.data.carousel : []
+          const mapped = carousel.map((it, i) => ({
+            id: it?.available_product_id || ('p' + i),
+            title: it?.name || ('推荐商品 ' + (i + 1)),
+            price: Number(it?.price ?? 0) || 0,
+            sales: 0,
+            image: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || '/static/logo.png'
+          }))
+          this.recommendList = mapped
+        })
+        .catch(() => {})
+    } catch (e) {}
   },
   onPullDownRefresh() {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
   },
   methods: {
     onSearch(val) {
-      uni.showToast({ title: '搜索：' + (val || this.keyword), icon: 'none' })
+      const q = (val || this.keyword || '').trim()
+      if (!q) { uni.showToast({ title: '请输入关键字', icon: 'none' }); return }
+      // #ifdef H5
+      try {
+        const base = window.location.origin + window.location.pathname
+        const url = base + '#/pages/search/index?q=' + encodeURIComponent(q)
+        window.open(url, '_blank')
+      } catch (e) {
+        uni.navigateTo({ url: '/pages/search/index?q=' + encodeURIComponent(q) })
+      }
+      // #endif
+      // #ifndef H5
+      uni.navigateTo({ url: '/pages/search/index?q=' + encodeURIComponent(q) })
+      // #endif
     },
     openCategory(cat) {
-      if (uni.switchTab) {
-        uni.switchTab({ url: '/pages/category/index' })
-      } else {
-        uni.navigateTo({ url: '/pages/category/index' })
+      // #ifdef H5
+      const id = cat?.categories_id || ''
+      if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
+      // 再次点击同一一级分类时收缩关闭展开框
+      if (this.activeCateId === id) {
+        this.activeCateId = ''
+        this.activeCateName = ''
+        this.leftChildren = []
+        return
       }
+      // 展开并加载子分类
+      this.activeCateId = id
+      this.activeCateName = cat?.name || ''
+      try {
+        getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
+          .then((res) => {
+            const items = Array.isArray(res?.data?.items) ? res.data.items : []
+            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '' }))
+          })
+          .catch(() => { this.leftChildren = [] })
+      } catch (e) { this.leftChildren = [] }
+      // #endif
+      // #ifndef H5
+      const aid = encodeURIComponent(cat?.categories_id || '')
+      const aname = encodeURIComponent(cat?.name || '')
+      const url = `/pages/category/index?active=${aname}&active_id=${aid}`
+      if (uni.switchTab) { uni.switchTab({ url }) } else { uni.navigateTo({ url }) }
+      // #endif
+    },
+    goSubList(sub) {
+      // 仅 H5 展开面板内点击：跳转到子分类商品列表新页面
+      // 传递父分类ID与当前子分类ID以用于顶部导航和内容加载
+      const pid = encodeURIComponent(this.activeCateId || '')
+      const cid = encodeURIComponent(sub?.categories_id || '')
+      const pname = encodeURIComponent(this.activeCateName || '')
+      if (!cid) { uni.showToast({ title: '子分类缺少ID', icon: 'none' }); return }
+      const url = `/pages/category/list?parent_id=${pid}&category_id=${cid}&active=${pname}`
+      uni.navigateTo({ url })
     },
     addToCart(product) {
       try {
@@ -189,6 +265,13 @@ export default {
         if (!rooms.includes(name)) { rooms.push(name); uni.setStorageSync('rooms', rooms) }
         uni.showToast({ title: '房间名已保存', icon: 'success' })
       } catch (e) { }
+    },
+    logout() {
+      try {
+        uni.removeStorageSync('user')
+      } catch (e) { }
+      this.user = null
+      uni.showToast({ title: '已退出登录', icon: 'success' })
     }
   }
 }
@@ -197,7 +280,14 @@ export default {
 <style scoped>
 .page {
   background: #f7f7f7;
+  /* #ifdef H5 */
+  height: 100vh;
+  overflow: hidden;
+  /* #endif */
+  /* #ifndef H5 */
   min-height: 100vh;
+  padding-bottom: 20rpx;
+  /* #endif */
 }
 
 /* H5 三栏布局样式 */
@@ -207,6 +297,7 @@ export default {
   grid-template-columns: 300rpx 1fr 320rpx;
   grid-gap: 20rpx;
   padding: 20rpx;
+  height: 100%;
 }
 
 .side-cate {
@@ -214,6 +305,7 @@ export default {
   border-radius: 12rpx;
   overflow: hidden;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, .06);
+  height: 100%;
 }
 
 .cate-title {
@@ -241,9 +333,36 @@ export default {
   color: #333;
 }
 
-.main {}
+.sub-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 12rpx;
+  padding: 0 20rpx 20rpx;
+}
 
-.side-user {}
+.sub-cat-item .sub-cat-card {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.04);
+}
+
+.sub-cat-name {
+  color: #333;
+  font-size: 26rpx;
+}
+
+.main {
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #ffffff;    /* 中间部分背景占满剩余高度 */
+}
+
+.side-user {
+  height: 100%;
+}
 
 .user-card {
   background: #fff;
@@ -402,4 +521,50 @@ export default {
   border-radius: 12rpx;
   padding: 0 16rpx;
 }
+
+/* H5：右侧展开的子分类面板样式 */
+.sub-panel {
+  position: absolute;
+  top: 20rpx;         /* 与顶部更远 */
+  left: 0rpx;        /* 增加左侧间距，避免贴边 */
+  right: 0rpx;       /* 增加右侧间距，远离右栏 */
+  z-index: 10;
+  background-color: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.08);
+  border: 1.5rpx solid #e1251b;            /* 美观边框 */
+  /* 固定高度同时适配不同屏幕 */
+  height: clamp(240rpx, 38vh, 560rpx);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 16rpx 20rpx 20rpx;
+}
+.panel-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+.panel-columns {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12rpx 16rpx;
+}
+.panel-link {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 40rpx;
+}
+.panel-link:hover {
+  color: #e1251b;
+}
+.sub-empty {
+  font-size: 24rpx;
+  color: #888;
+  text-align: center;
+  padding: 20rpx 0;
+}
 </style>
+.main {
+  position: relative;
+}

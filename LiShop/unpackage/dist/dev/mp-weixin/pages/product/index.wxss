@@ -43,6 +43,94 @@
   background: #ff5500;
   color: #fff;
 }
+
+/* 通用：规格列表（H5 与 MP 共用） */
+.specs-list.data-v-a911e391 {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.spec-item.data-v-a911e391 {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx;
+  border: 1rpx solid #eee;
+  border-radius: 12rpx;
+  background: #fafafa;
+  transition: all .2s;
+}
+.spec-item.active.data-v-a911e391 {
+  border-color: #ff5500;
+  background: #fff5f0;
+}
+.spec-thumb.data-v-a911e391 {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 10rpx;
+  background: #f5f5f5;
+}
+.spec-info.data-v-a911e391 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.spec-name.data-v-a911e391 {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.4;
+}
+.spec-price-row.data-v-a911e391 {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+}
+.spec-price.data-v-a911e391 {
+  color: #e1251b;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+.spec-oprice.data-v-a911e391 {
+  color: #999;
+  font-size: 24rpx;
+  text-decoration: line-through;
+}
+.spec-unit.data-v-a911e391 {
+  color: #666;
+  font-size: 24rpx;
+}
+.specs-toggle.data-v-a911e391 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx;
+  font-size: 24rpx;
+  color: #666;
+  background: #fafafa;
+  border-radius: 0 0 12rpx 12rpx;
+}
+.toggle-icon.data-v-a911e391 { margin-left: 8rpx; font-size: 20rpx;
+}
+.rooms-list.data-v-a911e391 {
+  margin-top: 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+.rooms-title.data-v-a911e391 {
+  color: #666;
+  font-size: 26rpx;
+  margin-bottom: 8rpx;
+}
+.room-item.data-v-a911e391 {
+  padding: 12rpx 14rpx;
+  border: 1rpx solid #eee;
+  border-radius: 10rpx;
+  background: #fafafa;
+}
+.room-name.data-v-a911e391 { color: #333; font-size: 28rpx;
+}
 .mp-mask.data-v-a911e391 {
   position: fixed;
   left: 0;
@@ -65,9 +153,15 @@
   box-shadow: 0 -8rpx 24rpx rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
-  max-height: 72vh;
+  max-height: 80vh;
+  overflow: hidden;
   animation: mpSlideUp-a911e391 .22s ease-out;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+}
+.mp-scroll-view.data-v-a911e391 {
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 16rpx;
 }
 .mp-title.data-v-a911e391 {
   font-size: 32rpx;

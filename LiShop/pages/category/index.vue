@@ -3,7 +3,7 @@
     <view class="container">
       <scroll-view class="left" scroll-y>
         <view v-for="(c, idx) in categories" :key="idx" :class="['left-item', activeIndex === idx ? 'active' : '']"
-          @click="activeIndex = idx">
+          @click="selectCategory(idx)">
           <text>{{ c.name }}</text>
         </view>
       </scroll-view>
@@ -11,7 +11,7 @@
         <view class="right-wrap">
           <view class="sub-title">{{ activeCategory.name }}</view>
           <view class="sub-grid">
-            <view class="sub-item" v-for="(s, i) in activeCategory.children" :key="i" @click="openList(s)">
+            <view class="sub-item" v-for="(s, i) in rightChildren" :key="i" @click="openList(s)">
               <image class="sub-icon" :src="s.icon || '/static/logo.png'" mode="aspectFill" />
               <text class="sub-name">{{ s.name }}</text>
             </view>
@@ -27,25 +27,16 @@
 
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
+import { getVisibleCategories } from '../../api/index.js'
 export default {
   components: { FloatingNav },
   data() {
     return {
       activeIndex: 0,
-      categories: [
-        {
-          name: '灯光',
-          children: [
-            { name: '嵌入式灯光' },
-            { name: '后口层板灯' },
-            { name: '玻璃层板灯' },
-            { name: '明装层板灯' },
-            { name: '电源' },
-            { name: '开关' },
-            { name: '配件' }
-          ]
-        }
-      ]
+      categories: [],
+      pendingActiveName: '',
+      pendingActiveId: '',
+      rightChildren: []
     }
   },
   computed: {
@@ -55,15 +46,74 @@ export default {
     // #ifdef H5
     try { uni.hideTabBar({ animation: false }) } catch (e) { }
     // #endif
+    // 拉取分类列表用于左侧分类栏
+    try {
+      getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id' })
+        .then((res) => {
+          const items = Array.isArray(res?.data?.items) ? res.data.items : []
+          const mapped = items.map((it, i) => ({ name: it?.name || ('分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '', children: [] }))
+          this.categories = mapped
+          if (this.pendingActiveId) {
+            const idxById = this.categories.findIndex(c => c.categories_id === this.pendingActiveId)
+            if (idxById >= 0) {
+              this.activeIndex = idxById
+              this.loadChildrenById(this.pendingActiveId)
+            }
+            this.pendingActiveId = ''
+            this.pendingActiveName = ''
+          } else if (this.pendingActiveName) {
+            const idx = this.categories.findIndex(c => c.name === this.pendingActiveName)
+            if (idx >= 0) {
+              this.activeIndex = idx
+              const id = this.categories[idx].categories_id
+              if (id) this.loadChildrenById(id)
+            }
+            this.pendingActiveName = ''
+          } else {
+            // 默认加载第一个分类的子分类（用于小程序端首次进入渲染右侧）
+            if (this.categories.length) {
+              this.activeIndex = 0
+              const firstId = this.categories[0].categories_id
+              if (firstId) this.loadChildrenById(firstId)
+            }
+          }
+        })
+        .catch(() => {})
+    } catch (e) {}
   },
   onLoad(query) {
     const q = decodeURIComponent(query?.active || '')
-    const idx = this.categories.findIndex(c => c.name === q)
-    if (idx >= 0) this.activeIndex = idx
+    const aid = decodeURIComponent(query?.active_id || '')
+    this.pendingActiveName = q
+    this.pendingActiveId = aid
   },
   methods: {
+    selectCategory(idx) {
+      this.activeIndex = idx
+      const id = this.categories[idx]?.categories_id || ''
+      if (id) this.loadChildrenById(id)
+    },
+    loadChildrenById(id) {
+      try {
+        getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
+          .then((res) => {
+            const items = Array.isArray(res?.data?.items) ? res.data.items : []
+            const children = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), icon: '', categories_id: it?.categories_id || it?.id || '' }))
+            const idx = this.activeIndex
+            const cat = this.categories[idx]
+            if (cat) this.$set(this.categories, idx, { ...cat, children })
+            this.rightChildren = children
+          })
+          .catch(() => {})
+      } catch (e) {}
+    },
     openList(sub) {
-      uni.showToast({ title: sub.name, icon: 'none' })
+      const parentId = this.categories[this.activeIndex]?.categories_id || ''
+      const cid = sub?.categories_id || ''
+      const pname = this.activeCategory?.name || ''
+      if (!cid) { uni.showToast({ title: '子分类缺少ID', icon: 'none' }); return }
+      const url = `/pages/category/list?parent_id=${encodeURIComponent(parentId)}&category_id=${encodeURIComponent(cid)}&active=${encodeURIComponent(pname)}`
+      uni.navigateTo({ url })
     }
   }
 }

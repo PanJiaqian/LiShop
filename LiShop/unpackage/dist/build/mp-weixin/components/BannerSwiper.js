@@ -1,0 +1,1 @@
+"use strict";const e=require("../common/vendor.js"),t={name:"BannerSwiper",props:{images:{type:Array,default:()=>["/static/logo.png","/static/logo.png"]}}};const n=e._export_sfc(t,[["render",function(t,n,o,r,a,s){return{a:e.f(o.images,((e,t,n)=>({a:e,b:t})))}}],["__scopeId","data-v-191b3b65"]]);wx.createComponent(n);

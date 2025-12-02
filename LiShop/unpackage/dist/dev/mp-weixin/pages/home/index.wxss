@@ -1,7 +1,13 @@
 
 .page.data-v-4978fed5 {
   background: #f7f7f7;
+
+
+
+
+
   min-height: 100vh;
+  padding-bottom: 20rpx;
 }
 
 /* H5 三栏布局样式 */
@@ -74,4 +80,47 @@
   border: 1rpx solid #e6e6e6;
   border-radius: 12rpx;
   padding: 0 16rpx;
+}
+
+/* H5：右侧展开的子分类面板样式 */
+.sub-panel.data-v-4978fed5 {
+  position: absolute;
+  top: 20rpx;         /* 与顶部更远 */
+  left: 0rpx;        /* 增加左侧间距，避免贴边 */
+  right: 0rpx;       /* 增加右侧间距，远离右栏 */
+  z-index: 10;
+  background-color: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.08);
+  border: 1.5rpx solid #e1251b;            /* 美观边框 */
+  /* 固定高度同时适配不同屏幕 */
+  height: clamp(240rpx, 38vh, 560rpx);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 16rpx 20rpx 20rpx;
+}
+.panel-title.data-v-4978fed5 {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+.panel-columns.data-v-4978fed5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12rpx 16rpx;
+}
+.panel-link.data-v-4978fed5 {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 40rpx;
+}
+.panel-link.data-v-4978fed5:hover {
+  color: #e1251b;
+}
+.sub-empty.data-v-4978fed5 {
+  font-size: 24rpx;
+  color: #888;
+  text-align: center;
+  padding: 20rpx 0;
 }

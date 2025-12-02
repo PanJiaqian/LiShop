@@ -1,25 +1,16 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_index = require("../../api/index.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
 const _sfc_main = {
   components: { FloatingNav },
   data() {
     return {
       activeIndex: 0,
-      categories: [
-        {
-          name: "灯光",
-          children: [
-            { name: "嵌入式灯光" },
-            { name: "后口层板灯" },
-            { name: "玻璃层板灯" },
-            { name: "明装层板灯" },
-            { name: "电源" },
-            { name: "开关" },
-            { name: "配件" }
-          ]
-        }
-      ]
+      categories: [],
+      pendingActiveName: "",
+      pendingActiveId: "",
+      rightChildren: []
     };
   },
   computed: {
@@ -28,16 +19,83 @@ const _sfc_main = {
     }
   },
   onShow() {
+    try {
+      api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id" }).then((res) => {
+        var _a;
+        const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+        const mapped = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "", children: [] }));
+        this.categories = mapped;
+        if (this.pendingActiveId) {
+          const idxById = this.categories.findIndex((c) => c.categories_id === this.pendingActiveId);
+          if (idxById >= 0) {
+            this.activeIndex = idxById;
+            this.loadChildrenById(this.pendingActiveId);
+          }
+          this.pendingActiveId = "";
+          this.pendingActiveName = "";
+        } else if (this.pendingActiveName) {
+          const idx = this.categories.findIndex((c) => c.name === this.pendingActiveName);
+          if (idx >= 0) {
+            this.activeIndex = idx;
+            const id = this.categories[idx].categories_id;
+            if (id)
+              this.loadChildrenById(id);
+          }
+          this.pendingActiveName = "";
+        } else {
+          if (this.categories.length) {
+            this.activeIndex = 0;
+            const firstId = this.categories[0].categories_id;
+            if (firstId)
+              this.loadChildrenById(firstId);
+          }
+        }
+      }).catch(() => {
+      });
+    } catch (e) {
+    }
   },
   onLoad(query) {
     const q = decodeURIComponent((query == null ? void 0 : query.active) || "");
-    const idx = this.categories.findIndex((c) => c.name === q);
-    if (idx >= 0)
-      this.activeIndex = idx;
+    const aid = decodeURIComponent((query == null ? void 0 : query.active_id) || "");
+    this.pendingActiveName = q;
+    this.pendingActiveId = aid;
   },
   methods: {
+    selectCategory(idx) {
+      var _a;
+      this.activeIndex = idx;
+      const id = ((_a = this.categories[idx]) == null ? void 0 : _a.categories_id) || "";
+      if (id)
+        this.loadChildrenById(id);
+    },
+    loadChildrenById(id) {
+      try {
+        api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id", categories_id: id }).then((res) => {
+          var _a;
+          const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+          const children = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), icon: "", categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "" }));
+          const idx = this.activeIndex;
+          const cat = this.categories[idx];
+          if (cat)
+            this.$set(this.categories, idx, { ...cat, children });
+          this.rightChildren = children;
+        }).catch(() => {
+        });
+      } catch (e) {
+      }
+    },
     openList(sub) {
-      common_vendor.index.showToast({ title: sub.name, icon: "none" });
+      var _a, _b;
+      const parentId = ((_a = this.categories[this.activeIndex]) == null ? void 0 : _a.categories_id) || "";
+      const cid = (sub == null ? void 0 : sub.categories_id) || "";
+      const pname = ((_b = this.activeCategory) == null ? void 0 : _b.name) || "";
+      if (!cid) {
+        common_vendor.index.showToast({ title: "子分类缺少ID", icon: "none" });
+        return;
+      }
+      const url = `/pages/category/list?parent_id=${encodeURIComponent(parentId)}&category_id=${encodeURIComponent(cid)}&active=${encodeURIComponent(pname)}`;
+      common_vendor.index.navigateTo({ url });
     }
   }
 };
@@ -48,11 +106,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         a: common_vendor.t(c.name),
         b: idx,
         c: common_vendor.n($data.activeIndex === idx ? "active" : ""),
-        d: common_vendor.o(($event) => $data.activeIndex = idx, idx)
+        d: common_vendor.o(($event) => $options.selectCategory(idx), idx)
       };
     }),
     b: common_vendor.t($options.activeCategory.name),
-    c: common_vendor.f($options.activeCategory.children, (s, i, i0) => {
+    c: common_vendor.f($data.rightChildren, (s, i, i0) => {
       return {
         a: s.icon || "/static/logo.png",
         b: common_vendor.t(s.name),

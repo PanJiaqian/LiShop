@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "LiShop",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "search-bar": "../../components/SearchBar",
+    "banner-swiper": "../../components/BannerSwiper",
+    "category-grid": "../../components/CategoryGrid",
+    "product-card": "../../components/ProductCard"
+  }
+}

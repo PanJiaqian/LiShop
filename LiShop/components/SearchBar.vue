@@ -2,7 +2,7 @@
   <view class="search-bar">
     <view class="search-input">
       <text class="icon">🔍</text>
-      <input class="input" :value="modelValue" :placeholder="placeholder" confirm-type="search" @confirm="onSearch"
+      <input class="input" :value="modelValue" :placeholder="placeholder" confirm-type="search"
         @input="onInput" />
     </view>
     <button class="search-btn" size="mini" @click="onSearch">搜索</button>

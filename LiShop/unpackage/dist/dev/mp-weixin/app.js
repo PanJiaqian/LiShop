@@ -11,6 +11,10 @@ if (!Math) {
   "./pages/login/index.js";
   "./pages/settings/index.js";
   "./pages/messages/index.js";
+  "./pages/search/index.js";
+  "./pages/category/list.js";
+  "./pages/address/index.js";
+  "./pages/address/edit.js";
 }
 const _sfc_main = {
   onLaunch: function() {

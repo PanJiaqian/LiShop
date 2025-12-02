@@ -11,7 +11,7 @@
             </view>
           </view>
           <view class="tool-right">
-            <button size="mini" class="btn-del" :disabled="selectedCount === 0" @click="removeSelected">删除选中</button>
+            <button size="mini" class="btn-clear" @click="clearRemote">清空</button>
           </view>
         </view>
 
@@ -21,22 +21,34 @@
               <text class="room">{{ grp.name }}</text>
             </view>
             <view class="item" v-for="it in grp.items" :key="it.id">
-              <view class="chk" @click="toggleById(it.id)">
-                <view class="chk-ico" :class="{ on: it.selected }"></view>
-              </view>
-              <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
-              <view class="meta">
+            <view class="chk" @click="toggleById(it.id)">
+              <view class="chk-ico" :class="{ on: it.selected }"></view>
+            </view>
+            <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
+            <view class="meta">
+              <view class="row-title">
                 <text class="title">{{ it.title }}</text>
-                <text class="attr" v-if="it.attr">{{ it.attr }}</text>
-                <text class="price">¥{{ it.price.toFixed(2) }}</text>
-                <view class="qty">
-                  <button size="mini" @click="decById(it.id)">-</button>
-                  <text class="count">{{ it.quantity }}</text>
-                  <button size="mini" @click="incById(it.id)">+</button>
-                  <button size="mini" class="del" @click="removeById(it.id)">删除</button>
+              </view>
+              <view class="row-attr">
+                <text class="attr-txt">{{ it.attr }}</text>
+                <!-- <text class="attr-icon">﹀</text> -->
+              </view>
+              <view class="row-main">
+                <view class="price-box">
+                  <text class="price">¥{{ it.price.toFixed(2) }}</text>
+                </view>
+                <view class="qty-box">
+                  <view class="qty-btn" @click.stop="decById(it.id)">-</view>
+                  <text class="qty-num">{{ it.quantity }}</text>
+                  <view class="qty-btn" @click.stop="incById(it.id)">+</view>
+                </view>
+                <view class="actions-col">
+                  <!-- <text class="act-txt">移入收藏</text> -->
+                  <text class="act-txt del" @click.stop="removeById(it.id)">删除</text>
                 </view>
               </view>
             </view>
+          </view>
           </view>
         </view>
         <view v-else class="empty">购物车空空如也~</view>
@@ -101,7 +113,7 @@
     <view v-if="cart.length" class="list">
       <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
         <view class="group-header">
-          <text class="room">{{ grp.name }}</text>
+          <text class="room" @click="openRoomPopup(grp)">{{ grp.name }} ▾</text>
         </view>
         <view class="item" v-for="it in grp.items" :key="it.id">
           <view class="chk" @click="toggleById(it.id)">
@@ -109,13 +121,24 @@
           </view>
           <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
           <view class="meta">
-            <text class="title">{{ it.title }}</text>
-            <text class="price">¥{{ it.price.toFixed(2) }}</text>
-            <view class="qty">
-              <button size="mini" @click="decById(it.id)">-</button>
-              <text class="count">{{ it.quantity }}</text>
-              <button size="mini" @click="incById(it.id)">+</button>
-              <button size="mini" class="del" @click="removeById(it.id)">删除</button>
+            <view class="row-title">
+              <text class="title">{{ it.title }}</text>
+            </view>
+            <view class="row-attr">
+              <text class="attr-txt">{{ it.attr }}</text>
+            </view>
+            <view class="row-main">
+              <view class="price-box">
+                <text class="price">¥{{ it.price.toFixed(2) }}</text>
+              </view>
+              <view class="qty-box">
+                <view class="qty-btn" @click.stop="decById(it.id)">-</view>
+                <text class="qty-num">{{ it.quantity }}</text>
+                <view class="qty-btn" @click.stop="incById(it.id)">+</view>
+              </view>
+              <view class="actions-col">
+                <text class="act-txt del" @click.stop="removeById(it.id)">删除</text>
+              </view>
             </view>
           </view>
         </view>
@@ -137,20 +160,87 @@
           }})</button>
       </view>
     </view>
+
+    <!-- 房间选择弹窗 -->
+    <view v-if="showRoomModal" class="spec-modal-mask" @click="closeRoomPopup">
+      <view class="spec-modal room-modal" @click.stop>
+        <view class="spec-header">
+          <text class="spec-title">选择房间</text>
+          <view class="spec-close" @click="closeRoomPopup">✕</view>
+        </view>
+        <scroll-view scroll-y class="spec-body">
+          <view class="spec-list">
+             <text v-for="r in rooms" :key="r.id" class="spec-opt" :class="{ active: targetGroup && targetGroup.name === r.name }" @click="selectRoom(r)">{{ r.name }}</text>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
     <!-- #endif -->
 
     <!-- #ifdef H5 -->
     <FloatingNav />
     <!-- #endif -->
+
+    <!-- 规格选择弹窗 -->
+    <view v-if="showSpecModal" class="spec-modal-mask" @click="closeSpecPopup">
+      <view class="spec-modal" @click.stop>
+        <view class="spec-header">
+          <image class="spec-img" :src="editingItem.image || '/static/logo.png'" mode="aspectFill"></image>
+          <view class="spec-info">
+            <text class="spec-price">¥{{ editingItem.price }}</text>
+            <text class="spec-selected">已选: {{ editingItem.attr }}</text>
+          </view>
+          <view class="spec-close" @click="closeSpecPopup">✕</view>
+        </view>
+        <scroll-view scroll-y class="spec-body">
+          <view class="spec-group">
+            <text class="spec-title">系列</text>
+            <view class="spec-list">
+              <text class="spec-opt active">苹果17系列钢化膜</text>
+              <text class="spec-opt">苹果17系列手机壳</text>
+              <text class="spec-opt">苹果16-15系列手机贴膜</text>
+            </view>
+          </view>
+          <view class="spec-group">
+            <text class="spec-title">颜色</text>
+            <view class="spec-list">
+              <text class="spec-opt">专业版-Asahi抑菌基材</text>
+              <text class="spec-opt active">专业版2片装-Asahi基材</text>
+              <text class="spec-opt">过滤蓝光版-护眼认证</text>
+            </view>
+          </view>
+           <view class="spec-group">
+            <text class="spec-title">版本</text>
+            <view class="spec-list">
+              <text class="spec-opt active">iPhone16ProMax</text>
+              <text class="spec-opt">16Plus/15Plus/14ProMax</text>
+            </view>
+          </view>
+        </scroll-view>
+        <view class="spec-footer">
+          <button class="spec-btn cancel" @click="closeSpecPopup">取消</button>
+          <button class="spec-btn confirm" @click="closeSpecPopup">确认</button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
+import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms } from '../../api/index.js'
 export default {
   components: { FloatingNav },
   data() {
-    return { cart: [] }
+    return {
+      cart: [],
+      showSpecModal: false,
+      editingItem: {},
+      // 房间选择相关
+      rooms: [],
+      showRoomModal: false,
+      targetGroup: null
+    }
   },
   computed: {
     total() { return this.cart.reduce((s, it) => s + (it.price * (it.quantity || 1)), 0) },
@@ -187,19 +277,113 @@ export default {
   },
   methods: {
     load() {
-      try { this.cart = uni.getStorageSync('cart') || [] } catch (e) { this.cart = [] }
-      this.cart = (this.cart || []).map(it => ({
-        ...it,
-        quantity: it.quantity || 1,
-        selected: !!it.selected
-      }))
+      getCartItems()
+        .then((res) => {
+          const isEmpty = typeof res === 'string' && (res.includes('空') || res === '当前购物车为空')
+          if (isEmpty) { this.cart = []; return }
+
+          const payload = res && res.data && typeof res.data === 'object' ? res.data : res
+          const groups = Array.isArray(payload?.groups) ? payload.groups : []
+          const list = []
+          for (const g of groups) {
+            const roomName = g && g.room_name ? g.room_name : ''
+            const items = Array.isArray(g && g.items) ? g.items : []
+            for (const x of items) {
+              list.push({
+                id: (x && x.id) ? x.id : '',
+                title: (x && x.product_id) ? x.product_id : '',
+                productId: (x && x.product_id) ? x.product_id : '',
+                price: Number((x && x.price) !== undefined ? x.price : 0) || 0,
+                quantity: Number((x && x.quantity) !== undefined ? x.quantity : 1) || 1,
+                image: '/static/logo.png',
+                roomName: roomName || '默认房间',
+                roomId: g.room_id || '',
+                length: x.length || 1,
+                color: x.color || '暖白',
+                note: x.note || '',
+                attr: ((x && x.length) ? ('长度 ' + x.length) : '') + ((x && x.note) ? (' ｜ ' + x.note) : ''),
+                selected: false
+              })
+            }
+          }
+          this.cart = list
+        })
+        .catch((err) => {
+          console.error('Get cart failed', err)
+          try { this.cart = uni.getStorageSync('cart') || [] } catch (e) { this.cart = [] }
+          this.cart = (this.cart || []).map(it => ({
+            ...it,
+            quantity: it.quantity || 1,
+            selected: !!it.selected
+          }))
+        })
     },
     sync() { uni.setStorageSync('cart', this.cart) },
     findIndexById(id) { return this.cart.findIndex(it => it.id === id) },
-    incById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart[i].quantity += 1; this.sync() } },
-    decById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart[i].quantity = Math.max(1, (this.cart[i].quantity || 1) - 1); this.sync() } },
-    removeById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart.splice(i, 1); this.sync() } },
+    incById(id) {
+      const i = this.findIndexById(id)
+      if (i >= 0) {
+        const item = this.cart[i]
+        this.updateItemQuantity(item, item.quantity + 1)
+      }
+    },
+    decById(id) {
+      const i = this.findIndexById(id)
+      if (i >= 0) {
+        const item = this.cart[i]
+        if (item.quantity > 1) {
+          this.updateItemQuantity(item, item.quantity - 1)
+        }
+      }
+    },
+    updateItemQuantity(item, quantity) {
+      updateCartItem({
+        id: item.id,
+        room_id: item.roomId,
+        product_id: item.productId,
+        length: item.length,
+        quantity: quantity,
+        color: item.color,
+        note: item.note
+      }).then(res => {
+        if (res && res.success) {
+          item.quantity = quantity
+          this.sync()
+        } else {
+          uni.showToast({ title: '更新失败', icon: 'none' })
+        }
+      }).catch((err) => {
+        console.error(err)
+        uni.showToast({ title: '更新出错', icon: 'none' })
+      })
+    },
+    removeById(id) {
+      deleteCartItem({ id })
+        .then(() => {
+          const i = this.findIndexById(id); if (i >= 0) { this.cart.splice(i, 1); this.sync() }
+          uni.showToast({ title: '已删除', icon: 'success' })
+        })
+        .catch(() => {
+          const i = this.findIndexById(id); if (i >= 0) { this.cart.splice(i, 1); this.sync() }
+          uni.showToast({ title: '本地删除', icon: 'none' })
+        })
+    },
     removeSelected() { this.cart = this.cart.filter(it => !it.selected); this.sync() },
+    clearRemote() {
+      clearCart()
+        .then((res) => {
+          if (res && res.success) {
+            this.cart = []
+            this.sync()
+            uni.showToast({ title: '已清空', icon: 'success' })
+          } else {
+            uni.showToast({ title: (res && res.message) ? res.message : '清空失败', icon: 'none' })
+          }
+        })
+        .catch(() => {
+          uni.showToast({ title: '清空失败', icon: 'none' })
+        })
+    },
     toggleById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart[i].selected = !this.cart[i].selected; this.sync() } },
     toggleAll() {
       const makeSelected = !(this.selectedCount === this.cart.length && this.cart.length > 0)
@@ -264,6 +448,68 @@ export default {
         const a = document.createElement('a')
         a.href = url; a.download = `订单_${order.id}.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url)
       } catch (e) { /* 非H5端或环境不支持下载忽略 */ }
+    },
+    openSpecPopup(item) {
+      this.editingItem = item
+      this.showSpecModal = true
+    },
+    closeSpecPopup() {
+      this.showSpecModal = false
+      this.editingItem = {}
+    },
+    // 房间选择逻辑
+    loadRooms() {
+      getRooms().then(res => {
+        const items = Array.isArray(res?.data?.items) ? res.data.items : []
+        this.rooms = items.map(r => ({
+          id: r.room_id,
+          name: r.name
+        }))
+      }).catch(err => {
+        console.error('Get rooms failed', err)
+        this.rooms = (uni.getStorageSync('rooms') || []).map(n => ({ id: n, name: n }))
+      })
+    },
+    openRoomPopup(group) {
+      this.targetGroup = group
+      this.showRoomModal = true
+      if (this.rooms.length === 0) {
+        this.loadRooms()
+      }
+    },
+    closeRoomPopup() {
+      this.showRoomModal = false
+      this.targetGroup = null
+    },
+    selectRoom(room) {
+      if (!this.targetGroup || !this.targetGroup.items) return
+      const items = this.targetGroup.items
+      // 批量更新该组下的商品到新房间
+      // 由于API是单个更新，循环调用（优化：如果有批量接口更好，这里只能循环）
+      uni.showLoading({ title: '移动中' })
+      const promises = items.map(item => {
+        return updateCartItem({
+          id: item.id,
+          room_id: room.id,
+          product_id: item.productId,
+          length: item.length,
+          quantity: item.quantity,
+          color: item.color,
+          note: item.note
+        })
+      })
+
+      Promise.all(promises).then(() => {
+        uni.hideLoading()
+        uni.showToast({ title: '已移动到 ' + room.name, icon: 'success' })
+        this.closeRoomPopup()
+        this.load() // 重新加载购物车
+      }).catch(() => {
+        uni.hideLoading()
+        uni.showToast({ title: '移动部分失败', icon: 'none' })
+        this.closeRoomPopup()
+        this.load()
+      })
     }
   }
 }
@@ -360,6 +606,10 @@ export default {
   align-items: center;
 }
 
+.actions-left .chk-ico {
+  display: none;
+}
+
 .chk {
   width: 40rpx;
   display: flex;
@@ -409,28 +659,35 @@ export default {
   border-bottom: 1px solid #f0f0f0;
 }
 
-.chk {
-  width: 40rpx;
-  display: flex;
+.toolbar .chk {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 10rpx;
 }
 
-.chk-ico {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 50%;
-  border: 2rpx solid #ccc;
+.toolbar .chk-ico {
+  display: none;
 }
 
-.chk-ico.on {
+
+.toolbar .chk-ico.on {
   background: #ff5500;
   border-color: #ff5500;
+  box-shadow: 0 0 0 6rpx rgba(255, 85, 0, .12) inset;
 }
 
-.chk-txt {
-  margin-left: 8rpx;
+.toolbar .chk-txt {
+  font-size: 26rpx;
   color: #333;
+  white-space: nowrap;
+}
+
+.btn-clear {
+  background: #ff5500;
+  color: #fff;
+  border: none;
+  border-radius: 999rpx;
+  padding: 0 20rpx;
 }
 
 .list.h5 .item {
@@ -450,13 +707,8 @@ export default {
 .list.h5 .meta {
   flex: 1;
   margin-left: 16rpx;
-}
-
-.attr {
-  color: #888;
-  font-size: 24rpx;
-  margin-top: 6rpx;
-  display: block;
+  display: flex;
+  flex-direction: column;
 }
 
 .cart-aside {}
@@ -631,6 +883,143 @@ export default {
     order: -1;
   }
 }
-
 /* #endif */
+
+/* 新版商品卡片样式 */
+.row-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 26rpx;
+  line-height: 36rpx;
+  color: #333;
+}
+.tag {
+  display: inline-block;
+  background: #00c853;
+  color: #fff;
+  font-size: 20rpx;
+  padding: 0 6rpx;
+  border-radius: 4rpx;
+  margin-right: 8rpx;
+  vertical-align: middle;
+}
+.title { vertical-align: middle; }
+
+.row-attr {
+  background: #f7f7f7;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+  margin-top: 12rpx;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  max-width: 100%;
+}
+.attr-txt { font-size: 22rpx; color: #666; margin-right: 8rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attr-icon { font-size: 20rpx; color: #999; }
+
+.row-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16rpx;
+}
+.price-box { flex: 1; }
+.price { color: #e1251b; font-size: 32rpx; font-weight: 700; }
+
+.qty-box {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 6rpx;
+  height: 44rpx;
+}
+.qty-btn { width: 44rpx; height: 44rpx; display: flex; align-items: center; justify-content: center; color: #333; }
+.qty-num { padding: 0 12rpx; font-size: 24rpx; color: #333; }
+
+.actions-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 20rpx;
+}
+.act-txt { font-size: 22rpx; color: #666; margin-bottom: 8rpx; }
+.act-txt.del { margin-bottom: 0; }
+
+.row-service {
+  margin-top: 12rpx;
+  display: flex;
+  align-items: center;
+}
+.svc-tag { color: #e1251b; font-size: 20rpx; border: 1rpx solid #e1251b; padding: 0 4rpx; border-radius: 4rpx; margin-right: 8rpx; }
+.svc-txt { color: #666; font-size: 22rpx; }
+
+/* 规格弹窗样式 */
+.spec-modal-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.spec-modal {
+  width: 600rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+.spec-header {
+  padding: 24rpx;
+  display: flex;
+  gap: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  position: relative;
+}
+.spec-img { width: 120rpx; height: 120rpx; border-radius: 8rpx; background: #f5f5f5; }
+.spec-info { display: flex; flex-direction: column; justify-content: center; }
+.spec-price { color: #e1251b; font-size: 32rpx; font-weight: 700; margin-bottom: 8rpx; }
+.spec-selected { color: #666; font-size: 24rpx; }
+.spec-close {
+  position: absolute;
+  top: 20rpx; right: 24rpx;
+  font-size: 36rpx; color: #999; padding: 10rpx;
+}
+.spec-body {
+  padding: 24rpx;
+  flex: 1;
+  overflow-y: auto;
+}
+.spec-group { margin-bottom: 32rpx; }
+.spec-title { font-size: 28rpx; color: #333; font-weight: 700; margin-bottom: 16rpx; display: block; }
+.spec-list { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.spec-opt {
+  padding: 10rpx 24rpx;
+  background: #f7f7f7;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #333;
+  border: 1rpx solid transparent;
+}
+.spec-opt.active {
+  background: #fff5f5;
+  color: #e1251b;
+  border-color: #e1251b;
+}
+.spec-footer {
+  padding: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+  display: flex;
+  gap: 20rpx;
+}
+.spec-btn { flex: 1; font-size: 28rpx; border-radius: 999rpx; }
+.spec-btn.cancel { background: #fff; border: 1rpx solid #ddd; color: #333; }
+.spec-btn.confirm { background: #e1251b; color: #fff; border: none; }
+
 </style>

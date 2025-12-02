@@ -4,20 +4,57 @@
       <image class="avatar" src="/static/logo.png" />
       <view class="user">
         <text class="name">{{ loggedIn ? displayName : '未登录' }}</text>
-        <button v-if="!loggedIn" size="mini" class="login" @click="login">登录</button>
+        <button size="mini" class="login" @click="onAuthButton">{{ loggedIn ? '退出登录' : '登录' }}</button>
       </view>
     </view>
 
     <!-- 信息卡片：公司信息与账号信息（H5/小程序通用） -->
     <view class="info-card">
-      <view class="info-row"><text class="label">公司名称</text><text class="value">{{ profile.companyName }}</text></view>
-      <view class="info-row"><text class="label">联系人姓名</text><text class="value">{{ profile.contactName }}</text></view>
-      <view class="info-row"><text class="label">电源</text><text class="value">{{ profile.power }}</text></view>
-      <view class="info-row"><text class="label">地址（收货地址）</text><text class="value">{{ profile.address }}</text></view>
-      <view class="info-row"><text class="label">等级</text><text class="value">{{ profile.level }}</text></view>
-      <view class="info-row"><text class="label">价格分组</text><text class="value">{{ profile.priceGroup }}</text></view>
-      <view class="info-row"><text class="label">账号状态</text><text class="value">{{ profile.status }}</text></view>
-      <view class="info-row"><text class="label">经销商地区</text><text class="value">{{ profile.region }}</text></view>
+      <view class="card-header">
+        <text class="card-title">个人信息</text>
+        <view class="card-actions" v-if="loggedIn">
+          <text v-if="!isEditing" class="btn-edit" @click="handleEdit">编辑</text>
+          <template v-else>
+            <text class="btn-cancel" @click="handleCancel">取消</text>
+            <text class="btn-save" @click="handleSave">保存</text>
+          </template>
+        </view>
+      </view>
+      <view class="info-row">
+        <text class="label">用户名</text>
+        <input v-if="isEditing" class="input" v-model="editForm.username" placeholder="请输入用户名" />
+        <text v-else class="value">{{ profile.username }}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">手机号</text>
+        <text class="value">{{ profile.phone }}</text>
+        <text v-if="loggedIn" class="btn-link" @click="openSecurityModal('phone')">修改</text>
+      </view>
+      <view class="info-row">
+        <text class="label">邮箱</text>
+        <text class="value">{{ profile.email }}</text>
+        <text v-if="loggedIn" class="btn-link" @click="openSecurityModal('email')">修改</text>
+      </view>
+      <view class="info-row">
+        <text class="label">登录密码</text>
+        <text class="value">********</text>
+        <text v-if="loggedIn" class="btn-link" @click="openSecurityModal('password')">修改</text>
+      </view>
+      <view class="info-row">
+        <text class="label">公司名称</text>
+        <input v-if="isEditing" class="input" v-model="editForm.company_name" placeholder="请输入公司名称" />
+        <text v-else class="value">{{ profile.companyName }}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">联系人</text>
+        <input v-if="isEditing" class="input" v-model="editForm.contact_name" placeholder="请输入联系人" />
+        <text v-else class="value">{{ profile.contactName }}</text>
+      </view>
+      <view class="info-row">
+        <text class="label">地区</text>
+        <input v-if="isEditing" class="input" v-model="editForm.region" placeholder="请输入地区" />
+        <text v-else class="value">{{ profile.region }}</text>
+      </view>
     </view>
 
     <view class="menu">
@@ -37,37 +74,69 @@
         <text>消息</text>
         <text class="arrow">›</text>
       </navigator>
-      <view class="menu-item">
+      <navigator url="/pages/address/index" class="menu-item" hover-class="none">
         <text>收货地址</text>
         <text class="arrow">›</text>
-      </view>
+      </navigator>
     </view>
     <!-- #ifdef H5 -->
     <FloatingNav />
     <!-- #endif -->
+
+    <!-- 安全验证弹窗 -->
+    <view v-if="showSecurityModal" class="modal-mask" @click="closeSecurityModal">
+      <view class="modal-content" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">{{ securityTitle }}</text>
+        </view>
+        <view class="modal-body">
+          <input class="modal-input" v-model="securityForm.value" :placeholder="securityPlaceholder" />
+          <view class="code-box">
+            <input class="modal-input code" v-model="securityForm.code" placeholder="请输入验证码" />
+            <button size="mini" class="btn-code" :disabled="countdown > 0" @click="sendCode">
+              {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+            </button>
+          </view>
+        </view>
+        <view class="modal-footer">
+          <button class="modal-btn cancel" @click="closeSecurityModal">取消</button>
+          <button class="modal-btn confirm" @click="confirmSecurityEdit">确认</button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
+import { getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail } from '../../api/index.js'
 export default {
   components: { FloatingNav },
-  data() { return { loggedIn: false, displayName: '' } },
+  data() { return { 
+    loggedIn: false, displayName: '', fetchedProfile: {}, isEditing: false, editForm: {},
+    showSecurityModal: false, securityType: '', securityForm: { value: '', code: '' }, countdown: 0, timer: null
+  } },
   computed: {
     profile() {
       try {
-        const u = uni.getStorageSync('user') || null
+        const u = this.fetchedProfile.user_id ? this.fetchedProfile : (uni.getStorageSync('user') || null)
         return {
-          companyName: u?.companyName || '未设置',
-          contactName: u?.contactName || u?.username || '未设置',
-          power: u?.power || '未设置',
-          address: u?.address || '未设置',
-          level: u?.level || '未设置',
-          priceGroup: u?.priceGroup || '未设置',
-          status: u?.status || (this.loggedIn ? '正常' : '未登录'),
+          username: u?.username || '未设置',
+          phone: u?.phone || '未设置',
+          email: u?.email || '未设置',
+          companyName: u?.company_name || u?.companyName || '未设置',
+          contactName: u?.contact_name || u?.contactName || '未设置',
           region: u?.region || '未设置'
         }
-      } catch (e) { return { companyName: '未设置', contactName: '未设置', power: '未设置', address: '未设置', level: '未设置', priceGroup: '未设置', status: this.loggedIn ? '正常' : '未登录', region: '未设置' } }
+      } catch (e) { return { username: '未设置', phone: '未设置', email: '未设置', companyName: '未设置', contactName: '未设置', region: '未设置' } }
+    },
+    securityTitle() {
+      const map = { phone: '更换手机号', email: '更换邮箱', password: '修改登录密码' }
+      return map[this.securityType] || '安全验证'
+    },
+    securityPlaceholder() {
+      const map = { phone: '请输入新手机号', email: '请输入新邮箱', password: '请输入新密码' }
+      return map[this.securityType] || ''
     }
   },
   onShow() {
@@ -78,11 +147,176 @@ export default {
       const u = uni.getStorageSync('user') || null
       this.loggedIn = !!u
       this.displayName = u?.username || ''
+      if (this.loggedIn) {
+        const token = (u && (u.token || (u.data && u.data.token))) || ''
+        this.loadUserProfile(token)
+      }
     } catch (e) { }
   },
   methods: {
+    loadUserProfile(token) {
+      if (!token) return
+      getUserProfile({ token }).then(res => {
+        if (res && res.success) {
+          this.fetchedProfile = res.data
+          if (res.data.username) this.displayName = res.data.username
+        }
+      }).catch(err => {
+        console.error('Fetch user profile failed', err)
+      })
+    },
     login() {
       uni.navigateTo({ url: '/pages/login/index' })
+    },
+    logout() {
+      try { uni.removeStorageSync('user') } catch (e) { }
+      this.loggedIn = false
+      this.displayName = ''
+      this.fetchedProfile = {}
+      uni.showToast({ title: '已退出登录', icon: 'success' })
+    },
+    onAuthButton() {
+      if (this.loggedIn) this.logout()
+      else this.login()
+    },
+    handleEdit() {
+      this.editForm = {
+        username: this.profile.username,
+        company_name: this.profile.companyName,
+        contact_name: this.profile.contactName,
+        region: this.profile.region,
+        phone: this.profile.phone // Pass phone as required by some APIs, though not edited
+      }
+      this.isEditing = true
+    },
+    handleCancel() {
+      this.isEditing = false
+      this.editForm = {}
+    },
+    handleSave() {
+      const u = uni.getStorageSync('user')
+      const token = (u && (u.token || (u.data && u.data.token))) || ''
+      if (!token) {
+        uni.showToast({ title: '请先登录', icon: 'none' })
+        return
+      }
+      
+      uni.showLoading({ title: '保存中' })
+      updateUserProfile({
+        ...this.editForm,
+        token: token
+      }).then(res => {
+        uni.hideLoading()
+        if (res && res.success) {
+            uni.showToast({ title: '更新成功', icon: 'success' })
+            this.isEditing = false
+            
+            // 更新本地 fetchedProfile
+            this.fetchedProfile = {
+              ...this.fetchedProfile,
+              username: this.editForm.username,
+              company_name: this.editForm.company_name,
+              contact_name: this.editForm.contact_name,
+              region: this.editForm.region
+            }
+            
+            // 重新获取最新信息
+            this.loadUserProfile(token)
+        } else {
+            uni.showToast({ title: res.message || '更新失败', icon: 'none' })
+        }
+      }).catch(err => {
+        uni.hideLoading()
+        console.error(err)
+        uni.showToast({ title: '更新出错', icon: 'none' })
+      })
+    },
+    openSecurityModal(type) {
+      this.securityType = type
+      this.securityForm = { value: '', code: '' }
+      this.showSecurityModal = true
+    },
+    closeSecurityModal() {
+      this.showSecurityModal = false
+      this.securityForm = { value: '', code: '' }
+      if (this.timer) { clearInterval(this.timer); this.timer = null }
+      this.countdown = 0
+    },
+    sendCode() {
+      if (this.countdown > 0) return
+      const u = uni.getStorageSync('user')
+      const token = (u && (u.token || (u.data && u.data.token))) || ''
+      if (!token) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
+      
+      // 验证手机号或邮箱格式
+      const val = this.securityForm.value
+      if (this.securityType === 'phone') {
+        if (!/^1[3-9]\d{9}$/.test(val)) {
+          uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+          return
+        }
+      } else if (this.securityType === 'email') {
+        if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
+          uni.showToast({ title: '请输入正确的邮箱', icon: 'none' })
+          return
+        }
+      }
+
+      uni.showLoading({ title: '发送中' })
+      sendSecurityCode({ token }).then(res => {
+        uni.hideLoading()
+        if (res && res.success) {
+          uni.showToast({ title: '已发送至安全邮箱', icon: 'none', duration: 2000 })
+          this.countdown = 60
+          this.timer = setInterval(() => {
+            this.countdown--
+            if (this.countdown <= 0) { clearInterval(this.timer); this.timer = null }
+          }, 1000)
+        } else {
+          uni.showToast({ title: res.message || '发送失败', icon: 'none' })
+        }
+      }).catch(err => {
+        uni.hideLoading()
+        console.error(err)
+        uni.showToast({ title: '发送出错', icon: 'none' })
+      })
+    },
+    confirmSecurityEdit() {
+      const { value, code } = this.securityForm
+      if (!value) { uni.showToast({ title: this.securityPlaceholder, icon: 'none' }); return }
+      if (!code) { uni.showToast({ title: '请输入验证码', icon: 'none' }); return }
+      
+      const u = uni.getStorageSync('user')
+      const token = (u && (u.token || (u.data && u.data.token))) || ''
+      if (!token) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
+
+      uni.showLoading({ title: '提交中' })
+      let promise
+      if (this.securityType === 'phone') {
+        promise = updateUserPhone({ new_phone: value, code, token })
+      } else if (this.securityType === 'email') {
+        promise = updateUserEmail({ new_email: value, code, token })
+      } else if (this.securityType === 'password') {
+        // Placeholder for password update
+        promise = Promise.reject({ message: '暂无修改密码接口' })
+      }
+
+      if (promise) {
+        promise.then(res => {
+          uni.hideLoading()
+          if (res && res.success) {
+            uni.showToast({ title: '修改成功', icon: 'success' })
+            this.closeSecurityModal()
+            this.loadUserProfile(token)
+          } else {
+            uni.showToast({ title: res.message || '修改失败', icon: 'none' })
+          }
+        }).catch(err => {
+          uni.hideLoading()
+          console.error(err)
+          uni.showToast({ title: (err && err.message) || '修改出错', icon: 'none' })
+        })
+      }
     }
   }
 }
@@ -148,6 +382,36 @@ export default {
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
 }
 
+.card-header {
+  padding: 24rpx;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.card-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.btn-edit, .btn-cancel {
+  color: #666;
+  font-size: 26rpx;
+}
+
+.btn-save {
+  color: #e1251b;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
 .info-row {
   display: flex;
   justify-content: space-between;
@@ -162,11 +426,21 @@ export default {
 
 .label {
   color: #666;
+  min-width: 140rpx;
 }
 
 .value {
   color: #333;
   font-weight: 600;
+  text-align: right;
+  flex: 1;
+}
+
+.input {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+  color: #333;
 }
 
 .menu-item {
@@ -180,4 +454,86 @@ export default {
 .arrow {
   color: #a0a0a0;
 }
+
+.btn-link {
+  color: #007aff;
+  font-size: 26rpx;
+  margin-left: 16rpx;
+}
+
+/* Modal Styles */
+.modal-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  width: 600rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+.modal-header {
+  padding: 30rpx;
+  text-align: center;
+  border-bottom: 1rpx solid #eee;
+}
+.modal-title {
+  font-weight: 600;
+  font-size: 32rpx;
+  color: #333;
+}
+.modal-body {
+  padding: 40rpx 30rpx;
+}
+.modal-input {
+  background: #f5f5f5;
+  height: 80rpx;
+  border-radius: 8rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+.code-box {
+  display: flex;
+  gap: 20rpx;
+}
+.code-box .code {
+  flex: 1;
+  margin-bottom: 0;
+}
+.btn-code {
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 24rpx;
+  padding: 0 20rpx;
+  background: #e1251b;
+  color: #fff;
+  border-radius: 8rpx;
+}
+.btn-code[disabled] {
+  background: #ccc;
+  color: #fff;
+}
+.modal-footer {
+  display: flex;
+  border-top: 1rpx solid #eee;
+}
+.modal-btn {
+  flex: 1;
+  height: 100rpx;
+  line-height: 100rpx;
+  text-align: center;
+  font-size: 30rpx;
+  background: #fff;
+  border-radius: 0;
+}
+.modal-btn::after { border: none; }
+.modal-btn.cancel { color: #666; border-right: 1rpx solid #eee; }
+.modal-btn.confirm { color: #e1251b; font-weight: 600; }
 </style>

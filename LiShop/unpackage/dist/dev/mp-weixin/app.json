@@ -8,7 +8,11 @@
     "pages/order/index",
     "pages/login/index",
     "pages/settings/index",
-    "pages/messages/index"
+    "pages/messages/index",
+    "pages/search/index",
+    "pages/category/list",
+    "pages/address/index",
+    "pages/address/edit"
   ],
   "window": {
     "navigationBarTextStyle": "black",

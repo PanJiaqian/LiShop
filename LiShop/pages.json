@@ -57,6 +57,32 @@
 				"navigationBarTitleText": "消息"
 			}
 		}
+		,
+		{
+			"path": "pages/search/index",
+			"style": {
+				"navigationBarTitleText": "Lishop"
+			}
+		}
+		,
+		{
+			"path": "pages/category/list",
+			"style": {
+				"navigationBarTitleText": "分类商品"
+			}
+		},
+		{
+			"path": "pages/address/index",
+			"style": {
+				"navigationBarTitleText": "收货地址"
+			}
+		},
+		{
+			"path": "pages/address/edit",
+			"style": {
+				"navigationBarTitleText": "编辑收货地址"
+			}
+		}
 	],
 	"tabBar": {
 		"color": "#7a7a7a",

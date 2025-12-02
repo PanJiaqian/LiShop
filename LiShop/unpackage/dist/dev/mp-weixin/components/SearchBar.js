@@ -22,9 +22,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
     a: $props.modelValue,
     b: $props.placeholder,
-    c: common_vendor.o((...args) => $options.onSearch && $options.onSearch(...args)),
-    d: common_vendor.o((...args) => $options.onInput && $options.onInput(...args)),
-    e: common_vendor.o((...args) => $options.onSearch && $options.onSearch(...args))
+    c: common_vendor.o((...args) => $options.onInput && $options.onInput(...args)),
+    d: common_vendor.o((...args) => $options.onSearch && $options.onSearch(...args))
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-2334f7bd"]]);
