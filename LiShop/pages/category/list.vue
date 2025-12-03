@@ -145,13 +145,18 @@ export default {
 .header {
   display: flex;
   align-items: baseline;
-  padding: 20rpx;
+  padding: 20rpx 50rpx;
 }
 .title { font-size: 32rpx; font-weight: 600; margin-right: 16rpx; }
 .kw { font-size: 28rpx; color: #666; }
 
 .sub-nav { background: #fff; border-bottom: 1rpx solid #f0f0f0; }
-.nav-wrap { display: flex; gap: 40rpx; padding: 16rpx 20rpx; white-space: nowrap; }
+.nav-wrap { 
+   display: flex;
+   gap: 40rpx; 
+   padding: 16rpx 60rpx; 
+   white-space: nowrap;
+  }
 .nav-item { display: inline-flex; align-items: center; padding: 0; background: transparent; border-radius: 0; }
 .nav-text { font-size: 26rpx; color: #333; }
 .nav-item.active .nav-text { color: #e1251b; font-weight: 600; }
@@ -173,7 +178,36 @@ export default {
 .empty { height: 40vh; display: flex; align-items: center; justify-content: center; color: #999; }
 
 /* #ifdef H5 */
-.grid2 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.grid2 { 
+  grid-template-columns: repeat(8, minmax(0, 1fr)); 
+  padding: 20rpx 80rpx; /* Add side spacing */
+  grid-gap: 50rpx; /* Increase gap */
+}
+.header {
+  padding: 20rpx 80rpx; /* Add side spacing */
+}
+.nav-wrap {
+  padding: 16rpx 80rpx; /* Add side spacing */
+}
+.title { font-size: 38rpx !important; }
+.kw { font-size: 32rpx !important; }
+.nav-text { font-size: 32rpx !important; }
+
+.pager {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  /* background: #fff; */
+  z-index: 99;
+  /* box-shadow: 0 -4rpx 16rpx rgba(0,0,0,0.05); */
+  padding: 30rpx;
+}
+.pg-text { font-size: 28rpx; }
+.page {
+  padding-bottom: 160rpx; /* Space for fixed pager */
+}
+
 @media (max-width: 1440px) {
   .grid2 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }

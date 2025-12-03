@@ -24,7 +24,8 @@ const _sfc_main = {
         { id: "s2", title: "爆款秒杀2", price: 129, image: "/static/logo.png" },
         { id: "s3", title: "爆款秒杀3", price: 59, image: "/static/logo.png" }
       ],
-      recommendList: []
+      recommendList: [],
+      pinnedByClick: false
     };
   },
   onShow() {
@@ -63,6 +64,65 @@ const _sfc_main = {
     }, 600);
   },
   methods: {
+    hoverCategory(cat) {
+      if (this.pinnedByClick)
+        return;
+      const id = (cat == null ? void 0 : cat.categories_id) || "";
+      if (!id) {
+        common_vendor.index.showToast({ title: "分类缺少ID", icon: "none" });
+        return;
+      }
+      if (this.activeCateId === id && (this.leftChildren && this.leftChildren.length))
+        return;
+      this.activeCateId = id;
+      this.activeCateName = (cat == null ? void 0 : cat.name) || "";
+      try {
+        api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id", categories_id: id }).then((res) => {
+          var _a;
+          const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+          this.leftChildren = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "" }));
+        }).catch(() => {
+          this.leftChildren = [];
+        });
+      } catch (e) {
+        this.leftChildren = [];
+      }
+    },
+    closeCategory() {
+      if (this.pinnedByClick)
+        return;
+      this.activeCateId = "";
+      this.activeCateName = "";
+      this.leftChildren = [];
+    },
+    toggleCategoryByClick(cat) {
+      const id = (cat == null ? void 0 : cat.categories_id) || "";
+      if (!id) {
+        common_vendor.index.showToast({ title: "分类缺少ID", icon: "none" });
+        return;
+      }
+      if (this.pinnedByClick && this.activeCateId === id) {
+        this.pinnedByClick = false;
+        this.activeCateId = "";
+        this.activeCateName = "";
+        this.leftChildren = [];
+        return;
+      }
+      this.pinnedByClick = true;
+      this.activeCateId = id;
+      this.activeCateName = (cat == null ? void 0 : cat.name) || "";
+      try {
+        api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id", categories_id: id }).then((res) => {
+          var _a;
+          const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+          this.leftChildren = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "" }));
+        }).catch(() => {
+          this.leftChildren = [];
+        });
+      } catch (e) {
+        this.leftChildren = [];
+      }
+    },
     onSearch(val) {
       const q = (val || this.keyword || "").trim();
       if (!q) {

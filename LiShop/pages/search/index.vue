@@ -150,7 +150,27 @@ export default {
 .nomore { text-align: center; color: #999; padding: 12rpx; }
 
 /* #ifdef H5 */
-.grid2 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.grid2 { 
+  grid-template-columns: repeat(8, minmax(0, 1fr)); 
+  padding: 30rpx 100rpx;
+  grid-gap: 50rpx;
+}
+.header {
+  padding: 20rpx 80rpx;
+}
+.pager {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  /* background: #fff; */
+  z-index: 99;
+  /* box-shadow: 0 -4rpx 16rpx rgba(0,0,0,0.05); */
+  padding: 30rpx;
+}
+.page {
+  padding-bottom: 160rpx;
+}
 @media (max-width: 1440px) {
   .grid2 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }

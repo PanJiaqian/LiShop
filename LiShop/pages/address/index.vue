@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page address-list-page">
     <view class="address-list" v-if="addressList.length > 0">
       <view class="address-item" v-for="(item, index) in addressList" :key="item.addresses_id" @click="editAddress(item.addresses_id)">
         <view class="info">
@@ -175,4 +175,38 @@ export default {
   border-radius: 40rpx;
   font-size: 32rpx;
 }
+
+/* #ifdef H5 */
+.address-list-page {
+  padding-left: 600rpx;
+  padding-right: 600rpx;
+  box-sizing: border-box;
+}
+.footer {
+  padding-left: 170rpx; /* 150 + 20 original */
+  padding-right: 170rpx;
+}
+.btn-add {
+  width: 50%; /* Reduce width */
+  margin: 0 auto;
+}
+.btn-edit, .btn-delete {
+  display: inline-block;
+  padding: 10rpx 30rpx;
+  border-radius: 30rpx;
+  border: 1rpx solid #ccc;
+  margin-bottom: 10rpx;
+  text-align: center;
+}
+.btn-edit {
+  color: #666;
+  border-color: #ddd;
+}
+.btn-delete {
+  color: #e1251b;
+  border-color: #e1251b;
+  margin-top: 10rpx;
+}
+/* #endif */
+
 </style>

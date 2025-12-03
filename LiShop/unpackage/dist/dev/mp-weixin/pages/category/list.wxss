@@ -8,7 +8,7 @@
 .header.data-v-17e22e15 {
   display: flex;
   align-items: baseline;
-  padding: 20rpx;
+  padding: 20rpx 50rpx;
 }
 .title.data-v-17e22e15 { font-size: 32rpx; font-weight: 600; margin-right: 16rpx;
 }
@@ -16,7 +16,11 @@
 }
 .sub-nav.data-v-17e22e15 { background: #fff; border-bottom: 1rpx solid #f0f0f0;
 }
-.nav-wrap.data-v-17e22e15 { display: flex; gap: 40rpx; padding: 16rpx 20rpx; white-space: nowrap;
+.nav-wrap.data-v-17e22e15 { 
+   display: flex;
+   gap: 40rpx; 
+   padding: 16rpx 60rpx; 
+   white-space: nowrap;
 }
 .nav-item.data-v-17e22e15 { display: inline-flex; align-items: center; padding: 0; background: transparent; border-radius: 0;
 }
@@ -44,6 +48,35 @@
 }
 .empty.data-v-17e22e15 { height: 40vh; display: flex; align-items: center; justify-content: center; color: #999;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

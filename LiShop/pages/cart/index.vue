@@ -1,6 +1,12 @@
 <template>
   <view class="page">
     <!-- #ifdef H5 -->
+    <view class="h5-nav-bar">
+      <view class="nav-back" @click="goBack">
+        <view class="back-arrow"></view>
+      </view>
+      <text class="nav-title">购物车</text>
+    </view>
     <view class="cart-grid">
       <view class="cart-main">
         <view class="toolbar" v-if="cart.length">
@@ -20,35 +26,21 @@
             <view class="group-header">
               <text class="room">{{ grp.name }}</text>
             </view>
-            <view class="item" v-for="it in grp.items" :key="it.id">
-            <view class="chk" @click="toggleById(it.id)">
-              <view class="chk-ico" :class="{ on: it.selected }"></view>
-            </view>
-            <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
-            <view class="meta">
-              <view class="row-title">
-                <text class="title">{{ it.title }}</text>
+            <view class="item h5-row" v-for="it in grp.items" :key="it.id">
+              <view class="chk" @click="toggleById(it.id)">
+                <view class="chk-ico" :class="{ on: it.selected }"></view>
               </view>
-              <view class="row-attr">
-                <text class="attr-txt">{{ it.attr }}</text>
-                <!-- <text class="attr-icon">﹀</text> -->
-              </view>
-              <view class="row-main">
-                <view class="price-box">
-                  <text class="price">¥{{ it.price.toFixed(2) }}</text>
-                </view>
-                <view class="qty-box">
+              <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
+              <text class="title">{{ it.title }}</text>
+              <text class="attr-txt">{{ it.attr }}</text>
+              <text class="price">¥{{ it.price.toFixed(2) }}</text>
+              <view class="qty-box">
                   <view class="qty-btn" @click.stop="decById(it.id)">-</view>
                   <text class="qty-num">{{ it.quantity }}</text>
                   <view class="qty-btn" @click.stop="incById(it.id)">+</view>
-                </view>
-                <view class="actions-col">
-                  <!-- <text class="act-txt">移入收藏</text> -->
-                  <text class="act-txt del" @click.stop="removeById(it.id)">删除</text>
-                </view>
               </view>
+              <text class="del-btn" @click.stop="removeById(it.id)">删除</text>
             </view>
-          </view>
           </view>
         </view>
         <view v-else class="empty">购物车空空如也~</view>
@@ -276,6 +268,14 @@ export default {
     // #endif
   },
   methods: {
+    goBack() {
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack()
+      } else {
+        uni.switchTab({ url: '/pages/home/index' })
+      }
+    },
     load() {
       getCartItems()
         .then((res) => {
@@ -639,11 +639,54 @@ export default {
   display: none;
 }
 
+.h5-nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 88rpx; /* Standard nav height */
+  padding: 0 40rpx;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 1rpx 0 #f0f0f0;
+  box-sizing: border-box;
+}
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
+  margin-right: 80rpx; /* Balance the back button width */
+}
+.nav-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center; /* Center the arrow */
+  font-size: 32rpx;
+  color: #333;
+  cursor: pointer;
+  width: 80rpx; /* Fixed width for balance */
+  height: 100%;
+}
+.back-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 4rpx solid #333;
+  border-bottom: 4rpx solid #333;
+  transform: rotate(45deg);
+}
+
 .cart-grid {
   display: grid;
-  grid-template-columns: 1fr 900rpx;
-  grid-gap: 20rpx;
-  padding: 20rpx;
+  grid-template-columns: 3fr 2fr;
+  grid-gap: 80rpx;
+  padding-right: 130rpx;
+  padding-left: 130rpx;
+  padding-top: 108rpx; /* 88rpx header + 20rpx space */
+  /* padding: 20rpx; */
 }
 
 .cart-main {
@@ -1021,5 +1064,71 @@ export default {
 .spec-btn { flex: 1; font-size: 28rpx; border-radius: 999rpx; }
 .spec-btn.cancel { background: #fff; border: 1rpx solid #ddd; color: #333; }
 .spec-btn.confirm { background: #e1251b; color: #fff; border: none; }
+
+/* #ifdef H5 */
+.h5-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+  justify-content: space-between;
+}
+.h5-row .chk {
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  align-self: center;
+}
+.h5-row .cover {
+  width: 100rpx !important; /* Make image smaller */
+  height: 100rpx !important;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  align-self: center;
+}
+.h5-row .title {
+  flex: 1;
+  font-size: 26rpx;
+  color: #333;
+  margin: 0 10rpx;
+  text-align: center;
+  align-self: center;
+}
+.h5-row .attr-txt {
+  flex: 1;
+  font-size: 24rpx;
+  color: #999;
+  margin: 0 10rpx;
+  text-align: center;
+  background: none;
+  padding: 0;
+  margin-top: 0;
+  align-self: center;
+}
+.h5-row .price {
+  width: 140rpx;
+  font-size: 28rpx;
+  color: #e1251b;
+  text-align: center;
+  flex-shrink: 0;
+  align-self: center;
+}
+.h5-row .qty-box {
+  margin: 0 20rpx;
+  flex-shrink: 0;
+  align-self: center;
+}
+.h5-row .del-btn {
+  font-size: 26rpx;
+  color: #999;
+  cursor: pointer;
+  width: 80rpx;
+  text-align: center;
+  flex-shrink: 0;
+  align-self: center;
+}
+.h5-row .del-btn:hover {
+  color: #e1251b;
+}
+/* #endif */
 
 </style>

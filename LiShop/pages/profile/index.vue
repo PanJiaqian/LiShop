@@ -1,5 +1,13 @@
 <template>
   <view class="page">
+    <!-- #ifdef H5 -->
+    <view class="h5-nav-bar">
+      <view class="nav-back" @click="goBack">
+        <view class="back-arrow"></view>
+      </view>
+      <text class="nav-title">个人中心</text>
+    </view>
+    <!-- #endif -->
     <view class="header">
       <image class="avatar" src="/static/logo.png" />
       <view class="user">
@@ -154,6 +162,14 @@ export default {
     } catch (e) { }
   },
   methods: {
+    goBack() {
+      const pages = getCurrentPages()
+      if (pages.length > 1) {
+        uni.navigateBack()
+      } else {
+        uni.switchTab({ url: '/pages/home/index' })
+      }
+    },
     loadUserProfile(token) {
       if (!token) return
       getUserProfile({ token }).then(res => {
@@ -334,8 +350,9 @@ export default {
   align-items: center;
   padding: 40rpx 24rpx;
   background: #fff;
-  border-radius: 0 0 24rpx 24rpx;
+  border-radius: 24rpx;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
+  margin-top: 20rpx;
 }
 
 .avatar {
@@ -536,4 +553,53 @@ export default {
 .modal-btn::after { border: none; }
 .modal-btn.cancel { color: #666; border-right: 1rpx solid #eee; }
 .modal-btn.confirm { color: #e1251b; font-weight: 600; }
+
+/* #ifdef H5 */
+.h5-nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 88rpx;
+  padding: 0 40rpx;
+  z-index: 100;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  box-shadow: 0 1rpx 0 #f0f0f0;
+}
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
+  margin-right: 80rpx;
+}
+.nav-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #333;
+  cursor: pointer;
+  width: 80rpx;
+  height: 100%;
+}
+.back-arrow {
+  width: 20rpx;
+  height: 20rpx;
+  border-left: 4rpx solid #333;
+  border-bottom: 4rpx solid #333;
+  transform: rotate(45deg);
+}
+
+.page {
+  padding-left: 600rpx;
+  padding-right: 600rpx;
+  box-sizing: border-box;
+  padding-top: 88rpx; /* Make space for fixed header */
+}
+/* #endif */
 </style>

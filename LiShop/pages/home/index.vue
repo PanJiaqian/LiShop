@@ -3,10 +3,10 @@
     <!-- H5 三栏布局（包含分类、我的、商品） -->
     <!-- #ifdef H5 -->
     <view class="h5-layout">
-      <view class="side-cate">
+      <view class="side-cate" @mouseleave="closeCategory">
         <view class="cate-title">全部分类</view>
         <view class="cate-list">
-          <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @click="openCategory(c)">
+          <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c)" @click="toggleCategoryByClick(c)">
             <text class="dot">•</text>
             <text class="cate-name">{{ c.name }}</text>
           </view>
@@ -18,7 +18,7 @@
         <BannerSwiper :images="banners" />
 
         <!-- #ifdef H5 -->
-        <view v-if="activeCateId" class="sub-panel">
+        <view v-if="activeCateId" class="sub-panel" @mouseleave="closeCategory">
           <view class="panel-title">
             <text>{{ activeCateName || '二级分类' }}</text>
           </view>
@@ -136,6 +136,7 @@ export default {
         { id: 's3', title: '爆款秒杀3', price: 59, image: '/static/logo.png' }
       ],
       recommendList: []
+      , pinnedByClick: false
     }
   },
   onShow() {
@@ -177,6 +178,50 @@ export default {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
   },
   methods: {
+    hoverCategory(cat) {
+      if (this.pinnedByClick) return
+      const id = cat?.categories_id || ''
+      if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
+      if (this.activeCateId === id && (this.leftChildren && this.leftChildren.length)) return
+      this.activeCateId = id
+      this.activeCateName = cat?.name || ''
+      try {
+        getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
+          .then((res) => {
+            const items = Array.isArray(res?.data?.items) ? res.data.items : []
+            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '' }))
+          })
+          .catch(() => { this.leftChildren = [] })
+      } catch (e) { this.leftChildren = [] }
+    },
+    closeCategory() {
+      if (this.pinnedByClick) return
+      this.activeCateId = ''
+      this.activeCateName = ''
+      this.leftChildren = []
+    },
+    toggleCategoryByClick(cat) {
+      const id = cat?.categories_id || ''
+      if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
+      if (this.pinnedByClick && this.activeCateId === id) {
+        this.pinnedByClick = false
+        this.activeCateId = ''
+        this.activeCateName = ''
+        this.leftChildren = []
+        return
+      }
+      this.pinnedByClick = true
+      this.activeCateId = id
+      this.activeCateName = cat?.name || ''
+      try {
+        getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
+          .then((res) => {
+            const items = Array.isArray(res?.data?.items) ? res.data.items : []
+            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '' }))
+          })
+          .catch(() => { this.leftChildren = [] })
+      } catch (e) { this.leftChildren = [] }
+    },
     onSearch(val) {
       const q = (val || this.keyword || '').trim()
       if (!q) { uni.showToast({ title: '请输入关键字', icon: 'none' }); return }
@@ -295,8 +340,11 @@ export default {
 .h5-layout {
   display: grid;
   grid-template-columns: 300rpx 1fr 320rpx;
-  grid-gap: 20rpx;
-  padding: 20rpx;
+  grid-gap: 70rpx;
+  padding-left: 60rpx;
+  padding-right: 160rpx;
+  padding-top: 20rpx;
+  /* padding: 50rpx; */
   height: 100%;
 }
 
@@ -312,6 +360,7 @@ export default {
   font-weight: 600;
   padding: 20rpx;
   border-bottom: 1rpx solid #f0f0f0;
+  text-align: center;
 }
 
 .cate-list {
@@ -327,10 +376,12 @@ export default {
 .cate-item .dot {
   color: #ff5500;
   margin-right: 12rpx;
+  font-size: 52rpx;
 }
 
 .cate-item .cate-name {
   color: #333;
+  font-size: 32rpx;
 }
 
 .sub-cat-grid {
@@ -369,6 +420,10 @@ export default {
   border-radius: 12rpx;
   padding: 20rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, .06);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .avatar {
@@ -376,12 +431,14 @@ export default {
   height: 100rpx;
   border-radius: 50%;
   background: #f0f0f0;
+  margin: 0 auto;
 }
 
 .u-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 12rpx;
   margin-top: 10rpx;
 }
 
@@ -400,21 +457,46 @@ export default {
   margin-top: 16rpx;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .u-link {
   padding: 18rpx 0;
   color: #555;
   border-bottom: 1rpx solid #f0f0f0;
+  text-align: center;
+  width: 100%;
 }
 
 /* 右侧快捷入口与 H5 专属布局优化 */
 
 .main .grid2 {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-gap: 14rpx;
-  padding: 0;
+  grid-template-columns: repeat(5, 1fr);
+  grid-gap: 60rpx;
+  padding-left: 80rpx;
+  padding-right: 80rpx;
+}
+
+.main :deep(.search-bar) {
+  padding: 26rpx 40rpx;
+  margin: 0 80rpx;
+}
+.main :deep(.search-input) {
+  padding: 18rpx 28rpx;
+}
+.main :deep(.icon) {
+  font-size: 34rpx;
+}
+.main :deep(.input) {
+  font-size: 32rpx;
+}
+.main :deep(.swiper) {
+  height: 500rpx;
+}
+
+.main :deep(.banner) {
+  margin: 0 120rpx;
 }
 
 :deep(.card) {
@@ -450,7 +532,9 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 20rpx;
-  font-size: 30rpx;
+  font-weight: 500;
+  font-size: 35rpx;
+  margin-left: 70rpx;
 }
 
 .more {
@@ -537,23 +621,23 @@ export default {
   height: clamp(240rpx, 38vh, 560rpx);
   max-height: 60vh;
   overflow-y: auto;
-  padding: 16rpx 20rpx 20rpx;
+  padding: 30rpx 60rpx 60rpx;
 }
 .panel-title {
-  font-size: 30rpx;
+  font-size: 36rpx;
   font-weight: 600;
   color: #333;
   margin-bottom: 12rpx;
 }
 .panel-columns {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12rpx 16rpx;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 20rpx 24rpx;
 }
 .panel-link {
-  font-size: 26rpx;
+  font-size: 32rpx;
   color: #333;
-  line-height: 40rpx;
+  line-height: 48rpx;
 }
 .panel-link:hover {
   color: #e1251b;

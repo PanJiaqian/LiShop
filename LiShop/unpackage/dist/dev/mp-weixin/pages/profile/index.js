@@ -57,6 +57,14 @@ const _sfc_main = {
     }
   },
   methods: {
+    goBack() {
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        common_vendor.index.navigateBack();
+      } else {
+        common_vendor.index.switchTab({ url: "/pages/home/index" });
+      }
+    },
     loadUserProfile(token) {
       if (!token)
         return;

@@ -1,5 +1,5 @@
 <template>
-  <view class="page" v-if="product">
+  <view class="page product-page" v-if="product">
     <!-- #ifdef H5 -->
     <view class="pd-grid">
       <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
@@ -18,11 +18,12 @@
             <view class="pd-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text>
             </view>
             <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
-            <view class="pd-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—' }}</text></view>
             <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
-            <view class="pd-param-item"><text class="key">单位</text><text class="val">件</text></view>
-            <view class="pd-param-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
-            }}</text></view>
+            <view class="pd-param-item inline-params">
+              <view class="sub-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—' }}</text></view>
+              <view class="sub-item"><text class="key">单位</text><text class="val">件</text></view>
+              <view class="sub-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2) }}</text></view>
+            </view>
           </view>
         </view>
 
@@ -44,7 +45,6 @@
             <text>包邮 ｜ 48小时内发货 ｜ 七天无理由</text>
           </view>
 
-          <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
           <view>
             <text class="pd-section-title">规格明细</text>
             <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
@@ -69,11 +69,11 @@
               <text class="label">房间名</text>
               <view class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
             </view>
-            <view class="pd-field">
+            <view class="pd-field inline">
               <text class="label">色温</text>
               <input class="pd-input" v-model="specTemp" placeholder="如 3000K / 4000K" />
             </view>
-            <view class="pd-field">
+            <view class="pd-field inline">
               <text class="label">长度</text>
               <input class="pd-input" v-model="specLength" placeholder="如 1m / 2m" />
             </view>
@@ -81,10 +81,10 @@
 
           <view class="pd-qty">
             <text class="label">数量</text>
-            <view class="qty-stepper">
-              <button class="step" @click="decQty">-</button>
-              <text class="count">{{ qty }}</text>
-              <button class="step" @click="incQty">+</button>
+            <view class="qty-box">
+              <view class="qty-btn" @click="decQty">-</view>
+              <text class="qty-num">{{ qty }}</text>
+              <view class="qty-btn" @click="incQty">+</view>
             </view>
           </view>
 
@@ -103,8 +103,10 @@
               </view>
               <view class="rooms-list" v-if="roomsList && roomsList.length">
                 <text class="rooms-title">已保存房间</text>
-                <view class="room-item" v-for="(name,i) in roomsList" :key="'r'+i" @click="roomInput = name">
-                  <text class="room-name">{{ name }}</text>
+                <view class="rooms-grid">
+                  <view class="room-item" v-for="(name,i) in roomsList" :key="'r'+i" @click="roomInput = name">
+                    <text class="room-name">{{ name }}</text>
+                  </view>
                 </view>
               </view>
               <view class="h5-actions">
@@ -213,8 +215,10 @@
         <scroll-view scroll-y class="mp-scroll-view">
             <view class="rooms-list" v-if="roomsList && roomsList.length">
                 <text class="rooms-title">已保存房间</text>
-                <view class="room-item" v-for="(name,i) in roomsList" :key="'mpr'+i" @click="roomInput = name">
-                    <text class="room-name">{{ name }}</text>
+                <view class="rooms-grid">
+                  <view class="room-item" v-for="(name,i) in roomsList" :key="'mpr'+i" @click="roomInput = name">
+                      <text class="room-name">{{ name }}</text>
+                  </view>
                 </view>
             </view>
         </scroll-view>
@@ -570,9 +574,11 @@ export default {
 
 .rooms-list {
   margin-top: 12rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
+}
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-gap: 12rpx;
 }
 .rooms-title {
   color: #666;
@@ -584,22 +590,59 @@ export default {
   border: 1rpx solid #eee;
   border-radius: 10rpx;
   background: #fafafa;
+  display: flex;
+  align-items: center;
 }
 .room-name { color: #333; font-size: 28rpx; }
 
 /* #ifdef H5 */
+/* Hide scrollbars */
+.product-page ::-webkit-scrollbar {
+  display: none;
+  width: 0 !important;
+  height: 0 !important;
+  -webkit-appearance: none;
+  background: transparent;
+}
+
 .footer {
   display: none;
 }
 
 .pd-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 2fr;
   grid-gap: 24rpx;
-  padding: 20rpx;
+  padding: 20rpx 160rpx;
   height: calc(100vh - 40rpx);
   align-items: start;
 }
+
+/* New styles for inline params */
+.pd-param-item.inline-params {
+  display: flex;
+  justify-content: space-between;
+  gap: 10rpx;
+  padding: 10rpx;
+}
+
+.pd-param-item.inline-params .sub-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+/* Qty Stepper matching cart */
+.qty-box {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 6rpx;
+  height: 44rpx;
+}
+.qty-btn { width: 44rpx; height: 44rpx; display: flex; align-items: center; justify-content: center; color: #333; font-size: 28rpx; cursor: pointer; }
+.qty-num { padding: 0 12rpx; font-size: 24rpx; color: #333; }
 
 .pd-left,
 .pd-right {
@@ -716,6 +759,13 @@ export default {
   gap: 20rpx;
 }
 
+/* H5 规格列表左图右文排版：一行三列 */
+.specs-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-gap: 12rpx; }
+.spec-item { flex-direction: row; align-items: center; box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.05); }
+.spec-thumb { width: 120rpx; height: 120rpx; }
+.spec-info { flex: 1; }
+.spec-price-row { justify-content: flex-start; gap: 10rpx; }
+
 .pd-form {
   display: flex;
   flex-direction: column;
@@ -733,7 +783,8 @@ export default {
 .pd-field.inline {
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 20rpx;
 }
 
 .picker-display {
@@ -745,6 +796,7 @@ export default {
   border-radius: 10rpx;
   padding: 0 14rpx;
   color: #666;
+  max-width: 20%;
 }
 
 .pd-input {
@@ -755,6 +807,14 @@ export default {
   border: 1rpx solid #e5e5e5;
   border-radius: 10rpx;
   padding: 0 14rpx;
+  max-width: 25%;
+}
+
+/* H5 内联字段输入宽度缩小 */
+.pd-field.inline .pd-input,
+.pd-field.inline .picker-display {
+  flex: 1;
+  /* width: 60%; */
 }
 
 .pd-title {
@@ -773,7 +833,7 @@ export default {
 
 .pd-price {
   color: #e1251b;
-  font-size: 40rpx;
+  font-size: 50rpx;
   font-weight: 700;
 }
 

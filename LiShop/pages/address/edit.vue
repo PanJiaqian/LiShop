@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page address-edit-page">
     <view class="form">
       <view class="form-item">
         <text class="label">收货人</text>
@@ -178,4 +178,30 @@ export default {
   border-radius: 40rpx;
   font-size: 32rpx;
 }
+
+/* #ifdef H5 */
+.address-edit-page {
+  padding-left: 600rpx;
+  padding-right: 600rpx;
+  box-sizing: border-box;
+  padding-bottom: 140rpx; /* Add bottom padding to prevent content from being hidden */
+}
+.btn-save {
+  width: 50%;
+  margin: 0 auto;
+  display: block;
+}
+.switch-item .label {
+  width: 240rpx; /* Increase width to prevent wrapping */
+}
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
+  z-index: 999;
+}
+/* #endif */
 </style>

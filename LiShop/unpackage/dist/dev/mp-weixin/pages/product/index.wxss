@@ -114,9 +114,11 @@
 }
 .rooms-list.data-v-a911e391 {
   margin-top: 12rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
+}
+.rooms-grid.data-v-a911e391 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-gap: 12rpx;
 }
 .rooms-title.data-v-a911e391 {
   color: #666;
@@ -128,6 +130,8 @@
   border: 1rpx solid #eee;
   border-radius: 10rpx;
   background: #fafafa;
+  display: flex;
+  align-items: center;
 }
 .room-name.data-v-a911e391 { color: #333; font-size: 28rpx;
 }

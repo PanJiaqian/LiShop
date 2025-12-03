@@ -70,6 +70,14 @@ const _sfc_main = {
     this.load();
   },
   methods: {
+    goBack() {
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        common_vendor.index.navigateBack();
+      } else {
+        common_vendor.index.switchTab({ url: "/pages/home/index" });
+      }
+    },
     load() {
       api_index.getCartItems().then((res) => {
         const isEmpty = typeof res === "string" && (res.includes("空") || res === "当前购物车为空");
