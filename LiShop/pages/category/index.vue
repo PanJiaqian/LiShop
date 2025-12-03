@@ -152,11 +152,12 @@ export default {
 }
 
 .right-wrap {
-  padding: 20rpx;
+  padding: 20rpx 40rpx;
 }
 
 .sub-title {
-  font-size: 28rpx;
+  font-size: 33rpx;
+  font-weight: 600;
   color: #333;
   margin-bottom: 12rpx;
 }

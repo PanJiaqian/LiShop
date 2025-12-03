@@ -343,6 +343,11 @@ export default {
   background: linear-gradient(180deg, #fff4f2 0%, #f7f7f7 45%, #f7f7f7 100%);
   min-height: 100vh;
   padding-bottom: 40rpx;
+  /* #ifndef H5 */
+  padding-left: 30rpx;
+  padding-right: 30rpx;
+  box-sizing: border-box;
+  /* #endif */
 }
 
 .header {

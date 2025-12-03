@@ -179,6 +179,10 @@ export default {
   font-size: 32rpx;
 }
 
+.switch-item .label {
+  width: 240rpx; /* Increase width to prevent wrapping */
+}
+
 /* #ifdef H5 */
 .address-edit-page {
   padding-left: 600rpx;
@@ -187,12 +191,9 @@ export default {
   padding-bottom: 140rpx; /* Add bottom padding to prevent content from being hidden */
 }
 .btn-save {
-  width: 50%;
+  width: 30%;
   margin: 0 auto;
   display: block;
-}
-.switch-item .label {
-  width: 240rpx; /* Increase width to prevent wrapping */
 }
 .footer {
   position: fixed;

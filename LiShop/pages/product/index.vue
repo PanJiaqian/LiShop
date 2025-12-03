@@ -122,22 +122,25 @@
 
     <!-- #ifndef H5 -->
     <image class="cover" :src="product.image || '/static/logo.png'" mode="aspectFill" />
-    <view class="info">
+    <view class="info mp-info-spacing">
       <text class="title">{{ product.title }}</text>
-      <text class="price">¥{{ product.price.toFixed(2) }}</text>
-      <text class="sales">销量 {{ product.sales }}</text>
+      <view class="mp-price-row">
+        <text class="price">¥{{ product.price.toFixed(2) }}</text>
+        <text class="sales">销量 {{ product.sales }}</text>
+      </view>
     </view>
     <!-- MP 端参数信息与图文详情 -->
-    <view class="mp-section">
+    <view class="mp-section mp-section-spacing">
       <text class="mp-title">参数信息</text>
       <view class="mp-param-grid">
         <view class="mp-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text></view>
         <view class="mp-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
-        <view class="mp-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—' }}</text></view>
         <view class="mp-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
-        <view class="mp-param-item"><text class="key">单位</text><text class="val">件</text></view>
-        <view class="mp-param-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
-        }}</text></view>
+        <view class="mp-param-row-inline">
+           <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—' }}</text></view>
+           <view class="mp-param-item inline"><text class="key">单位</text><text class="val">件</text></view>
+           <view class="mp-param-item inline"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2) }}</text></view>
+        </view>
       </view>
     </view>
     <view class="mp-section">
@@ -807,7 +810,7 @@ export default {
   border: 1rpx solid #e5e5e5;
   border-radius: 10rpx;
   padding: 0 14rpx;
-  max-width: 25%;
+  max-width: 30%;
 }
 
 /* H5 内联字段输入宽度缩小 */
@@ -1036,20 +1039,33 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12rpx;
+  background: #f7f7f7;
+  border-radius: 6rpx;
+  height: 60rpx; /* Match Cart */
 }
 
 /* 淘宝风格：步进器在弹窗内的样式适配 */
 .mp-sheet .qty-stepper .step {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 12rpx;
-  background: #fff;
-  border: 1rpx solid #ddd;
+  width: 60rpx; /* Match Cart */
+  height: 60rpx; /* Match Cart */
+  border-radius: 0; /* Remove individual radius */
+  background: transparent;
+  border: none;
+  color: #333;
+  font-size: 32rpx; /* Match Cart */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
 }
+.mp-sheet .qty-stepper .step::after { border: none; } /* Remove button border */
+
 .mp-sheet .qty-stepper .count {
   width: 80rpx;
   text-align: center;
+  font-size: 28rpx;
+  color: #333;
 }
 
 @keyframes mpSlideUp {
@@ -1108,4 +1124,49 @@ export default {
 }
 
 /* #endif */
+
+/* MP Modifications */
+.mp-info-spacing {
+  padding: 20rpx 40rpx;
+}
+
+.mp-section-spacing {
+  padding: 20rpx 40rpx;
+}
+
+.mp-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12rpx;
+}
+
+.mp-param-row-inline {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 12rpx;
+  border-top: 1rpx solid #eee;
+  padding-top: 12rpx;
+}
+
+.mp-param-item.inline {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0 10rpx;
+  gap: 8rpx;
+}
+
+.mp-param-item.inline .key {
+  margin-bottom: 0;
+}
+
+.mp-param-item.inline .val {
+  margin-top: 0;
+  text-align: center;
+}
 </style>

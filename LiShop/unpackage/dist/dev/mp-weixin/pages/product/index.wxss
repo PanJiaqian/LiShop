@@ -219,20 +219,33 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12rpx;
+  background: #f7f7f7;
+  border-radius: 6rpx;
+  height: 60rpx; /* Match Cart */
 }
 
 /* 淘宝风格：步进器在弹窗内的样式适配 */
 .mp-sheet .qty-stepper .step.data-v-a911e391 {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 12rpx;
-  background: #fff;
-  border: 1rpx solid #ddd;
+  width: 60rpx; /* Match Cart */
+  height: 60rpx; /* Match Cart */
+  border-radius: 0; /* Remove individual radius */
+  background: transparent;
+  border: none;
+  color: #333;
+  font-size: 32rpx; /* Match Cart */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
 }
+.mp-sheet .qty-stepper .step.data-v-a911e391::after { border: none;
+} /* Remove button border */
 .mp-sheet .qty-stepper .count.data-v-a911e391 {
   width: 80rpx;
   text-align: center;
+  font-size: 28rpx;
+  color: #333;
 }
 @keyframes mpSlideUp-a911e391 {
 from { transform: translateY(100%);
@@ -286,3 +299,42 @@ to { transform: translateY(0);
 }
 
 
+
+/* MP Modifications */
+.mp-info-spacing.data-v-a911e391 {
+  padding: 20rpx 40rpx;
+}
+.mp-section-spacing.data-v-a911e391 {
+  padding: 20rpx 40rpx;
+}
+.mp-price-row.data-v-a911e391 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12rpx;
+}
+.mp-param-row-inline.data-v-a911e391 {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 12rpx;
+  border-top: 1rpx solid #eee;
+  padding-top: 12rpx;
+}
+.mp-param-item.inline.data-v-a911e391 {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0 10rpx;
+  gap: 8rpx;
+}
+.mp-param-item.inline .key.data-v-a911e391 {
+  margin-bottom: 0;
+}
+.mp-param-item.inline .val.data-v-a911e391 {
+  margin-top: 0;
+  text-align: center;
+}

@@ -384,7 +384,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.t($options.selectedTotal.toFixed(2)),
     f: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
     g: common_vendor.t($options.selectedCount),
-    h: $options.selectedCount === 0,
+    h: $options.selectedCount === 0 ? 1 : "",
     i: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
     j: $data.showRoomModal
   }, $data.showRoomModal ? {

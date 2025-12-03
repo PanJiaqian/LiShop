@@ -11,7 +11,7 @@
       <view class="cart-main">
         <view class="toolbar" v-if="cart.length">
           <view class="tool-left">
-            <view class="chk all" @click="toggleAll">
+            <view class="chk all btn-style" @click="toggleAll">
               <view class="chk-ico" :class="{ on: isAllSelected }"></view>
               <text class="chk-txt">全选</text>
             </view>
@@ -105,7 +105,7 @@
     <view v-if="cart.length" class="list">
       <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
         <view class="group-header">
-          <text class="room" @click="openRoomPopup(grp)">{{ grp.name }} ▾</text>
+          <text class="room mp-room" @click="openRoomPopup(grp)">{{ grp.name }} ▾</text>
         </view>
         <view class="item" v-for="it in grp.items" :key="it.id">
           <view class="chk" @click="toggleById(it.id)">
@@ -123,10 +123,10 @@
               <view class="price-box">
                 <text class="price">¥{{ it.price.toFixed(2) }}</text>
               </view>
-              <view class="qty-box">
-                <view class="qty-btn" @click.stop="decById(it.id)">-</view>
+              <view class="qty-box mp-qty-box">
+                <view class="qty-btn mp-qty-btn" @click.stop="decById(it.id)">-</view>
                 <text class="qty-num">{{ it.quantity }}</text>
-                <view class="qty-btn" @click.stop="incById(it.id)">+</view>
+                <view class="qty-btn mp-qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
               <view class="actions-col">
                 <text class="act-txt del" @click.stop="removeById(it.id)">删除</text>
@@ -140,16 +140,15 @@
 
     <view class="footer">
       <view class="actions-left" @click="toggleAll">
-        <view class="chk">
+        <view class="chk btn-style">
           <view class="chk-ico" :class="{ on: isAllSelected }"></view>
           <text class="chk-txt">全选</text>
         </view>
       </view>
       <text>合计：<text class="sum">¥{{ selectedTotal.toFixed(2) }}</text></text>
       <view class="actions">
-        <button size="mini" @click="clear">清空</button>
-        <button size="mini" class="checkout" :disabled="selectedCount === 0" @click="checkout">去结算({{ selectedCount
-          }})</button>
+        <view class="footer-btn" @click="clear">清空</view>
+        <view class="footer-btn" :class="{ disabled: selectedCount === 0 }" @click="checkout">去结算({{ selectedCount }})</view>
       </view>
     </view>
 
@@ -632,6 +631,49 @@ export default {
 .chk-txt {
   margin-left: 8rpx;
   color: #333;
+}
+
+.chk.btn-style {
+  width: auto;
+  padding: 10rpx 20rpx;
+  background: #fff;
+  border: 1rpx solid #ddd;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  margin-right: 10rpx;
+}
+.chk.btn-style .chk-txt {
+  margin-left: 0;
+  font-size: 26rpx;
+  line-height: 1;
+}
+
+.footer .actions {
+  display: flex;
+  align-items: center;
+}
+
+.footer-btn {
+  width: auto;
+  padding: 10rpx 20rpx;
+  background: #fff;
+  border: 1rpx solid #ddd;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  color: #333;
+  margin-left: 10rpx;
+}
+
+.footer-btn.disabled {
+  color: #999;
+  border-color: #eee;
+  background: #f5f5f5;
 }
 
 /* #ifdef H5 */
@@ -1131,4 +1173,24 @@ export default {
 }
 /* #endif */
 
+/* #ifndef H5 */
+.mp-room {
+  margin-left: 30rpx;
+}
+
+.mp-qty-box {
+  height: 60rpx;
+}
+
+.mp-qty-btn {
+  width: 60rpx;
+  height: 60rpx;
+  font-size: 32rpx;
+}
+
+.act-txt.del {
+  font-size: 32rpx;
+  margin-top: 10rpx;
+}
+/* #endif */
 </style>

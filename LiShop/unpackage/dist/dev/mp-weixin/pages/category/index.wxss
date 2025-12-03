@@ -25,10 +25,11 @@
   background: #fff;
 }
 .right-wrap.data-v-3cdc7548 {
-  padding: 20rpx;
+  padding: 20rpx 40rpx;
 }
 .sub-title.data-v-3cdc7548 {
-  font-size: 28rpx;
+  font-size: 33rpx;
+  font-weight: 600;
   color: #333;
   margin-bottom: 12rpx;
 }

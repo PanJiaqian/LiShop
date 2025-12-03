@@ -147,12 +147,21 @@ export default {
   align-items: flex-end;
 }
 .btn-edit, .btn-delete {
-  padding: 10rpx 20rpx;
+  display: inline-block;
+  padding: 10rpx 30rpx;
+  border-radius: 30rpx;
+  border: 1rpx solid #ccc;
+  margin-bottom: 10rpx;
+  text-align: center;
   font-size: 26rpx;
+}
+.btn-edit {
   color: #666;
+  border-color: #ddd;
 }
 .btn-delete {
   color: #e1251b;
+  border-color: #e1251b;
   margin-top: 10rpx;
 }
 .empty-state {
@@ -187,25 +196,8 @@ export default {
   padding-right: 170rpx;
 }
 .btn-add {
-  width: 50%; /* Reduce width */
+  width: 30%; /* Reduce width */
   margin: 0 auto;
-}
-.btn-edit, .btn-delete {
-  display: inline-block;
-  padding: 10rpx 30rpx;
-  border-radius: 30rpx;
-  border: 1rpx solid #ccc;
-  margin-bottom: 10rpx;
-  text-align: center;
-}
-.btn-edit {
-  color: #666;
-  border-color: #ddd;
-}
-.btn-delete {
-  color: #e1251b;
-  border-color: #e1251b;
-  margin-top: 10rpx;
 }
 /* #endif */
 
