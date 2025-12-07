@@ -13,6 +13,8 @@ const _sfc_main = {
       rooms: [],
       showRoomModal: false,
       targetGroup: null,
+      addresses: [],
+      selectedAddress: null,
       summaryData: {
         total_price: 0,
         total_original: 0,
@@ -71,6 +73,7 @@ const _sfc_main = {
   },
   onShow() {
     this.load();
+    this.loadAddresses();
   },
   methods: {
     goBack() {
@@ -80,6 +83,42 @@ const _sfc_main = {
       } else {
         common_vendor.index.switchTab({ url: "/pages/home/index" });
       }
+    },
+    loadAddresses() {
+      api_index.getAddresses().then((res) => {
+        var _a;
+        const raw = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : Array.isArray(res == null ? void 0 : res.items) ? res.items : [];
+        this.addresses = raw.map((a) => ({
+          id: a.addresses_id || a.id || "",
+          receiver: a.receiver || "",
+          phone: a.phone || "",
+          full: [a.province, a.city, a.district, a.detail_address].filter(Boolean).join(" "),
+          is_default: a.is_default === 1
+        }));
+        const cached = common_vendor.index.getStorageSync("selected_address_id") || "";
+        let pick = this.addresses.find((x) => x.id === cached) || this.addresses.find((x) => x.is_default) || this.addresses[0];
+        this.selectedAddress = pick || null;
+      }).catch(() => {
+        this.addresses = [];
+        this.selectedAddress = null;
+      });
+    },
+    openAddressPicker() {
+      if (!this.addresses.length) {
+        common_vendor.index.showToast({ title: "请先添加收货地址", icon: "none" });
+        return;
+      }
+      const items = this.addresses.map((a) => `${a.receiver} ${a.phone} ${a.full}`.trim()).slice(0, 12);
+      common_vendor.index.showActionSheet({ itemList: items, success: (r) => {
+        const addr = this.addresses[r.tapIndex];
+        if (addr) {
+          this.selectedAddress = addr;
+          common_vendor.index.setStorageSync("selected_address_id", addr.id);
+        }
+      } });
+    },
+    toAddressPage() {
+      common_vendor.index.navigateTo({ url: "/pages/address/index" });
     },
     load() {
       api_index.getCartItems().then((res) => {
@@ -260,42 +299,29 @@ const _sfc_main = {
       this.fetchSummary();
     },
     async checkout() {
-      var _a, _b;
+      var _a;
       if (this.selectedCount === 0) {
         common_vendor.index.showToast({ title: "请选择商品", icon: "none" });
         return;
       }
       const selectedIds = this.cart.filter((it) => it.selected).map((it) => it.id);
-      let addresses = [];
-      try {
-        const resAddr = await api_index.getAddresses();
-        const raw = Array.isArray((_a = resAddr == null ? void 0 : resAddr.data) == null ? void 0 : _a.items) ? resAddr.data.items : Array.isArray(resAddr == null ? void 0 : resAddr.items) ? resAddr.items : [];
-        addresses = raw.map((a) => ({ id: a.addresses_id || a.id || "", name: `${a.receiver || ""} ${a.phone || ""} ${a.detail_address || ""}`.trim() }));
-      } catch (e) {
-      }
-      if (!addresses.length) {
-        common_vendor.index.showToast({ title: "请先添加收货地址", icon: "none" });
+      const addressId = ((_a = this.selectedAddress) == null ? void 0 : _a.id) || "";
+      if (!addressId) {
+        common_vendor.index.showToast({ title: "请先选择收货地址", icon: "none" });
         return;
       }
-      const itemNames = addresses.map((a) => a.name || a.id);
-      const choice = await new Promise((resolve) => {
-        common_vendor.index.showActionSheet({ itemList: itemNames.slice(0, 12), success: (r) => resolve(r.tapIndex), fail: () => resolve(-1) });
-      });
-      if (choice < 0)
-        return;
-      const addressId = ((_b = addresses[choice]) == null ? void 0 : _b.id) || "";
       if (!addressId) {
         common_vendor.index.showToast({ title: "地址选择异常", icon: "none" });
         return;
       }
       api_index.createOrderByIds({ ids: selectedIds, address_id: addressId }).then((res) => {
-        var _a2, _b2;
+        var _a2, _b;
         if (res && res.success) {
           common_vendor.index.showToast({ title: "下单成功", icon: "success" });
           this.cart = this.cart.filter((it) => !it.selected);
           this.sync();
           this.fetchSummary();
-          const orderId = ((_a2 = res.data) == null ? void 0 : _a2.order_id) || ((_b2 = res.data) == null ? void 0 : _b2.id);
+          const orderId = ((_a2 = res.data) == null ? void 0 : _a2.order_id) || ((_b = res.data) == null ? void 0 : _b.id);
           if (orderId) {
             setTimeout(() => {
               common_vendor.index.navigateTo({ url: "/pages/order/index?id=" + orderId });
@@ -318,54 +344,14 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "请选择商品", icon: "none" });
         return;
       }
-      const selectedIds = this.cart.filter((it) => it.selected).map((it) => it.id);
+      this.cart.filter((it) => it.selected).map((it) => it.id);
       common_vendor.index.showModal({
         title: "导出提示",
         content: "导出Excel将为您自动生成订单，确认继续？",
         success: (res) => {
           if (res.confirm) {
-            common_vendor.index.showLoading({ title: "正在导出..." });
-            api_index.createOrderByIds({ ids: selectedIds }).then((res2) => {
-              var _a, _b;
-              if (res2 && res2.success) {
-                const orderId = ((_a = res2.data) == null ? void 0 : _a.order_id) || ((_b = res2.data) == null ? void 0 : _b.id);
-                if (orderId) {
-                  api_index.exportOrderExcel({ order_id: orderId }).then((exportRes) => {
-                    common_vendor.index.hideLoading();
-                    if (exportRes && exportRes.url) {
-                      this.cart = this.cart.filter((it) => !it.selected);
-                      this.sync();
-                      this.fetchSummary();
-                      common_vendor.index.downloadFile({
-                        url: exportRes.url,
-                        success: (downloadResult) => {
-                          if (downloadResult.statusCode === 200) {
-                            common_vendor.index.openDocument({
-                              filePath: downloadResult.tempFilePath,
-                              showMenu: true
-                            });
-                          }
-                        }
-                      });
-                    } else {
-                      common_vendor.index.showToast({ title: "未获取到导出链接", icon: "none" });
-                    }
-                  }).catch((e) => {
-                    common_vendor.index.hideLoading();
-                    common_vendor.index.showToast({ title: "导出请求失败", icon: "none" });
-                  });
-                } else {
-                  common_vendor.index.hideLoading();
-                  common_vendor.index.showToast({ title: "订单创建异常", icon: "none" });
-                }
-              } else {
-                common_vendor.index.hideLoading();
-                common_vendor.index.showToast({ title: res2.message || "生成订单失败", icon: "none" });
-              }
-            }).catch((e) => {
-              common_vendor.index.hideLoading();
-              common_vendor.index.showToast({ title: "网络请求失败", icon: "none" });
-            });
+            common_vendor.index.showModal({ title: "提示", content: "小程序暂不支持导出", showCancel: false });
+            return;
           }
         }
       });
@@ -435,9 +421,19 @@ const _sfc_main = {
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: $data.cart.length
+    a: $data.selectedAddress
+  }, $data.selectedAddress ? {
+    b: common_vendor.t($data.selectedAddress.receiver),
+    c: common_vendor.t($data.selectedAddress.phone)
+  } : {}, {
+    d: $data.selectedAddress
+  }, $data.selectedAddress ? {
+    e: common_vendor.t($data.selectedAddress.full)
+  } : {}, {
+    f: common_vendor.o((...args) => $options.openAddressPicker && $options.openAddressPicker(...args)),
+    g: $data.cart.length
   }, $data.cart.length ? {
-    b: common_vendor.f($options.groups, (grp, gi, i0) => {
+    h: common_vendor.f($options.groups, (grp, gi, i0) => {
       return {
         a: common_vendor.t(grp.name),
         b: common_vendor.o(($event) => $options.openRoomPopup(grp), grp.name),
@@ -466,18 +462,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    c: $options.isAllSelected ? 1 : "",
-    d: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
-    e: common_vendor.t($options.selectedTotal.toFixed(2)),
-    f: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
-    g: common_vendor.o((...args) => $options.handleExportExcel && $options.handleExportExcel(...args)),
-    h: common_vendor.t($options.selectedCount),
-    i: $options.selectedCount === 0 ? 1 : "",
-    j: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
-    k: $data.showRoomModal
+    i: $options.isAllSelected ? 1 : "",
+    j: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
+    k: common_vendor.t($options.selectedTotal.toFixed(2)),
+    l: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
+    m: common_vendor.o((...args) => $options.handleExportExcel && $options.handleExportExcel(...args)),
+    n: common_vendor.t($options.selectedCount),
+    o: $options.selectedCount === 0 ? 1 : "",
+    p: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
+    q: $data.showRoomModal
   }, $data.showRoomModal ? {
-    l: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
-    m: common_vendor.f($data.rooms, (r, k0, i0) => {
+    r: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
+    s: common_vendor.f($data.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: r.id,
@@ -485,21 +481,21 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.selectRoom(r), r.id)
       };
     }),
-    n: common_vendor.o(() => {
+    t: common_vendor.o(() => {
     }),
-    o: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
+    v: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
   } : {}, {
-    p: $data.showSpecModal
+    w: $data.showSpecModal
   }, $data.showSpecModal ? {
-    q: $data.editingItem.image || "/static/logo.png",
-    r: common_vendor.t($data.editingItem.price),
-    s: common_vendor.t($data.editingItem.attr),
-    t: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    v: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    w: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    x: common_vendor.o(() => {
+    x: $data.editingItem.image || "/static/logo.png",
+    y: common_vendor.t($data.editingItem.price),
+    z: common_vendor.t($data.editingItem.attr),
+    A: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    B: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    C: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    D: common_vendor.o(() => {
     }),
-    y: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
+    E: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-8039fbf1"]]);

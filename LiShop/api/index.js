@@ -17,12 +17,15 @@ function toQuery(params) {
     if (v === undefined || v === null || v === '') return
     if (k === 'ids') {
       if (Array.isArray(v)) {
-        const raw = '[' + v.join(',') + ']'
+        const raw = '[' + v.map((x) => '"' + String(x) + '"').join(',') + ']'
         arr.push(k + '=' + raw)
         return
       }
       if (typeof v === 'string') {
-        const raw = v.startsWith('[') ? v.replace(/"/g, '') : v
+        // Keep quotes for array-string form; if comma-separated, wrap each with quotes
+        const raw = v.startsWith('[')
+          ? v
+          : ('[' + v.split(',').map(s => '"' + s.replace(/\[|\]|"/g, '').trim() + '"').join(',') + ']')
         arr.push(k + '=' + raw)
         return
       }
@@ -937,11 +940,30 @@ export function exportOrderExcel(options = {}) {
       url,
       method: 'GET',
       header,
+      responseType: 'arraybuffer',
       success: (res) => {
-        let data = res?.data
-        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
-        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
-        else reject(res)
+        const ok = res && res.statusCode >= 200 && res.statusCode < 300
+        if (!ok) { reject(res); return }
+        const ct = (res && res.header && (res.header['content-type'] || res.header['Content-Type'])) || ''
+        const cd = (res && res.header && (res.header['content-disposition'] || res.header['Content-Disposition'])) || ''
+        const isBinary = ct && (ct.includes('application') || ct.includes('octet-stream'))
+        if (isBinary && res.data) {
+          let filename = ''
+          try {
+            const m = cd && cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i)
+            if (m) filename = decodeURIComponent(m[1] || m[2] || '')
+          } catch (e) {}
+          try {
+            const blob = (typeof Blob !== 'undefined') ? new Blob([res.data], { type: ct || 'application/octet-stream' }) : res.data
+            resolve({ success: true, blob, filename })
+          } catch (e) {
+            resolve({ success: true, data: res.data, filename })
+          }
+        } else {
+          let data = res?.data
+          if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+          resolve(data)
+        }
       },
       fail: (err) => reject(err)
     })

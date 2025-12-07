@@ -25,7 +25,7 @@
             <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
             <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
             <view class="pd-param-item inline-params">
-              <view class="sub-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—'
+              <view class="sub-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin ? product.shipping_origin.replace(/省|市/g, '') : '—'
                   }}</text></view>
               <view class="sub-item"><text class="key">单位</text><text class="val">件</text></view>
               <view class="sub-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
@@ -152,7 +152,7 @@
         <view class="mp-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
         <view class="mp-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
         <view class="mp-param-row-inline">
-          <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin ||
+          <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin ? product.shipping_origin.replace(/省|市/g, '') :
               '—' }}</text></view>
           <view class="mp-param-item inline"><text class="key">单位</text><text class="val">件</text></view>
           <view class="mp-param-item inline"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
@@ -1374,19 +1374,21 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   border: none;
   padding: 0 10rpx;
-  gap: 8rpx;
+  gap: 4rpx;
 }
 
 .mp-param-item.inline .key {
   margin-bottom: 0;
+  white-space: nowrap;
 }
 
 .mp-param-item.inline .val {
   margin-top: 0;
   text-align: center;
+  white-space: nowrap;
 }
 /* #ifdef MP-WEIXIN */
 .mp-param-grid {
@@ -1395,7 +1397,7 @@ export default {
 }
 
 .mp-param-item .key {
-  min-width: 160rpx;
+  min-width: 120rpx;
   display: inline-block;
 }
 /* #endif */

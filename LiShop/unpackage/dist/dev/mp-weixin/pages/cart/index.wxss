@@ -483,6 +483,20 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 新版商品卡片样式 */
 .row-title.data-v-8039fbf1 {
   display: -webkit-box;
@@ -634,6 +648,24 @@
 .spec-btn.cancel.data-v-8039fbf1 { background: #fff; border: 1rpx solid #ddd; color: #333;
 }
 .spec-btn.confirm.data-v-8039fbf1 { background: #e1251b; color: #fff; border: none;
+}
+.mp-address-bar.data-v-8039fbf1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 20rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.bar-left.data-v-8039fbf1 { display: flex; align-items: center; gap: 12rpx;
+}
+.addr-icon.data-v-8039fbf1 { font-size: 28rpx;
+}
+.bar-info.data-v-8039fbf1 { display: flex; flex-direction: column; font-size: 24rpx; color: #555;
+}
+.bar-line.data-v-8039fbf1 { white-space: nowrap;
+}
+.bar-btn.data-v-8039fbf1 { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx;
 }
 .mp-room.data-v-8039fbf1 {
   margin: 0 30rpx;

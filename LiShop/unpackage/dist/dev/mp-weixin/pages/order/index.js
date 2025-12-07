@@ -42,15 +42,20 @@ const _sfc_main = {
     },
     async exportExcel(order) {
       try {
+        common_vendor.index.showModal({ title: "提示", content: "小程序暂不支持导出", showCancel: false });
+        return;
         common_vendor.index.showLoading({ title: "请求导出" });
         const res = await api_index.exportOrderExcel({ order_id: order.id });
         common_vendor.index.hideLoading();
         if (res.success) {
           const msg = res.message || "导出请求已发送";
           common_vendor.index.showToast({ title: msg, icon: "success" });
-          if (res.data && (res.data.url || typeof res.data === "string" && res.data.startsWith("http"))) {
-            const url = res.data.url || res.data;
+          const possibleUrl = res && res.url || res && res.data && res.data.url || (res && res.data && typeof res.data === "string" ? res.data : "");
+          if (possibleUrl && typeof possibleUrl === "string") {
+            const url = possibleUrl;
             common_vendor.index.setClipboardData({ data: url, success: () => common_vendor.index.showToast({ title: "下载链接已复制", icon: "none" }) });
+          } else {
+            common_vendor.index.showToast({ title: "未获取到导出链接", icon: "none" });
           }
         } else {
           common_vendor.index.showToast({ title: res.message || "导出失败", icon: "none" });

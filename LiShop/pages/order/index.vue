@@ -118,20 +118,42 @@ export default {
     },
     async exportExcel(order) {
       try {
+        // #ifdef MP-WEIXIN
+        uni.showModal({ title: '提示', content: '小程序暂不支持导出', showCancel: false })
+        return
+        // #endif
         uni.showLoading({ title: '请求导出' })
         const res = await exportOrderExcel({ order_id: order.id })
         uni.hideLoading()
         if (res.success) {
             const msg = res.message || '导出请求已发送'
             uni.showToast({ title: msg, icon: 'success' })
-            if (res.data && (res.data.url || (typeof res.data === 'string' && res.data.startsWith('http')))) {
-                const url = res.data.url || res.data
+            // #ifdef H5
+            if (res.blob) {
+                try {
+                  const url = URL.createObjectURL(res.blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = res.filename || '订单导出.xlsx'
+                  document.body.appendChild(a)
+                  a.click()
+                  a.remove()
+                  try { URL.revokeObjectURL(url) } catch (e) {}
+                  return
+                } catch (e) {}
+            }
+            // #endif
+            const possibleUrl = (res && res.url) || (res && res.data && res.data.url) || (res && res.data && typeof res.data === 'string' ? res.data : '')
+            if (possibleUrl && typeof possibleUrl === 'string') {
+                const url = possibleUrl
                 // #ifdef H5
-                window.location.href = url
+                try { window.open(url, '_blank') } catch (e) { window.location.href = url }
                 // #endif
                 // #ifndef H5
                 uni.setClipboardData({ data: url, success: () => uni.showToast({ title: '下载链接已复制', icon: 'none' }) })
                 // #endif
+            } else {
+                uni.showToast({ title: '未获取到导出链接', icon: 'none' })
             }
         } else {
             uni.showToast({ title: res.message || '导出失败', icon: 'none' })

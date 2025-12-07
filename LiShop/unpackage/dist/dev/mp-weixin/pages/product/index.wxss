@@ -352,24 +352,26 @@ to {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   border: none;
   padding: 0 10rpx;
-  gap: 8rpx;
+  gap: 4rpx;
 }
 .mp-param-item.inline .key.data-v-a911e391 {
   margin-bottom: 0;
+  white-space: nowrap;
 }
 .mp-param-item.inline .val.data-v-a911e391 {
   margin-top: 0;
   text-align: center;
+  white-space: nowrap;
 }
 .mp-param-grid.data-v-a911e391 {
   width: 100%;
   margin: 0 auto;
 }
 .mp-param-item .key.data-v-a911e391 {
-  min-width: 160rpx;
+  min-width: 120rpx;
   display: inline-block;
 }
 

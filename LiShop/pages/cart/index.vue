@@ -49,6 +49,18 @@
       </view>
 
       <view class="cart-aside">
+        <view class="address-card">
+          <view class="addr-title">收货地址</view>
+          <view v-if="selectedAddress" class="addr-body">
+            <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
+            <text class="addr-line">{{ selectedAddress.full }}</text>
+          </view>
+          <view v-else class="addr-empty">未选择收货地址</view>
+          <view class="addr-actions">
+            <button size="mini" class="addr-btn" @click="openAddressPicker">选择地址</button>
+            <!-- <button size="mini" class="addr-btn" @click="toAddressPage">管理地址</button> -->
+          </view>
+        </view>
         <view class="summary-card">
           <view class="sum-title">结算明细</view>
           <view class="sum-hint">实际优惠金额以下单页为准</view>
@@ -107,6 +119,17 @@
     <!-- #endif -->
 
     <!-- #ifndef H5 -->
+    <view class="mp-address-bar">
+      <view class="bar-left">
+        <text class="addr-icon">📍</text>
+        <view class="bar-info">
+          <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
+          <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.full }}</text>
+          <text v-else class="bar-line">未选择收货地址</text>
+        </view>
+      </view>
+      <button size="mini" class="bar-btn" @click="openAddressPicker">选择收货地址</button>
+    </view>
     <view v-if="cart.length" class="list">
       <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
         <view class="group-header">
@@ -239,6 +262,8 @@ export default {
       rooms: [],
       showRoomModal: false,
       targetGroup: null,
+      addresses: [],
+      selectedAddress: null,
       summaryData: {
         total_price: 0,
         total_original: 0,
@@ -280,6 +305,7 @@ export default {
   },
   onShow() {
     this.load()
+    this.loadAddresses()
     // #ifdef H5
     try { uni.hideTabBar({ animation: false }) } catch (e) { }
     // #endif
@@ -293,6 +319,30 @@ export default {
         uni.switchTab({ url: '/pages/home/index' })
       }
     },
+    loadAddresses() {
+      getAddresses().then(res => {
+        const raw = Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.items) ? res.items : [])
+        this.addresses = raw.map(a => ({
+          id: a.addresses_id || a.id || '',
+          receiver: a.receiver || '',
+          phone: a.phone || '',
+          full: [a.province, a.city, a.district, a.detail_address].filter(Boolean).join(' '),
+          is_default: a.is_default === 1
+        }))
+        const cached = uni.getStorageSync('selected_address_id') || ''
+        let pick = this.addresses.find(x => x.id === cached) || this.addresses.find(x => x.is_default) || this.addresses[0]
+        this.selectedAddress = pick || null
+      }).catch(() => { this.addresses = []; this.selectedAddress = null })
+    },
+    openAddressPicker() {
+      if (!this.addresses.length) { uni.showToast({ title: '请先添加收货地址', icon: 'none' }); return }
+      const items = this.addresses.map(a => `${a.receiver} ${a.phone} ${a.full}`.trim()).slice(0, 12)
+      uni.showActionSheet({ itemList: items, success: (r) => {
+        const addr = this.addresses[r.tapIndex]
+        if (addr) { this.selectedAddress = addr; uni.setStorageSync('selected_address_id', addr.id) }
+      } })
+    },
+    toAddressPage() { uni.navigateTo({ url: '/pages/address/index' }) },
     load() {
       getCartItems()
         .then((res) => {
@@ -449,19 +499,8 @@ export default {
     async checkout() {
       if (this.selectedCount === 0) { uni.showToast({ title: '请选择商品', icon: 'none' }); return }
       const selectedIds = this.cart.filter(it => it.selected).map(it => it.id)
-      let addresses = []
-      try {
-        const resAddr = await getAddresses()
-        const raw = Array.isArray(resAddr?.data?.items) ? resAddr.data.items : (Array.isArray(resAddr?.items) ? resAddr.items : [])
-        addresses = raw.map(a => ({ id: a.addresses_id || a.id || '', name: `${a.receiver || ''} ${a.phone || ''} ${a.detail_address || ''}`.trim() }))
-      } catch (e) {}
-      if (!addresses.length) { uni.showToast({ title: '请先添加收货地址', icon: 'none' }); return }
-      const itemNames = addresses.map(a => a.name || a.id)
-      const choice = await new Promise((resolve) => {
-        uni.showActionSheet({ itemList: itemNames.slice(0, 12), success: (r) => resolve(r.tapIndex), fail: () => resolve(-1) })
-      })
-      if (choice < 0) return
-      const addressId = addresses[choice]?.id || ''
+      const addressId = this.selectedAddress?.id || ''
+      if (!addressId) { uni.showToast({ title: '请先选择收货地址', icon: 'none' }); return }
       if (!addressId) { uni.showToast({ title: '地址选择异常', icon: 'none' }); return }
 
       createOrderByIds({ ids: selectedIds, address_id: addressId }).then(res => {
@@ -502,30 +541,41 @@ export default {
         content: '导出Excel将为您自动生成订单，确认继续？',
         success: (res) => {
           if (res.confirm) {
+            // #ifdef MP-WEIXIN
+            uni.showModal({ title: '提示', content: '小程序暂不支持导出', showCancel: false })
+            return
+            // #endif
             uni.showLoading({ title: '正在导出...' })
-            createOrderByIds({ ids: selectedIds }).then(res => {
+            createOrderByIds({ ids: selectedIds, address_id: (this.selectedAddress && this.selectedAddress.id) || '' }).then(res => {
               if (res && res.success) {
                 const orderId = res.data?.order_id || res.data?.id
                 if (orderId) {
                    exportOrderExcel({ order_id: orderId }).then(exportRes => {
                      uni.hideLoading()
-                     if (exportRes && exportRes.url) {
+                     // #ifdef H5
+                     if (exportRes && exportRes.blob) {
+                       try {
+                         const url = URL.createObjectURL(exportRes.blob)
+                         const a = document.createElement('a')
+                         a.href = url
+                         a.download = exportRes.filename || '订单导出.xlsx'
+                         document.body.appendChild(a)
+                         a.click()
+                         a.remove()
+                         try { URL.revokeObjectURL(url) } catch (e) {}
+                         this.cart = this.cart.filter(it => !it.selected); this.sync(); this.fetchSummary()
+                         return
+                       } catch (e) {}
+                     }
+                     // #endif
+                     const possibleUrl = (exportRes && exportRes.url) || (exportRes && exportRes.data && exportRes.data.url) || (exportRes && exportRes.data && typeof exportRes.data === 'string' ? exportRes.data : '')
+                     if (possibleUrl && typeof possibleUrl === 'string') {
                        this.cart = this.cart.filter(it => !it.selected); this.sync(); this.fetchSummary()
                        // #ifdef H5
-                       window.location.href = exportRes.url
+                       try { window.open(possibleUrl, '_blank') } catch (e) { window.location.href = possibleUrl }
                        // #endif
                        // #ifndef H5
-                       uni.downloadFile({
-                         url: exportRes.url,
-                         success: (downloadResult) => {
-                           if (downloadResult.statusCode === 200) {
-                             uni.openDocument({
-                               filePath: downloadResult.tempFilePath,
-                               showMenu: true
-                             })
-                           }
-                         }
-                       })
+                       uni.setClipboardData({ data: possibleUrl, success: () => uni.showToast({ title: '下载链接已复制', icon: 'none' }) })
                        // #endif
                      } else {
                        uni.showToast({ title: '未获取到导出链接', icon: 'none' })
@@ -955,6 +1005,20 @@ export default {
 
 .cart-aside {}
 
+.address-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,.06);
+  border: 1rpx solid #eee;
+  margin-bottom: 20rpx;
+}
+.addr-title { font-weight: 600; color: #333; font-size: 28rpx; }
+.addr-body { margin-top: 8rpx; color: #555; font-size: 24rpx; display: flex; flex-direction: column; gap: 6rpx; }
+.addr-empty { margin-top: 8rpx; color: #999; font-size: 24rpx; }
+.addr-actions { margin-top: 12rpx; display: flex; gap: 12rpx; }
+.addr-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; }
+
 .summary-card {
   position: relative;
   background: #fff;
@@ -1338,6 +1402,19 @@ export default {
 /* #endif */
 
 /* #ifndef H5 */
+.mp-address-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 20rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.bar-left { display: flex; align-items: center; gap: 12rpx; }
+.addr-icon { font-size: 28rpx; }
+.bar-info { display: flex; flex-direction: column; font-size: 24rpx; color: #555; }
+.bar-line { white-space: nowrap; }
+.bar-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; }
 .mp-room {
   margin: 0 30rpx;
   background: #fff9f5;

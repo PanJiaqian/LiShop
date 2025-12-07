@@ -304,7 +304,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.t($data.product.sales),
     f: common_vendor.t($data.product.id || "默认款"),
     g: common_vendor.t($data.product.title),
-    h: common_vendor.t($data.product.shipping_origin || "—"),
+    h: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
     i: common_vendor.t($data.product.price.toFixed(2)),
     j: common_vendor.f($data.product.details_images, (src, i, i0) => {
       return {
