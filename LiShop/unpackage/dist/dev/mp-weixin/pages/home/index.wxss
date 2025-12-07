@@ -86,16 +86,12 @@
 
 /* H5：右侧展开的子分类面板样式 */
 .sub-panel.data-v-4978fed5 {
-  position: absolute;
-  top: 20rpx;         /* 与顶部更远 */
-  left: 0rpx;        /* 增加左侧间距，避免贴边 */
-  right: 0rpx;       /* 增加右侧间距，远离右栏 */
-  z-index: 10;
+  position: fixed;
+  z-index: 1000;
   background-color: #fff;
   border-radius: 12rpx;
   box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.08);
-  border: 1.5rpx solid #e1251b;            /* 美观边框 */
-  /* 固定高度同时适配不同屏幕 */
+  border: 1.5rpx solid #e1251b;
   height: clamp(240rpx, 38vh, 560rpx);
   max-height: 60vh;
   overflow-y: auto;
@@ -125,4 +121,16 @@
   color: #888;
   text-align: center;
   padding: 20rpx 0;
+}
+
+
+.mp-cate-nav.data-v-4978fed5 { white-space: nowrap; padding: 12rpx 20rpx; background: #fff; position: -webkit-sticky; position: sticky; top: 0; z-index: 50;
+}
+.mp-cate-item.data-v-4978fed5 { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 14rpx 18rpx; margin-right: 12rpx; border-radius: 16rpx; background: #fff; color: #333; font-size: 26rpx; box-shadow: 0 4rpx 12rpx rgba(0,0,0,.04);
+}
+.mp-cate-thumb.data-v-4978fed5 { width: 96rpx; height: 96rpx; background: #f5f5f5; border-radius: 12rpx;
+}
+.mp-cate-name.data-v-4978fed5 { margin-top: 8rpx;
+}
+.mp-cate-item.active.data-v-4978fed5 { background: #ffe9e3; color: #ff5000;
 }

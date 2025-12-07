@@ -357,7 +357,12 @@ export default {
   background: #fff;
   border-radius: 24rpx;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
+  margin: 20rpx 0 0 0;
+  box-sizing: border-box;
+  width: 100%;
+  /* #ifdef MP-WEIXIN */
   margin-top: 20rpx;
+  /* #endif */
 }
 
 .avatar {
@@ -389,7 +394,7 @@ export default {
 }
 
 .menu {
-  margin: 24rpx;
+  margin: 24rpx 0;
   background: #fff;
   border-radius: 16rpx;
   overflow: hidden;
@@ -397,7 +402,7 @@ export default {
 }
 
 .info-card {
-  margin: 24rpx;
+  margin: 24rpx 0;
   background: #fff;
   border-radius: 16rpx;
   overflow: hidden;
@@ -566,7 +571,7 @@ export default {
   left: 0;
   width: 100%;
   height: 88rpx;
-  padding: 0 40rpx;
+  padding: 0 600rpx;
   z-index: 100;
   box-sizing: border-box;
   display: flex;

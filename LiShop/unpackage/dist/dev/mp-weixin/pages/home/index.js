@@ -25,7 +25,10 @@ const _sfc_main = {
         { id: "s3", title: "爆款秒杀3", price: 59, image: "/static/logo.png" }
       ],
       recommendList: [],
-      pinnedByClick: false
+      pinnedByClick: false,
+      panelTop: 20,
+      panelLeft: 0,
+      panelRight: 0
     };
   },
   onShow() {
@@ -35,7 +38,7 @@ const _sfc_main = {
         const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
         const mapped = items.map((it, i) => ({
           name: (it == null ? void 0 : it.name) || "分类" + (i + 1),
-          icon: "",
+          icon: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : ""),
           categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || ""
         }));
         this.topCategories = mapped;
@@ -43,9 +46,14 @@ const _sfc_main = {
       }).catch(() => {
       });
       api_index.getRecommendedProducts({ page: 1, page_size: 20 }).then((res) => {
-        var _a;
-        const carousel = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.carousel) ? res.data.carousel : [];
-        const mapped = carousel.map((it, i) => ({
+        var _a, _b, _c;
+        const carousel = ((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.carousel) && Array.isArray(res.data.carousel) ? res.data.carousel : ((_b = res == null ? void 0 : res.data) == null ? void 0 : _b.carousel) && Array.isArray(res.data.carousel.items) ? res.data.carousel.items : [];
+        this.banners = carousel.map((it) => {
+          const img = typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "";
+          return { image: img || "/static/logo.png", id: (it == null ? void 0 : it.available_product_id) || "" };
+        });
+        const fixed = ((_c = res == null ? void 0 : res.data) == null ? void 0 : _c.fixed) && Array.isArray(res.data.fixed.items) ? res.data.fixed.items : [];
+        const mapped = fixed.map((it, i) => ({
           id: (it == null ? void 0 : it.available_product_id) || "p" + i,
           title: (it == null ? void 0 : it.name) || "推荐商品 " + (i + 1),
           price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
@@ -64,7 +72,7 @@ const _sfc_main = {
     }, 600);
   },
   methods: {
-    hoverCategory(cat) {
+    hoverCategory(cat, e) {
       if (this.pinnedByClick)
         return;
       const id = (cat == null ? void 0 : cat.categories_id) || "";
@@ -80,11 +88,11 @@ const _sfc_main = {
         api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id", categories_id: id }).then((res) => {
           var _a;
           const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
-          this.leftChildren = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "" }));
+          this.leftChildren = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "", icon: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : "") }));
         }).catch(() => {
           this.leftChildren = [];
         });
-      } catch (e) {
+      } catch (e2) {
         this.leftChildren = [];
       }
     },
@@ -95,7 +103,7 @@ const _sfc_main = {
       this.activeCateName = "";
       this.leftChildren = [];
     },
-    toggleCategoryByClick(cat) {
+    toggleCategoryByClick(cat, e) {
       const id = (cat == null ? void 0 : cat.categories_id) || "";
       if (!id) {
         common_vendor.index.showToast({ title: "分类缺少ID", icon: "none" });
@@ -115,11 +123,11 @@ const _sfc_main = {
         api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id", categories_id: id }).then((res) => {
           var _a;
           const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
-          this.leftChildren = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "" }));
+          this.leftChildren = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "", icon: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : "") }));
         }).catch(() => {
           this.leftChildren = [];
         });
-      } catch (e) {
+      } catch (e2) {
         this.leftChildren = [];
       }
     },
@@ -207,9 +215,8 @@ const _sfc_main = {
 if (!Array) {
   const _component_SearchBar = common_vendor.resolveComponent("SearchBar");
   const _component_BannerSwiper = common_vendor.resolveComponent("BannerSwiper");
-  const _component_CategoryGrid = common_vendor.resolveComponent("CategoryGrid");
   const _component_ProductCard = common_vendor.resolveComponent("ProductCard");
-  (_component_SearchBar + _component_BannerSwiper + _component_CategoryGrid + _component_ProductCard)();
+  (_component_SearchBar + _component_BannerSwiper + _component_ProductCard)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
@@ -221,12 +228,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: common_vendor.p({
       images: $data.banners
     }),
-    e: common_vendor.p({
-      categories: $data.subCategoryList
+    e: common_vendor.f($data.subCategoryList, (c, i, i0) => {
+      return {
+        a: c.icon || "/static/logo.png",
+        b: common_vendor.t(c.name),
+        c: "mc" + i,
+        d: common_vendor.o(($event) => $options.openCategory(c), "mc" + i)
+      };
     }),
     f: common_vendor.f($data.recommendList, (p, idx, i0) => {
       return {
-        a: "4978fed5-3-" + i0,
+        a: "4978fed5-2-" + i0,
         b: common_vendor.p({
           product: p
         }),

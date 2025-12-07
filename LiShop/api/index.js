@@ -13,8 +13,23 @@ function getBearer(token) {
 function toQuery(params) {
   const arr = []
   Object.keys(params || {}).forEach((k) => {
-    const v = params[k]
+    let v = params[k]
     if (v === undefined || v === null || v === '') return
+    if (k === 'ids') {
+      if (Array.isArray(v)) {
+        const raw = '[' + v.join(',') + ']'
+        arr.push(k + '=' + raw)
+        return
+      }
+      if (typeof v === 'string') {
+        const raw = v.startsWith('[') ? v.replace(/"/g, '') : v
+        arr.push(k + '=' + raw)
+        return
+      }
+    }
+    if (typeof v === 'object') {
+      try { v = JSON.stringify(v) } catch (e) { }
+    }
     arr.push(encodeURIComponent(k) + '=' + encodeURIComponent(v))
   })
   return arr.join('&')
@@ -236,11 +251,11 @@ export function getProductSpecs(options = {}) {
     available_product_id,
     length,
     quantity,
-    color_temperature,
+    inventory,
+    has_length,
     token
   } = options
-
-  const query = toQuery({ page, page_size, sort_by, sort_order, available_product_id, length, quantity, color_temperature })
+  const query = toQuery({ page, page_size, sort_by, sort_order, available_product_id, length, quantity, inventory, has_length })
   const url = `${BASE_URL}/api/products/get${query ? `?${query}` : ''}`
 
   return new Promise((resolve, reject) => {
@@ -381,8 +396,8 @@ export function getRooms(options = {}) {
  * @param {Object} options { room_id: string, room_name?: string, product_id: string, length?: number, quantity?: number, color?: string, note?: string, token?: string }
  */
 export function addCartItem(options = {}) {
-  const { room_id, room_name, product_id, length, quantity, color, note, token } = options
-  const query = toQuery({ room_id, room_name, product_id, length, quantity, color, note })
+  const { room_id, product_id, length, quantity, color, note, token } = options
+  const query = toQuery({ room_id, product_id, length, quantity, color, note })
   const url = `${BASE_URL}/api/cart/items${query ? `?${query}` : ''}`
 
   return new Promise((resolve, reject) => {
@@ -717,5 +732,221 @@ export function clearCart(options = {}) {
   })
 }
 
-export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress }
+export function getPendingPaymentOrders(options = {}) {
+  const { token } = options
+  const url = `${BASE_URL}/api/user/orders/pending_payment`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function getPendingShipmentOrders(options = {}) {
+  const { token } = options
+  const url = `${BASE_URL}/api/user/orders/pending_shipment`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function getPendingReceiptOrders(options = {}) {
+  const { token } = options
+  const url = `${BASE_URL}/api/user/orders/pending_receipt`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function getHistoryOrders(options = {}) {
+  const { token } = options
+  const url = `${BASE_URL}/api/user/orders/history`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function getOrderDetail(options = {}) {
+  const { order_id, token } = options
+  const query = toQuery({ order_id })
+  const url = `${BASE_URL}/api/user/orders/detail${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function confirmOrderReceipt(options = {}) {
+  const { order_id, token } = options
+  const query = toQuery({ order_id })
+  const url = `${BASE_URL}/api/user/orders/confirm_receipt${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function createOrderByIds(options = {}) {
+  const { ids, address_id, note, token } = options
+  const query = toQuery({ ids, address_id, note })
+  const url = `${BASE_URL}/api/orders/create_by_ids${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function cancelOrder(options = {}) {
+  const { order_id, token } = options
+  const query = toQuery({ order_id })
+  const url = `${BASE_URL}/api/orders/cancel${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function getCartItemsByIDs(options = {}) {
+  const { ids, token } = options
+  const query = toQuery({ ids })
+  const url = `${BASE_URL}/api/cart/items/detail${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function exportOrderExcel(options = {}) {
+  const { order_id, token } = options
+  const query = toQuery({ order_id })
+  const url = `${BASE_URL}/api/user/orders/export_pending_excel${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress, getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, createOrderByIds, cancelOrder, getCartItemsByIDs, exportOrderExcel }
 

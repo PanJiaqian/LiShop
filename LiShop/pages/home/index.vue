@@ -6,7 +6,8 @@
       <view class="side-cate" @mouseleave="closeCategory">
         <view class="cate-title">全部分类</view>
         <view class="cate-list">
-          <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c)" @click="toggleCategoryByClick(c)">
+          <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)"
+            @click="toggleCategoryByClick(c, $event)">
             <text class="dot">•</text>
             <text class="cate-name">{{ c.name }}</text>
           </view>
@@ -18,7 +19,7 @@
         <BannerSwiper :images="banners" />
 
         <!-- #ifdef H5 -->
-        <view v-if="activeCateId" class="sub-panel" @mouseleave="closeCategory">
+        <view v-if="activeCateId" class="sub-panel" :style="{ top: panelTop + 'px', left: panelLeft + 'px', right: panelRight + 'px' }" @mouseleave="closeCategory">
           <view class="panel-title">
             <text>{{ activeCateName || '二级分类' }}</text>
           </view>
@@ -78,7 +79,12 @@
     <!-- #ifndef H5 -->
     <SearchBar v-model="keyword" @search="onSearch" />
     <BannerSwiper :images="banners" />
-    <CategoryGrid :categories="subCategoryList" />
+    <scroll-view class="mp-cate-nav" scroll-x>
+      <view class="mp-cate-item" v-for="(c,i) in subCategoryList" :key="'mc'+i" @click="openCategory(c)">
+        <image class="mp-cate-thumb" :src="c.icon || '/static/logo.png'" mode="aspectFit" />
+        <text class="mp-cate-name">{{ c.name }}</text>
+      </view>
+    </scroll-view>
     <!-- 京东秒杀模块（非 H5，小程序端）已按要求注释 -->
     <!--
     <view class="block">
@@ -137,6 +143,9 @@ export default {
       ],
       recommendList: []
       , pinnedByClick: false
+      , panelTop: 20
+      , panelLeft: 0
+      , panelRight: 0
     }
   },
   onShow() {
@@ -152,17 +161,24 @@ export default {
           const items = Array.isArray(res?.data?.items) ? res.data.items : []
           const mapped = items.map((it, i) => ({
             name: it?.name || ('分类' + (i + 1)),
-            icon: '',
+            icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : ''),
             categories_id: it?.categories_id || it?.id || ''
           }))
           this.topCategories = mapped
           this.subCategoryList = mapped
         })
-        .catch(() => {})
+        .catch(() => { })
       getRecommendedProducts({ page: 1, page_size: 20 })
         .then((res) => {
-          const carousel = Array.isArray(res?.data?.carousel) ? res.data.carousel : []
-          const mapped = carousel.map((it, i) => ({
+          const carousel = (res?.data?.carousel && Array.isArray(res.data.carousel)) ? res.data.carousel 
+              : ((res?.data?.carousel && Array.isArray(res.data.carousel.items)) ? res.data.carousel.items : [])
+          this.banners = carousel.map(it => {
+             const img = (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '')
+             return { image: img || '/static/logo.png', id: it?.available_product_id || '' }
+          })
+
+          const fixed = ((res?.data?.fixed && Array.isArray(res.data.fixed.items)) ? res.data.fixed.items : [])
+          const mapped = fixed.map((it, i) => ({
             id: it?.available_product_id || ('p' + i),
             title: it?.name || ('推荐商品 ' + (i + 1)),
             price: Number(it?.price ?? 0) || 0,
@@ -171,25 +187,37 @@ export default {
           }))
           this.recommendList = mapped
         })
-        .catch(() => {})
-    } catch (e) {}
+        .catch(() => { })
+    } catch (e) { }
   },
   onPullDownRefresh() {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
   },
   methods: {
-    hoverCategory(cat) {
+    hoverCategory(cat, e) {
       if (this.pinnedByClick) return
       const id = cat?.categories_id || ''
       if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
       if (this.activeCateId === id && (this.leftChildren && this.leftChildren.length)) return
       this.activeCateId = id
       this.activeCateName = cat?.name || ''
+      // #ifdef H5
+      try {
+        const main = document.querySelector('.main')
+        if (main && e && e.clientY != null) {
+          const rect = main.getBoundingClientRect()
+          const y = e.clientY - rect.top
+          this.panelTop = Math.max(20, Math.min(y - 40, rect.height - 200))
+          this.panelLeft = rect.left
+          this.panelRight = Math.max(0, document.documentElement.clientWidth - rect.right)
+        }
+      } catch (err) {}
+      // #endif
       try {
         getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
           .then((res) => {
             const items = Array.isArray(res?.data?.items) ? res.data.items : []
-            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '' }))
+            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '', icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : '' ) }))
           })
           .catch(() => { this.leftChildren = [] })
       } catch (e) { this.leftChildren = [] }
@@ -200,7 +228,7 @@ export default {
       this.activeCateName = ''
       this.leftChildren = []
     },
-    toggleCategoryByClick(cat) {
+    toggleCategoryByClick(cat, e) {
       const id = cat?.categories_id || ''
       if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
       if (this.pinnedByClick && this.activeCateId === id) {
@@ -213,11 +241,23 @@ export default {
       this.pinnedByClick = true
       this.activeCateId = id
       this.activeCateName = cat?.name || ''
+      // #ifdef H5
+      try {
+        const main = document.querySelector('.main')
+        if (main && e && e.clientY != null) {
+          const rect = main.getBoundingClientRect()
+          const y = e.clientY - rect.top
+          this.panelTop = Math.max(20, Math.min(y - 40, rect.height - 200))
+          this.panelLeft = rect.left
+          this.panelRight = Math.max(0, document.documentElement.clientWidth - rect.right)
+        }
+      } catch (err) {}
+      // #endif
       try {
         getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
           .then((res) => {
             const items = Array.isArray(res?.data?.items) ? res.data.items : []
-            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '' }))
+            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '', icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : '' ) }))
           })
           .catch(() => { this.leftChildren = [] })
       } catch (e) { this.leftChildren = [] }
@@ -395,7 +435,7 @@ export default {
   background: #fff;
   border-radius: 12rpx;
   padding: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .sub-cat-name {
@@ -408,8 +448,13 @@ export default {
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: #ffffff;    /* 中间部分背景占满剩余高度 */
+  background: #ffffff;
 }
+/* #ifdef H5 */
+.main::-webkit-scrollbar { width: 0; height: 0; }
+.main { scrollbar-width: none; -ms-overflow-style: none; }
+/* #endif */
+ 
 
 .side-user {
   height: 100%;
@@ -482,15 +527,19 @@ export default {
   padding: 26rpx 40rpx;
   margin: 0 80rpx;
 }
+
 .main :deep(.search-input) {
   padding: 18rpx 28rpx;
 }
+
 .main :deep(.icon) {
   font-size: 34rpx;
 }
+
 .main :deep(.input) {
   font-size: 32rpx;
 }
+
 .main :deep(.swiper) {
   height: 500rpx;
 }
@@ -608,40 +657,41 @@ export default {
 
 /* H5：右侧展开的子分类面板样式 */
 .sub-panel {
-  position: absolute;
-  top: 20rpx;         /* 与顶部更远 */
-  left: 0rpx;        /* 增加左侧间距，避免贴边 */
-  right: 0rpx;       /* 增加右侧间距，远离右栏 */
-  z-index: 10;
+  position: fixed;
+  z-index: 1000;
   background-color: #fff;
   border-radius: 12rpx;
   box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.08);
-  border: 1.5rpx solid #e1251b;            /* 美观边框 */
-  /* 固定高度同时适配不同屏幕 */
+  border: 1.5rpx solid #e1251b;
   height: clamp(240rpx, 38vh, 560rpx);
   max-height: 60vh;
   overflow-y: auto;
   padding: 30rpx 60rpx 60rpx;
 }
+
 .panel-title {
   font-size: 36rpx;
   font-weight: 600;
   color: #333;
   margin-bottom: 12rpx;
 }
+
 .panel-columns {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 20rpx 24rpx;
 }
+
 .panel-link {
   font-size: 32rpx;
   color: #333;
   line-height: 48rpx;
 }
+
 .panel-link:hover {
   color: #e1251b;
 }
+
 .sub-empty {
   font-size: 24rpx;
   color: #888;
@@ -649,6 +699,10 @@ export default {
   padding: 20rpx 0;
 }
 </style>
-.main {
-  position: relative;
-}
+<style scoped>
+.mp-cate-nav { white-space: nowrap; padding: 12rpx 20rpx; background: #fff; position: sticky; top: 0; z-index: 50; }
+.mp-cate-item { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 14rpx 18rpx; margin-right: 12rpx; border-radius: 16rpx; background: #fff; color: #333; font-size: 26rpx; box-shadow: 0 4rpx 12rpx rgba(0,0,0,.04); }
+.mp-cate-thumb { width: 96rpx; height: 96rpx; background: #f5f5f5; border-radius: 12rpx; }
+.mp-cate-name { margin-top: 8rpx; }
+.mp-cate-item.active { background: #ffe9e3; color: #ff5000; }
+</style>

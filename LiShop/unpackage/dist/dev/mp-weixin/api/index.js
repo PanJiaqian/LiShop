@@ -16,9 +16,27 @@ function getBearer(token) {
 function toQuery(params) {
   const arr = [];
   Object.keys(params || {}).forEach((k) => {
-    const v = params[k];
+    let v = params[k];
     if (v === void 0 || v === null || v === "")
       return;
+    if (k === "ids") {
+      if (Array.isArray(v)) {
+        const raw = "[" + v.join(",") + "]";
+        arr.push(k + "=" + raw);
+        return;
+      }
+      if (typeof v === "string") {
+        const raw = v.startsWith("[") ? v.replace(/"/g, "") : v;
+        arr.push(k + "=" + raw);
+        return;
+      }
+    }
+    if (typeof v === "object") {
+      try {
+        v = JSON.stringify(v);
+      } catch (e) {
+      }
+    }
     arr.push(encodeURIComponent(k) + "=" + encodeURIComponent(v));
   });
   return arr.join("&");
@@ -223,10 +241,11 @@ function getProductSpecs(options = {}) {
     available_product_id,
     length,
     quantity,
-    color_temperature,
+    inventory,
+    has_length,
     token
   } = options;
-  const query = toQuery({ page, page_size, sort_by, sort_order, available_product_id, length, quantity, color_temperature });
+  const query = toQuery({ page, page_size, sort_by, sort_order, available_product_id, length, quantity, inventory, has_length });
   const url = `${BASE_URL}/api/products/get${query ? `?${query}` : ""}`;
   return new Promise((resolve, reject) => {
     const auth = getBearer(token);
@@ -309,8 +328,8 @@ function getRooms(options = {}) {
   });
 }
 function addCartItem(options = {}) {
-  const { room_id, room_name, product_id, length, quantity, color, note, token } = options;
-  const query = toQuery({ room_id, room_name, product_id, length, quantity, color, note });
+  const { room_id, product_id, length, quantity, color, note, token } = options;
+  const query = toQuery({ room_id, product_id, length, quantity, color, note });
   const url = `${BASE_URL}/api/cart/items${query ? `?${query}` : ""}`;
   return new Promise((resolve, reject) => {
     const auth = getBearer(token);
@@ -698,14 +717,300 @@ function clearCart(options = {}) {
     });
   });
 }
+function getPendingPaymentOrders(options = {}) {
+  const { token } = options;
+  const url = `${BASE_URL}/api/user/orders/pending_payment`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function getPendingShipmentOrders(options = {}) {
+  const { token } = options;
+  const url = `${BASE_URL}/api/user/orders/pending_shipment`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function getPendingReceiptOrders(options = {}) {
+  const { token } = options;
+  const url = `${BASE_URL}/api/user/orders/pending_receipt`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function getHistoryOrders(options = {}) {
+  const { token } = options;
+  const url = `${BASE_URL}/api/user/orders/history`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function getOrderDetail(options = {}) {
+  const { order_id, token } = options;
+  const query = toQuery({ order_id });
+  const url = `${BASE_URL}/api/user/orders/detail${query ? `?${query}` : ""}`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function confirmOrderReceipt(options = {}) {
+  const { order_id, token } = options;
+  const query = toQuery({ order_id });
+  const url = `${BASE_URL}/api/user/orders/confirm_receipt${query ? `?${query}` : ""}`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "POST",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function createOrderByIds(options = {}) {
+  const { ids, address_id, note, token } = options;
+  const query = toQuery({ ids, address_id, note });
+  const url = `${BASE_URL}/api/orders/create_by_ids${query ? `?${query}` : ""}`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "POST",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function cancelOrder(options = {}) {
+  const { order_id, token } = options;
+  const query = toQuery({ order_id });
+  const url = `${BASE_URL}/api/orders/cancel${query ? `?${query}` : ""}`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "POST",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function getCartItemsByIDs(options = {}) {
+  const { ids, token } = options;
+  const query = toQuery({ ids });
+  const url = `${BASE_URL}/api/cart/items/detail${query ? `?${query}` : ""}`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
+function exportOrderExcel(options = {}) {
+  const { order_id, token } = options;
+  const query = toQuery({ order_id });
+  const url = `${BASE_URL}/api/user/orders/export_pending_excel${query ? `?${query}` : ""}`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
 exports.addAddress = addAddress;
 exports.addCartItem = addCartItem;
+exports.cancelOrder = cancelOrder;
 exports.clearCart = clearCart;
+exports.confirmOrderReceipt = confirmOrderReceipt;
+exports.createOrderByIds = createOrderByIds;
 exports.createRoom = createRoom;
 exports.deleteAddress = deleteAddress;
 exports.deleteCartItem = deleteCartItem;
+exports.exportOrderExcel = exportOrderExcel;
 exports.getAddresses = getAddresses;
 exports.getCartItems = getCartItems;
+exports.getCartItemsByIDs = getCartItemsByIDs;
+exports.getHistoryOrders = getHistoryOrders;
+exports.getOrderDetail = getOrderDetail;
+exports.getPendingPaymentOrders = getPendingPaymentOrders;
+exports.getPendingReceiptOrders = getPendingReceiptOrders;
+exports.getPendingShipmentOrders = getPendingShipmentOrders;
 exports.getProductDetail = getProductDetail;
 exports.getProductSpecs = getProductSpecs;
 exports.getRecommendedProducts = getRecommendedProducts;

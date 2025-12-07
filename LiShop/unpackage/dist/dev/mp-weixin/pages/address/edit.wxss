@@ -27,12 +27,12 @@
   font-size: 30rpx;
 }
 .region-inputs {
-    flex: 1;
-    display: flex;
-    gap: 10rpx;
+  flex: 1;
+  display: flex;
+  gap: 10rpx;
 }
 .region-input {
-    flex: 1;
+  flex: 1;
 }
 .textarea {
   flex: 1;
@@ -54,8 +54,13 @@
   font-size: 32rpx;
 }
 .switch-item .label {
-  width: 240rpx; /* Increase width to prevent wrapping */
+  width: 240rpx;
+  /* Increase width to prevent wrapping */
 }
+
+
+
+
 
 
 

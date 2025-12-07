@@ -1,7 +1,8 @@
 <template>
   <view class="page address-list-page">
     <view class="address-list" v-if="addressList.length > 0">
-      <view class="address-item" v-for="(item, index) in addressList" :key="item.addresses_id" @click="editAddress(item.addresses_id)">
+      <view class="address-item" v-for="(item, index) in addressList" :key="item.addresses_id"
+        @click="editAddress(item.addresses_id)">
         <view class="info">
           <view class="user-info">
             <text class="name">{{ item.receiver }}</text>
@@ -13,8 +14,8 @@
           </view>
         </view>
         <view class="actions">
-           <text class="btn-edit" @click.stop="editAddress(item.addresses_id)">编辑</text> 
-           <text class="btn-delete" @click.stop="handleDelete(item.addresses_id)">删除</text>
+          <text class="btn-edit" @click.stop="editAddress(item.addresses_id)">编辑</text>
+          <text class="btn-delete" @click.stop="handleDelete(item.addresses_id)">删除</text>
         </view>
       </view>
     </view>
@@ -97,9 +98,11 @@ export default {
   background-color: #f7f7f7;
   min-height: 100vh;
 }
+
 .address-list {
   padding: 20rpx;
 }
+
 .address-item {
   background-color: #fff;
   border-radius: 10rpx;
@@ -109,24 +112,29 @@ export default {
   justify-content: space-between;
   align-items: center;
 }
+
 .info {
   flex: 1;
 }
+
 .user-info {
   display: flex;
   align-items: center;
   margin-bottom: 10rpx;
 }
+
 .name {
   font-size: 32rpx;
   font-weight: bold;
   margin-right: 20rpx;
 }
+
 .phone {
   color: #666;
   font-size: 28rpx;
   margin-right: 20rpx;
 }
+
 .tag {
   background-color: #e1251b;
   color: #fff;
@@ -135,18 +143,22 @@ export default {
   border-radius: 4rpx;
   margin-left: 10rpx;
 }
+
 .address-detail {
   color: #333;
   font-size: 28rpx;
   line-height: 1.4;
 }
+
 .actions {
   display: flex;
   flex-direction: column;
   margin-left: 20rpx;
   align-items: flex-end;
 }
-.btn-edit, .btn-delete {
+
+.btn-edit,
+.btn-delete {
   display: inline-block;
   padding: 10rpx 30rpx;
   border-radius: 30rpx;
@@ -155,20 +167,24 @@ export default {
   text-align: center;
   font-size: 26rpx;
 }
+
 .btn-edit {
   color: #666;
   border-color: #ddd;
 }
+
 .btn-delete {
   color: #e1251b;
   border-color: #e1251b;
   margin-top: 10rpx;
 }
+
 .empty-state {
   padding: 100rpx;
   text-align: center;
   color: #999;
 }
+
 .footer {
   position: fixed;
   bottom: 0;
@@ -176,8 +192,9 @@ export default {
   right: 0;
   padding: 20rpx;
   background-color: #fff;
-  box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
+
 .btn-add {
   background-color: #e1251b;
   color: #fff;
@@ -191,14 +208,18 @@ export default {
   padding-right: 600rpx;
   box-sizing: border-box;
 }
+
 .footer {
-  padding-left: 170rpx; /* 150 + 20 original */
+  padding-left: 170rpx;
+  /* 150 + 20 original */
   padding-right: 170rpx;
 }
+
 .btn-add {
-  width: 30%; /* Reduce width */
+  width: 30%;
+  /* Reduce width */
   margin: 0 auto;
 }
-/* #endif */
 
+/* #endif */
 </style>

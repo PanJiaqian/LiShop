@@ -1,14 +1,19 @@
 <template>
-  <view class="page product-page" v-if="product">
+  <view class="page product-page" :class="{ 'no-scroll': mpSheet || mpRoomSheet }" v-if="product">
     <!-- #ifdef H5 -->
     <view class="pd-grid">
       <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
       <view class="pd-left">
         <view class="pd-gallery">
-          <image class="pd-main" :src="currentImage" mode="aspectFill" />
+          <video id="pd-video" v-if="isVideo(currentImage)" class="pd-main" :src="videoSrc" :poster="currentImage" :controls="true" :autoplay="false" playsinline webkit-playsinline crossorigin="anonymous" object-fit="contain" />
+          <image v-else class="pd-main" :src="currentImage" mode="aspectFill" />
           <view class="pd-thumbs">
-            <image v-for="(src, i) in images" :key="i" class="pd-thumb" :src="src" mode="aspectFill"
-              :class="{ active: i === current }" @click="current = i" />
+            <view v-for="(src, i) in images" :key="i" class="pd-thumb" :class="{ active: i === current }" @click="current = i" style="position: relative; overflow: hidden;">
+              <image :src="isVideo(src) ? (product.image || '/static/logo.png') : src" mode="aspectFill" style="width: 100%; height: 100%; display: block;" />
+              <view v-if="isVideo(src)" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                <text style="color: #fff; font-size: 12px;">▶</text>
+              </view>
+            </view>
           </view>
         </view>
 
@@ -20,16 +25,18 @@
             <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
             <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
             <view class="pd-param-item inline-params">
-              <view class="sub-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—' }}</text></view>
+              <view class="sub-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—'
+                  }}</text></view>
               <view class="sub-item"><text class="key">单位</text><text class="val">件</text></view>
-              <view class="sub-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2) }}</text></view>
+              <view class="sub-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
+                  }}</text></view>
             </view>
           </view>
         </view>
 
         <view class="pd-card pd-detail">
           <text class="pd-section-title">图文详情</text>
-          <image v-for="(src, i) in images" :key="'d' + i" class="pd-detail-img" :src="src" mode="widthFix" />
+          <image v-for="(src, i) in product.details_images" :key="'d' + i" class="pd-detail-img" :src="src" mode="widthFix" />
         </view>
       </view>
 
@@ -42,20 +49,22 @@
             <text class="pd-coupon">券后更低</text>
           </view>
           <view class="pd-meta">
-            <text>包邮 ｜ 48小时内发货 ｜ 七天无理由</text>
+            <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ? (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ? '七天无理由' : '不支持七天无理由' }}</text>
           </view>
 
           <view>
             <text class="pd-section-title">规格明细</text>
             <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
             <view v-else-if="specs && specs.length" class="specs-list">
-              <view class="spec-item" v-for="(it,i) in specs" :key="'h5sp'+i" :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
+              <view class="spec-item" v-for="(it, i) in specs" :key="'h5sp' + i"
+                :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
                 <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
                 <view class="spec-info">
                   <text class="spec-name">{{ it.name }}</text>
                   <view class="spec-price-row">
                     <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
-                    <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{ Number(it.original_price).toFixed(2) }}</text>
+                    <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
+                      Number(it.original_price).toFixed(2) }}</text>
                   </view>
                   <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
                 </view>
@@ -66,16 +75,17 @@
 
           <view class="pd-form">
             <view class="pd-field inline">
-              <text class="label">房间名</text>
+              <text class="label">房间</text>
               <view class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
             </view>
-            <view class="pd-field inline">
+            <!-- <view class="pd-field inline">
               <text class="label">色温</text>
               <input class="pd-input" v-model="specTemp" placeholder="如 3000K / 4000K" />
-            </view>
-            <view class="pd-field inline">
+            </view> -->
+            <view class="pd-field inline" v-if="selectedSpec && selectedSpec.has_length === 1">
               <text class="label">长度</text>
               <input class="pd-input" v-model="specLength" placeholder="如 1m / 2m" />
+              <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #999; margin-left: 12rpx;">可填最长长度：{{ selectedSpec.specification }}</text>
             </view>
           </view>
 
@@ -104,7 +114,7 @@
               <view class="rooms-list" v-if="roomsList && roomsList.length">
                 <text class="rooms-title">已保存房间</text>
                 <view class="rooms-grid">
-                  <view class="room-item" v-for="(name,i) in roomsList" :key="'r'+i" @click="roomInput = name">
+                  <view class="room-item" v-for="(name, i) in roomsList" :key="'r' + i" @click="roomInput = name">
                     <text class="room-name">{{ name }}</text>
                   </view>
                 </view>
@@ -121,7 +131,12 @@
     <!-- #endif -->
 
     <!-- #ifndef H5 -->
-    <image class="cover" :src="product.image || '/static/logo.png'" mode="aspectFill" />
+    <swiper class="cover" indicator-dots autoplay circular interval="3000">
+      <swiper-item v-for="(item, index) in images" :key="index">
+        <video v-if="isVideo(item)" :src="item" controls style="width: 100%; height: 100%;" object-fit="contain"></video>
+        <image v-else :src="item" mode="aspectFill" style="width: 100%; height: 100%;" />
+      </swiper-item>
+    </swiper>
     <view class="info mp-info-spacing">
       <text class="title">{{ product.title }}</text>
       <view class="mp-price-row">
@@ -137,15 +152,17 @@
         <view class="mp-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
         <view class="mp-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
         <view class="mp-param-row-inline">
-           <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin || '—' }}</text></view>
-           <view class="mp-param-item inline"><text class="key">单位</text><text class="val">件</text></view>
-           <view class="mp-param-item inline"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2) }}</text></view>
+          <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin ||
+              '—' }}</text></view>
+          <view class="mp-param-item inline"><text class="key">单位</text><text class="val">件</text></view>
+          <view class="mp-param-item inline"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
+              }}</text></view>
         </view>
       </view>
     </view>
     <view class="mp-section">
       <text class="mp-title">图文详情</text>
-      <image v-for="(src, i) in images" :key="'md' + i" class="mp-detail-img" :src="src" mode="widthFix" />
+      <image v-for="(src, i) in product.details_images" :key="'md' + i" class="mp-detail-img" :src="src" mode="widthFix" />
     </view>
     <view class="footer">
       <!-- #ifdef MP-WEIXIN -->
@@ -157,49 +174,56 @@
     </view>
 
     <!-- #ifdef MP-WEIXIN -->
-    <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet" @touchmove.stop.prevent="() => {}">
+    <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet" catchtouchmove="true" @touchmove.stop.prevent="() => { }">
       <view class="mp-sheet" @click.stop>
         <view class="mp-title">填写规格</view>
         <scroll-view scroll-y class="mp-scroll-view">
-        <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
-        <view class="mp-title">规格明细</view>
-        <view v-if="specsLoading" class="mp-param-grid">
-          <view class="mp-param-item"><text class="key">加载中...</text><text class="val"></text></view>
-        </view>
-        <view v-else-if="specs && specs.length" class="specs-list">
-          <view class="spec-item" v-for="(it,i) in (isSpecsCollapsed ? specs.slice(0, 2) : specs)" :key="'mpsp'+i" :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
-            <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
-            <view class="spec-info">
-              <text class="spec-name">{{ it.name }}</text>
-              <view class="spec-price-row">
-                <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
-                <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{ Number(it.original_price).toFixed(2) }}</text>
+          <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
+          <view class="mp-title">规格明细</view>
+          <view v-if="specsLoading" class="mp-param-grid">
+            <view class="mp-param-item"><text class="key">加载中...</text><text class="val"></text></view>
+          </view>
+          <view v-else-if="specs && specs.length" class="specs-list">
+            <view class="spec-item" v-for="(it, i) in (isSpecsCollapsed ? specs.slice(0, 2) : specs)" :key="'mpsp' + i"
+              :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
+              <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
+              <view class="spec-info">
+                <text class="spec-name">{{ it.name }}</text>
+                <view class="spec-price-row">
+                  <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
+                  <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
+                    Number(it.original_price).toFixed(2) }}</text>
+                </view>
+                <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
               </view>
-              <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
+            </view>
+            <!-- 展开/收起按钮 -->
+            <view v-if="specs.length > 3" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
+              <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
+              <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
             </view>
           </view>
-          <!-- 展开/收起按钮 -->
-          <view v-if="specs.length > 3" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
-            <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
-            <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
+          <view v-else class="mp-param-grid">
+            <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
           </view>
-        </view>
-        <view v-else class="mp-param-grid">
-          <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
-        </view>
-        <view class="mp-field"><text class="label">房间名</text><view class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view></view>
-        <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
-            placeholder="如 3000K" /></view>
-        <view class="mp-field"><text class="label">长度</text><input class="mp-input" v-model="mpLength"
-            placeholder="如 2m" /></view>
-        <view class="mp-field">
-          <text class="label">数量</text>
-          <view class="qty-stepper">
-            <button class="step" @click="mpQty = Math.max(1, mpQty - 1)">-</button>
-            <text class="count">{{ mpQty }}</text>
-            <button class="step" @click="mpQty = mpQty + 1">+</button>
+          <view class="mp-field"><text class="label">房间名</text>
+            <view class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
           </view>
-        </view>
+          <!-- <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
+              placeholder="如 3000K" /></view> -->
+          <view class="mp-field" v-if="selectedSpec && selectedSpec.has_length === 1">
+            <text class="label">长度</text>
+            <input class="mp-input" v-model="mpLength" placeholder="如 2m" />
+            <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #999; margin-left: 12rpx; white-space: nowrap;">可填最长长度：{{ selectedSpec.specification }}</text>
+          </view>
+          <view class="mp-field">
+            <text class="label">数量</text>
+            <view class="qty-stepper">
+              <button class="step" @click="mpQty = Math.max(1, mpQty - 1)">-</button>
+              <text class="count">{{ mpQty }}</text>
+              <button class="step" @click="mpQty = mpQty + 1">+</button>
+            </view>
+          </view>
         </scroll-view>
         <view class="mp-actions">
           <button class="mp-btn ghost" @click="closeSpecSheet">取消</button>
@@ -208,22 +232,23 @@
       </view>
     </view>
     <!-- MP Room Selection Modal -->
-    <view v-if="mpRoomSheet" class="mp-mask" style="z-index: 10000;" @click="closeMpRoomSheet" @touchmove.stop.prevent="() => {}">
+    <view v-if="mpRoomSheet" class="mp-mask" style="z-index: 10000;" @click="closeMpRoomSheet" catchtouchmove="true"
+      @touchmove.stop.prevent="() => { }">
       <view class="mp-sheet room-sheet" @click.stop>
         <view class="mp-title">选择房间</view>
         <view class="mp-field">
-            <text class="label">新房间名</text>
-            <input class="mp-input" v-model="roomInput" placeholder="输入新的房间名" />
+          <text class="label">新房间名</text>
+          <input class="mp-input" v-model="roomInput" placeholder="输入新的房间名" />
         </view>
         <scroll-view scroll-y class="mp-scroll-view">
-            <view class="rooms-list" v-if="roomsList && roomsList.length">
-                <text class="rooms-title">已保存房间</text>
-                <view class="rooms-grid">
-                  <view class="room-item" v-for="(name,i) in roomsList" :key="'mpr'+i" @click="roomInput = name">
-                      <text class="room-name">{{ name }}</text>
-                  </view>
-                </view>
+          <view class="rooms-list" v-if="roomsList && roomsList.length">
+            <text class="rooms-title">已保存房间</text>
+            <view class="rooms-grid">
+              <view class="room-item" v-for="(name, i) in roomsList" :key="'mpr' + i" @click="roomInput = name">
+                <text class="room-name">{{ name }}</text>
+              </view>
             </view>
+          </view>
         </scroll-view>
         <view class="mp-actions">
           <button class="mp-btn ghost" @click="closeMpRoomSheet">取消</button>
@@ -239,7 +264,7 @@
 <script>
 import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem } from '../../api/index.js'
 export default {
-  data() { return { product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true } },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0 } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -249,7 +274,8 @@ export default {
         const clean = (u) => typeof u === 'string' ? u.replace(/`/g, '').trim() : ''
         const arr = (x) => Array.isArray(x) ? x.map(clean).filter(Boolean) : []
         const main = arr(d.main_image)
-        const imgs = arr(d.images)
+        const videos = arr(d.video_url)
+        const detailImgs = arr(d.images)
         const price = Number(d.price ?? 0) || 0
         const base = {
           id: d.available_product_id || id,
@@ -257,8 +283,13 @@ export default {
           price,
           sales: 0,
           shipping_origin: clean(d.shipping_origin) || '',
+          main_media: [...main, ...videos].length ? [...main, ...videos] : ['/static/logo.png'],
+          details_images: detailImgs,
+          shipping_time_hours: d.shipping_time_hours || 0,
+          support_no_reason_return_7d: d.support_no_reason_return_7d || 0,
+          is_free_shipping: d.is_free_shipping || 0,
           image: main[0] || '/static/logo.png',
-          images: imgs.length ? imgs : (main.length ? main : ['/static/logo.png'])
+          images: [...main, ...videos].length ? [...main, ...videos] : ['/static/logo.png']
         }
         this.product = base
         this.fetchSpecs(base.id)
@@ -271,15 +302,78 @@ export default {
   },
   computed: {
     images() {
-      const imgs = (this.product && this.product.images) || []
+      const imgs = (this.product && this.product.main_media) || []
       return imgs.length ? imgs : [this.product?.image || '/static/logo.png']
     },
     currentImage() {
       const arr = this.images
       return arr[this.current] || arr[0]
+    },
+    videoSrc() {
+      const src = this.currentImage
+      if (!this.isVideo(src)) return ''
+      return src && !src.includes('.m3u8') ? src : ''
+    },
+    selectedSpec() {
+      return (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
+    }
+  },
+  watch: {
+    currentImage: {
+      handler(val) { this.initHls(val) },
+      immediate: true
+    }
+  },
+  beforeDestroy() {
+    if (this.hls) {
+      this.hls.destroy()
+      this.hls = null
     }
   },
   methods: {
+    initHls(src) {
+      // #ifdef H5
+      if (this.hls) {
+        this.hls.destroy()
+        this.hls = null
+      }
+      if (!src || !this.isVideo(src)) return
+      if (!src.includes('.m3u8')) return
+
+      this.$nextTick(() => {
+        let el = document.querySelector('#pd-video video') || document.querySelector('#pd-video')
+        if (el && el.tagName !== 'VIDEO') el = el.querySelector('video')
+        if (!el) return
+        try { el.setAttribute('crossorigin', 'anonymous') } catch (e) {}
+
+        if (window.Hls && Hls.isSupported()) {
+          this.hls = new Hls()
+          this.hls.loadSource(src)
+          this.hls.attachMedia(el)
+          this.hls.on(Hls.Events.ERROR, (event, data) => {
+            if (data && data.fatal) {
+              try { this.hls.destroy() } catch (e) {}
+              this.hls = null
+              try { uni.showToast({ title: '视频资源未找到', icon: 'none' }) } catch (e) {}
+              const imgs = (this.images || []).filter(u => !this.isVideo(u))
+              if (imgs.length) {
+                const idx = (this.images || []).findIndex(u => u === imgs[0])
+                this.current = idx >= 0 ? idx : 0
+              } else {
+                this.current = 0
+              }
+            }
+          })
+        } else if (el && el.canPlayType && el.canPlayType('application/vnd.apple.mpegurl')) {
+          el.src = src
+        }
+      })
+      // #endif
+    },
+    isVideo(src) {
+      if (!src) return false
+      return src.includes('.mp4') || src.includes('.m3u8')
+    },
     // 获取规格明细（按产品ID），适配返回 data.children
     fetchSpecs(availId) {
       if (!availId) return
@@ -287,6 +381,7 @@ export default {
       const clean = (u) => typeof u === 'string' ? u.replace(/`/g, '').trim() : ''
       getProductSpecs({ available_product_id: availId })
         .then((res) => {
+          if (res && res.message && res.message.includes('库存')) uni.showToast({ title: res.message, icon: 'none' })
           const children = (res && res.data && Array.isArray(res.data.children)) ? res.data.children : (Array.isArray(res?.children) ? res.children : [])
           this.specs = (children || []).map((it) => ({
             product_id: it.product_id || '',
@@ -294,7 +389,10 @@ export default {
             unit: it.unit || '',
             price: Number(it.price ?? 0) || 0,
             original_price: Number(it.original_price ?? 0) || 0,
-            image_url: clean(it.image_url) || ''
+            image_url: clean(it.image_url) || '',
+            inventory: it.inventory || 0,
+            has_length: it.has_length || 0,
+            specification: it.specification || ''
           }))
         })
         .catch(() => { this.specs = [] })
@@ -321,7 +419,16 @@ export default {
       if (!chosen) { uni.showToast({ title: '请先填写房间名', icon: 'none' }); return }
       const lengthNum = (this.specLength || '').replace(/[^0-9.]/g, '')
       const lengthVal = lengthNum ? Number(lengthNum) : undefined
+
       const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
+      if (spec && spec.specification && lengthVal) {
+        const max = parseFloat(spec.specification)
+        if (!isNaN(max) && lengthVal > max) {
+          uni.showModal({ title: '提示', content: '长度不能超过 ' + spec.specification, showCancel: false })
+          return
+        }
+      }
+
       const pid = spec ? spec.product_id : (this.product?.id || '')
       addCartItem({ room_id: this.roomId, product_id: pid, length: lengthVal, quantity: this.qty, color: this.specTemp || '', note: '' })
         .then((res) => {
@@ -336,8 +443,9 @@ export default {
       this.mpSheet = true
       const pid = this.product?.id || ''
       this.fetchSpecs(pid)
+      this.lockScroll = false
     },
-    closeSpecSheet() { this.mpSheet = false },
+    closeSpecSheet() { this.mpSheet = false; this.lockScroll = false },
     // H5 房间选择弹窗
     openRoomSheet() {
       this.roomInput = (this.roomName || '')
@@ -347,9 +455,9 @@ export default {
         .then((res) => {
           const raw = Array.isArray(res?.data?.items) ? res.data.items
             : (Array.isArray(res?.items) ? res.items
-            : (Array.isArray(res?.data?.children) ? res.data.children
-            : (Array.isArray(res?.data?.list) ? res.data.list
-            : (Array.isArray(res?.data) ? res.data : []))))
+              : (Array.isArray(res?.data?.children) ? res.data.children
+                : (Array.isArray(res?.data?.list) ? res.data.list
+                  : (Array.isArray(res?.data) ? res.data : []))))
           this.roomsRaw = (raw || []).map((it) => (typeof it === 'string') ? { id: '', name: it } : { id: (it?.id || it?.room_id || ''), name: (it?.name || it?.room_name || '') })
           this.roomsList = this.roomsRaw.map(it => it.name).filter((x) => !!x)
         })
@@ -380,8 +488,8 @@ export default {
       }
     },
     confirmSpecToCart() {
-      if (!this.mpRoom || !this.mpTemp || !this.mpLength || !this.mpQty) {
-        uni.showToast({ title: '请填写房间名、色温、长度、数量', icon: 'none' })
+      if (!this.mpRoom || !this.mpLength || !this.mpQty) {
+        uni.showToast({ title: '请填写房间名、长度、数量', icon: 'none' })
         return
       }
       const chosen = (this.mpRoom || '').trim()
@@ -391,8 +499,17 @@ export default {
       const lengthNum = (this.mpLength || '').replace(/[^0-9.]/g, '')
       const lengthVal = lengthNum ? Number(lengthNum) : undefined
       const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
+
+      if (spec && spec.specification && lengthVal) {
+        const max = parseFloat(spec.specification)
+        if (!isNaN(max) && lengthVal > max) {
+          uni.showModal({ title: '提示', content: '长度不能超过 ' + spec.specification, showCancel: false })
+          return
+        }
+      }
+
       const pid = spec ? spec.product_id : (this.product?.id || '')
-      addCartItem({ room_id: rid, room_name: chosen, product_id: pid, length: lengthVal, quantity: this.mpQty, color: this.mpTemp || '', note: '' })
+      addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: this.mpQty, color: this.mpTemp || '', note: '' })
         .then((res) => {
           if (res && res.success) {
             this.mpSheet = false
@@ -412,15 +529,15 @@ export default {
         .then((res) => {
           const raw = Array.isArray(res?.data?.items) ? res.data.items
             : (Array.isArray(res?.items) ? res.items
-            : (Array.isArray(res?.data?.children) ? res.data.children
-            : (Array.isArray(res?.data?.list) ? res.data.list
-            : (Array.isArray(res?.data) ? res.data : []))))
+              : (Array.isArray(res?.data?.children) ? res.data.children
+                : (Array.isArray(res?.data?.list) ? res.data.list
+                  : (Array.isArray(res?.data) ? res.data : []))))
           this.roomsRaw = (raw || []).map((it) => (typeof it === 'string') ? { id: '', name: it } : { id: (it?.id || it?.room_id || ''), name: (it?.name || it?.room_name || '') })
           this.roomsList = this.roomsRaw.map(it => it.name).filter((x) => !!x)
         })
         .catch(() => { this.roomsList = [] })
     },
-    closeMpRoomSheet() { this.mpRoomSheet = false },
+    closeMpRoomSheet() { this.mpRoomSheet = false; this.lockScroll = false },
     confirmMpRoomSelect() {
       const name = (this.roomInput || '').trim()
       if (!name) { uni.showToast({ title: '请填写房间名', icon: 'none' }); return }
@@ -573,21 +690,28 @@ export default {
   background: #fafafa;
   border-radius: 0 0 12rpx 12rpx;
 }
-.toggle-icon { margin-left: 8rpx; font-size: 20rpx; }
+
+.toggle-icon {
+  margin-left: 8rpx;
+  font-size: 20rpx;
+}
 
 .rooms-list {
   margin-top: 12rpx;
 }
+
 .rooms-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-gap: 12rpx;
 }
+
 .rooms-title {
   color: #666;
   font-size: 26rpx;
   margin-bottom: 8rpx;
 }
+
 .room-item {
   padding: 12rpx 14rpx;
   border: 1rpx solid #eee;
@@ -596,7 +720,11 @@ export default {
   display: flex;
   align-items: center;
 }
-.room-name { color: #333; font-size: 28rpx; }
+
+.room-name {
+  color: #333;
+  font-size: 28rpx;
+}
 
 /* #ifdef H5 */
 /* Hide scrollbars */
@@ -623,17 +751,15 @@ export default {
 
 /* New styles for inline params */
 .pd-param-item.inline-params {
-  display: flex;
-  justify-content: space-between;
-  gap: 10rpx;
-  padding: 10rpx;
+  display: contents;
 }
 
 .pd-param-item.inline-params .sub-item {
-  flex: 1;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 10rpx;
+  justify-content: space-between;
+  padding: 10rpx;
 }
 
 /* Qty Stepper matching cart */
@@ -642,10 +768,25 @@ export default {
   align-items: center;
   background: #f7f7f7;
   border-radius: 6rpx;
-  height: 44rpx;
+  height: 60rpx;
 }
-.qty-btn { width: 44rpx; height: 44rpx; display: flex; align-items: center; justify-content: center; color: #333; font-size: 28rpx; cursor: pointer; }
-.qty-num { padding: 0 12rpx; font-size: 24rpx; color: #333; }
+
+.qty-btn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  font-size: 36rpx;
+  cursor: pointer;
+}
+
+.qty-num {
+  padding: 0 12rpx;
+  font-size: 24rpx;
+  color: #333;
+}
 
 .pd-left,
 .pd-right {
@@ -689,6 +830,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12rpx;
+  margin-left: 30rpx;
 }
 
 .pd-thumb {
@@ -718,8 +860,10 @@ export default {
 }
 
 .pd-param-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, auto);
   gap: 12rpx;
   background: #fafafa;
   border-radius: 10rpx;
@@ -763,11 +907,31 @@ export default {
 }
 
 /* H5 规格列表左图右文排版：一行三列 */
-.specs-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-gap: 12rpx; }
-.spec-item { flex-direction: row; align-items: center; box-shadow: 0 6rpx 16rpx rgba(0,0,0,0.05); }
-.spec-thumb { width: 120rpx; height: 120rpx; }
-.spec-info { flex: 1; }
-.spec-price-row { justify-content: flex-start; gap: 10rpx; }
+.specs-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-gap: 12rpx;
+}
+
+.spec-item {
+  flex-direction: row;
+  align-items: center;
+  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.spec-thumb {
+  width: 120rpx;
+  height: 120rpx;
+}
+
+.spec-info {
+  flex: 1;
+}
+
+.spec-price-row {
+  justify-content: flex-start;
+  gap: 10rpx;
+}
 
 .pd-form {
   display: flex;
@@ -790,6 +954,13 @@ export default {
   gap: 20rpx;
 }
 
+.pd-param-grid { display: flex; align-items: center; gap: 20rpx; white-space: nowrap; overflow: hidden; }
+.pd-param-item { display: inline-flex; align-items: center; gap: 8rpx; white-space: nowrap; }
+.pd-param-item .key, .pd-param-item .val { white-space: nowrap; }
+.pd-param-item.inline-params { display: inline-flex; align-items: center; gap: 16rpx; }
+.pd-param-item.inline-params .sub-item { display: inline-flex; align-items: center; gap: 8rpx; white-space: nowrap; }
+.pd-param-item.inline-params .sub-item .val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
+
 .picker-display {
   flex: 1;
   min-height: 64rpx;
@@ -799,7 +970,7 @@ export default {
   border-radius: 10rpx;
   padding: 0 14rpx;
   color: #666;
-  max-width: 20%;
+  max-width: 30%;
 }
 
 .pd-input {
@@ -912,20 +1083,25 @@ export default {
 /* H5 房间选择弹窗 */
 .h5-mask {
   position: fixed;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0,0,0,.45);
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, .45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
+
 .h5-sheet {
   width: 820rpx;
   background: #fff;
   border-radius: 16rpx;
   padding: 24rpx;
-  box-shadow: 0 12rpx 28rpx rgba(0,0,0,0.12);
+  box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12);
 }
+
 .h5-title {
   font-size: 32rpx;
   font-weight: 700;
@@ -934,18 +1110,39 @@ export default {
   border-bottom: 1rpx solid #f0f0f0;
   margin-bottom: 16rpx;
 }
+
 .h5-actions {
   display: flex;
   gap: 12rpx;
   margin-top: 16rpx;
 }
-.h5-btn { flex: 1; height: 72rpx; border-radius: 999rpx; font-size: 28rpx; }
-.h5-btn.ghost { background: #f7f7f7; color: #333; border: 1rpx solid #e6e6e6; }
-.h5-btn.primary { background: linear-gradient(135deg, #ff6a00, #ff2d55); color: #fff; box-shadow: 0 6rpx 16rpx rgba(255,106,0,0.35); }
+
+.h5-btn {
+  flex: 1;
+  height: 72rpx;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+}
+
+.h5-btn.ghost {
+  background: #f7f7f7;
+  color: #333;
+  border: 1rpx solid #e6e6e6;
+}
+
+.h5-btn.primary {
+  background: linear-gradient(135deg, #ff6a00, #ff2d55);
+  color: #fff;
+  box-shadow: 0 6rpx 16rpx rgba(255, 106, 0, 0.35);
+}
 
 /* #endif */
 
 /* #ifdef MP-WEIXIN */
+.product-page.no-scroll {
+  height: 100vh;
+  overflow: hidden;
+}
 .mp-mask {
   position: fixed;
   left: 0;
@@ -954,7 +1151,8 @@ export default {
   bottom: 0;
   background: rgba(0, 0, 0, .55);
   display: flex;
-  align-items: flex-end; /* 底部弹窗 */
+  align-items: flex-end;
+  /* 底部弹窗 */
   justify-content: center;
   z-index: 9999;
 }
@@ -966,7 +1164,7 @@ export default {
   border-top-left-radius: 24rpx;
   border-top-right-radius: 24rpx;
   padding: 24rpx;
-  box-shadow: 0 -8rpx 24rpx rgba(0,0,0,0.08);
+  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   max-height: 80vh;
@@ -979,7 +1177,12 @@ export default {
   flex: 1;
   min-height: 0;
   margin-bottom: 16rpx;
+  height: 60vh;
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+.mp-scroll-view::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 .mp-title {
   font-size: 32rpx;
@@ -1010,7 +1213,8 @@ export default {
 .mp-actions {
   display: flex;
   gap: 12rpx;
-  margin-top: auto; /* 固定在底部 */
+  margin-top: auto;
+  /* 固定在底部 */
   padding-top: 16rpx;
   border-top: 1rpx solid #f0f0f0;
 }
@@ -1031,7 +1235,7 @@ export default {
 .mp-btn.primary {
   background: linear-gradient(135deg, #ff6a00, #ff2d55);
   color: #fff;
-  box-shadow: 0 6rpx 16rpx rgba(255,106,0,0.35);
+  box-shadow: 0 6rpx 16rpx rgba(255, 106, 0, 0.35);
 }
 
 /* 使数量步进器横向排列 */
@@ -1041,25 +1245,35 @@ export default {
   align-items: center;
   background: #f7f7f7;
   border-radius: 6rpx;
-  height: 60rpx; /* Match Cart */
+  height: 60rpx;
+  /* Match Cart */
 }
 
 /* 淘宝风格：步进器在弹窗内的样式适配 */
 .mp-sheet .qty-stepper .step {
-  width: 60rpx; /* Match Cart */
-  height: 60rpx; /* Match Cart */
-  border-radius: 0; /* Remove individual radius */
+  width: 60rpx;
+  /* Match Cart */
+  height: 60rpx;
+  /* Match Cart */
+  border-radius: 0;
+  /* Remove individual radius */
   background: transparent;
   border: none;
   color: #333;
-  font-size: 32rpx; /* Match Cart */
+  font-size: 32rpx;
+  /* Match Cart */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   margin: 0;
 }
-.mp-sheet .qty-stepper .step::after { border: none; } /* Remove button border */
+
+.mp-sheet .qty-stepper .step::after {
+  border: none;
+}
+
+/* Remove button border */
 
 .mp-sheet .qty-stepper .count {
   width: 80rpx;
@@ -1069,8 +1283,13 @@ export default {
 }
 
 @keyframes mpSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* 参数与图文详情样式 */
@@ -1131,7 +1350,7 @@ export default {
 }
 
 .mp-section-spacing {
-  padding: 20rpx 40rpx;
+  padding: 20rpx 20rpx;
 }
 
 .mp-price-row {
@@ -1169,4 +1388,23 @@ export default {
   margin-top: 0;
   text-align: center;
 }
+/* #ifdef MP-WEIXIN */
+.mp-param-grid {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.mp-param-item .key {
+  min-width: 160rpx;
+  display: inline-block;
+}
+/* #endif */
 </style>
+  onPageScroll(e) {
+    if (this.mpSheet || this.mpRoomSheet) {
+      if (!this.lockScroll) { this.lockScrollTop = e.scrollTop; this.lockScroll = true }
+      else { try { uni.pageScrollTo({ scrollTop: this.lockScrollTop, duration: 0 }) } catch (err) {} }
+    } else {
+      this.lockScroll = false
+    }
+  },

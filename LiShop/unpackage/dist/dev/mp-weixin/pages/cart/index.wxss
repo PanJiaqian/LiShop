@@ -11,6 +11,31 @@
   display: flex;
   padding: 20rpx;
   border-bottom: 1px solid #f0f0f0;
+  position: relative;
+}
+.out-stock-mask.data-v-8039fbf1 {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.6);
+  z-index: 5;
+  pointer-events: none;
+}
+.stock-tip.data-v-8039fbf1 {
+  position: absolute;
+  right: 20rpx;
+  bottom: 20rpx;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 4rpx 12rpx;
+  font-size: 24rpx;
+  border-radius: 4rpx;
+  z-index: 6;
+}
+.chk-ico.disabled.data-v-8039fbf1 {
+  background: #eee;
+  border-color: #ddd;
+}
+.item.out-of-stock .chk.data-v-8039fbf1 { pointer-events: none;
 }
 .cover.data-v-8039fbf1 {
   width: 160rpx;
@@ -68,6 +93,32 @@
 .checkout.data-v-8039fbf1 {
   background: #ff5500;
   color: #fff;
+}
+.action-buttons.data-v-8039fbf1 {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+.action-buttons .checkout.data-v-8039fbf1 {
+  flex: 1;
+  margin: 0;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+.action-buttons .export-btn.data-v-8039fbf1 {
+  flex: 1;
+  margin: 0;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+.action-buttons .export-btn.data-v-8039fbf1::after { border: none;
 }
 
 /* 小程序端勾选样式 */
@@ -585,15 +636,35 @@
 .spec-btn.confirm.data-v-8039fbf1 { background: #e1251b; color: #fff; border: none;
 }
 .mp-room.data-v-8039fbf1 {
-  margin-left: 30rpx;
+  margin: 0 30rpx;
+  background: #fff9f5;
+  color: #ff7b2b;
+  padding: 16rpx;
+  border-radius: 8rpx;
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
 }
 .mp-qty-box.data-v-8039fbf1 {
   height: 60rpx;
+  background: #f8f8f8;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
 }
 .mp-qty-btn.data-v-8039fbf1 {
   width: 60rpx;
   height: 60rpx;
+  font-size: 36rpx;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mp-qty-box .count.data-v-8039fbf1 {
   font-size: 32rpx;
+  font-weight: bold;
+  margin: 0 10rpx;
 }
 .act-txt.del.data-v-8039fbf1 {
   font-size: 32rpx;

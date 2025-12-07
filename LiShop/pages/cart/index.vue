@@ -26,9 +26,10 @@
             <view class="group-header">
               <text class="room">{{ grp.name }}</text>
             </view>
-            <view class="item h5-row" v-for="it in grp.items" :key="it.id">
+            <view class="item h5-row" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock }">
+              <view class="out-stock-mask" v-if="it.isOutOfStock"></view>
               <view class="chk" @click="toggleById(it.id)">
-                <view class="chk-ico" :class="{ on: it.selected }"></view>
+                <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
               </view>
               <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
               <text class="title">{{ it.title }}</text>
@@ -40,6 +41,7 @@
                   <view class="qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
               <text class="del-btn" @click.stop="removeById(it.id)">删除</text>
+              <view class="stock-tip" v-if="it.isOutOfStock">无货</view>
             </view>
           </view>
         </view>
@@ -83,7 +85,10 @@
                 <text class="total-reduce">共减 ¥ {{ totalReduce.toFixed(2) }}</text>
               </view>
             </view>
-            <button class="checkout" @click="checkout">结算({{ selectedCount }})</button>
+            <view class="action-buttons">
+              <button class="checkout" @click="checkout">结算({{ selectedCount }})</button>
+              <button class="export-btn" @click="handleExportExcel">导出Excel</button>
+            </view>
           </view>
           <view v-else class="sum-empty">
             <view class="empty-ico">🛒</view>
@@ -107,9 +112,10 @@
         <view class="group-header">
           <text class="room mp-room" @click="openRoomPopup(grp)">{{ grp.name }} ▾</text>
         </view>
-        <view class="item" v-for="it in grp.items" :key="it.id">
+        <view class="item" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock }">
+          <view class="out-stock-mask" v-if="it.isOutOfStock"></view>
           <view class="chk" @click="toggleById(it.id)">
-            <view class="chk-ico" :class="{ on: it.selected }"></view>
+            <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
           </view>
           <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
           <view class="meta">
@@ -132,6 +138,7 @@
                 <text class="act-txt del" @click.stop="removeById(it.id)">删除</text>
               </view>
             </view>
+            <view class="stock-tip" v-if="it.isOutOfStock">无货</view>
           </view>
         </view>
       </view>
@@ -148,6 +155,7 @@
       <text>合计：<text class="sum">¥{{ selectedTotal.toFixed(2) }}</text></text>
       <view class="actions">
         <view class="footer-btn" @click="clear">清空</view>
+        <view class="footer-btn" @click="handleExportExcel">导出Excel</view>
         <view class="footer-btn" :class="{ disabled: selectedCount === 0 }" @click="checkout">去结算({{ selectedCount }})</view>
       </view>
     </view>
@@ -219,7 +227,7 @@
 
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
-import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms } from '../../api/index.js'
+import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses } from '../../api/index.js'
 export default {
   components: { FloatingNav },
   data() {
@@ -230,20 +238,30 @@ export default {
       // 房间选择相关
       rooms: [],
       showRoomModal: false,
-      targetGroup: null
+      targetGroup: null,
+      summaryData: {
+        total_price: 0,
+        total_original: 0,
+        is_free_shipping: 0
+      }
     }
   },
   computed: {
     total() { return this.cart.reduce((s, it) => s + (it.price * (it.quantity || 1)), 0) },
-    selectedTotal() { return this.cart.reduce((s, it) => s + (it.selected ? it.price * (it.quantity || 1) : 0), 0) },
+    // selectedTotal() { return this.cart.reduce((s, it) => s + (it.selected ? it.price * (it.quantity || 1) : 0), 0) },
+    selectedTotal() { return this.summaryData.total_price || 0 }, // 使用API返回的总价
     selectedCount() { return this.cart.filter(it => it.selected).length },
-    isAllSelected() { return this.cart.length > 0 && this.selectedCount === this.cart.length },
+    isAllSelected() { 
+        const validItems = this.cart.filter(it => !it.isOutOfStock)
+        return validItems.length > 0 && validItems.every(it => it.selected)
+    },
     selectedThumbs() { return this.cart.filter(it => it.selected).slice(0, 2).map(it => it.image || '/static/logo.png') },
-    officialReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.officialReduce || 0) : 0), 0) },
-    redReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.redReduce || 0) : 0), 0) },
-    extraReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.reduce || 0) : 0), 0) },
-    totalReduce() { return this.officialReduce + this.redReduce + this.extraReduce },
-    payable() { return Math.max(0, this.selectedTotal - this.totalReduce) },
+    // officialReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.officialReduce || 0) : 0), 0) },
+    // redReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.redReduce || 0) : 0), 0) },
+    // extraReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.reduce || 0) : 0), 0) },
+    // totalReduce() { return this.officialReduce + this.redReduce + this.extraReduce },
+    totalReduce() { return Math.max(0, (this.summaryData.total_original || 0) - (this.summaryData.total_price || 0)) },
+    payable() { return this.summaryData.total_price || 0 },
     needForCoupon() { const need = Math.max(0, 800 - this.payable); return need.toFixed(2) },
     groups: function () {
       try {
@@ -288,6 +306,7 @@ export default {
             const roomName = g && g.room_name ? g.room_name : ''
             const items = Array.isArray(g && g.items) ? g.items : []
             for (const x of items) {
+              const isOutOfStock = (x.inventory === 0 || x.available_product_status === 0)
               list.push({
                 id: (x && x.id) ? x.id : '',
                 title: (x && x.product_id) ? x.product_id : '',
@@ -301,11 +320,17 @@ export default {
                 color: x.color || '暖白',
                 note: x.note || '',
                 attr: ((x && x.length) ? ('长度 ' + x.length) : '') + ((x && x.note) ? (' ｜ ' + x.note) : ''),
-                selected: false
+                selected: false,
+                inventory: x.inventory,
+                status: x.status,
+                available: x.available_product_status,
+                stockMessage: x.message || (isOutOfStock ? '该商品已无库存' : ''),
+                isOutOfStock: isOutOfStock
               })
             }
           }
           this.cart = list
+          this.fetchSummary()
         })
         .catch((err) => {
           console.error('Get cart failed', err)
@@ -317,12 +342,25 @@ export default {
           }))
         })
     },
+    fetchSummary() {
+        const selectedIds = this.cart.filter(it => it.selected).map(it => it.id)
+        if (selectedIds.length === 0) {
+            this.summaryData = { total_price: 0, total_original: 0, is_free_shipping: 0 }
+            return
+        }
+        getCartItemsByIDs({ ids: selectedIds }).then(res => {
+            if (res && res.success && res.data) {
+                this.summaryData = res.data
+            }
+        }).catch(e => console.error(e))
+    },
     sync() { uni.setStorageSync('cart', this.cart) },
     findIndexById(id) { return this.cart.findIndex(it => it.id === id) },
     incById(id) {
       const i = this.findIndexById(id)
       if (i >= 0) {
         const item = this.cart[i]
+        if (item.isOutOfStock) return
         this.updateItemQuantity(item, item.quantity + 1)
       }
     },
@@ -348,6 +386,7 @@ export default {
         if (res && res.success) {
           item.quantity = quantity
           this.sync()
+          this.fetchSummary()
         } else {
           uni.showToast({ title: '更新失败', icon: 'none' })
         }
@@ -359,21 +398,22 @@ export default {
     removeById(id) {
       deleteCartItem({ id })
         .then(() => {
-          const i = this.findIndexById(id); if (i >= 0) { this.cart.splice(i, 1); this.sync() }
+          const i = this.findIndexById(id); if (i >= 0) { this.cart.splice(i, 1); this.sync(); this.fetchSummary() }
           uni.showToast({ title: '已删除', icon: 'success' })
         })
         .catch(() => {
-          const i = this.findIndexById(id); if (i >= 0) { this.cart.splice(i, 1); this.sync() }
+          const i = this.findIndexById(id); if (i >= 0) { this.cart.splice(i, 1); this.sync(); this.fetchSummary() }
           uni.showToast({ title: '本地删除', icon: 'none' })
         })
     },
-    removeSelected() { this.cart = this.cart.filter(it => !it.selected); this.sync() },
+    removeSelected() { this.cart = this.cart.filter(it => !it.selected); this.sync(); this.fetchSummary() },
     clearRemote() {
       clearCart()
         .then((res) => {
           if (res && res.success) {
             this.cart = []
             this.sync()
+            this.fetchSummary()
             uni.showToast({ title: '已清空', icon: 'success' })
           } else {
             uni.showToast({ title: (res && res.message) ? res.message : '清空失败', icon: 'none' })
@@ -383,70 +423,132 @@ export default {
           uni.showToast({ title: '清空失败', icon: 'none' })
         })
     },
-    toggleById(id) { const i = this.findIndexById(id); if (i >= 0) { this.cart[i].selected = !this.cart[i].selected; this.sync() } },
+    toggleById(id) { 
+        const i = this.findIndexById(id); 
+        if (i >= 0) { 
+            if (this.cart[i].isOutOfStock) return
+            this.cart[i].selected = !this.cart[i].selected; 
+            this.sync() 
+            this.fetchSummary()
+        } 
+    },
     toggleAll() {
-      const makeSelected = !(this.selectedCount === this.cart.length && this.cart.length > 0)
-      this.cart.forEach(it => it.selected = makeSelected)
+      const validItems = this.cart.filter(it => !it.isOutOfStock)
+      if (validItems.length === 0) return
+      
+      const makeSelected = !this.isAllSelected
+      
+      this.cart.forEach(it => {
+          if (!it.isOutOfStock) it.selected = makeSelected
+          else it.selected = false
+      })
       this.sync()
+      this.fetchSummary()
     },
-    clear() { this.cart = []; this.sync() },
-    checkout() {
+    clear() { this.cart = []; this.sync(); this.fetchSummary() },
+    async checkout() {
       if (this.selectedCount === 0) { uni.showToast({ title: '请选择商品', icon: 'none' }); return }
-      // 生成订单
-      const selected = this.cart.filter(it => it.selected)
-      const groupMap = {}
-      selected.forEach(it => {
-        const key = it.roomName || '默认房间'
-        if (!groupMap[key]) groupMap[key] = []
-        groupMap[key].push({
-          id: it.id, title: it.title, price: it.price, quantity: it.quantity,
-          specTemp: it.specTemp || '', specLength: it.specLength || '', roomName: key
-        })
-      })
-      const rooms = Object.keys(groupMap).map(name => {
-        const items = groupMap[name]
-        const roomTotal = items.reduce((s, x) => s + x.price * x.quantity, 0)
-        return { name, items, roomTotal }
-      })
-      const now = new Date()
-      const id = Date.now()
-      const orderNo = `JD${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(id).slice(-6)}`
-      const waybillNo = `WB${Math.floor(Math.random() * 1e10).toString().padStart(10, '0')}`
-      const baseTime = now.getTime()
-      const tracking = [
-        { time: new Date(baseTime).toISOString(), status: '已下单', desc: '订单已提交，等待商家处理', place: '系统' },
-        { time: new Date(baseTime + 5 * 60 * 1000).toISOString(), status: '拣货中', desc: '商家正在为您拣货', place: '仓库' },
-        { time: new Date(baseTime + 30 * 60 * 1000).toISOString(), status: '已揽收', desc: '快递已揽收包裹', place: '揽收点' }
-      ]
-      const order = { id, orderNo, waybillNo, createdAt: now.toISOString(), rooms, total: rooms.reduce((s, r) => s + r.roomTotal, 0), tracking }
+      const selectedIds = this.cart.filter(it => it.selected).map(it => it.id)
+      let addresses = []
       try {
-        const orders = uni.getStorageSync('orders') || []
-        uni.setStorageSync('orders', [order, ...orders])
-        // 移除已选商品
-        this.cart = this.cart.filter(it => !it.selected); this.sync()
-        // 导出Excel（H5端下载）
-        this.exportExcel(order)
-        uni.showToast({ title: '已生成订单', icon: 'success' })
-        uni.navigateTo({ url: '/pages/order/index?id=' + order.id })
-      } catch (e) { console.error(e) }
+        const resAddr = await getAddresses()
+        const raw = Array.isArray(resAddr?.data?.items) ? resAddr.data.items : (Array.isArray(resAddr?.items) ? resAddr.items : [])
+        addresses = raw.map(a => ({ id: a.addresses_id || a.id || '', name: `${a.receiver || ''} ${a.phone || ''} ${a.detail_address || ''}`.trim() }))
+      } catch (e) {}
+      if (!addresses.length) { uni.showToast({ title: '请先添加收货地址', icon: 'none' }); return }
+      const itemNames = addresses.map(a => a.name || a.id)
+      const choice = await new Promise((resolve) => {
+        uni.showActionSheet({ itemList: itemNames.slice(0, 12), success: (r) => resolve(r.tapIndex), fail: () => resolve(-1) })
+      })
+      if (choice < 0) return
+      const addressId = addresses[choice]?.id || ''
+      if (!addressId) { uni.showToast({ title: '地址选择异常', icon: 'none' }); return }
+
+      createOrderByIds({ ids: selectedIds, address_id: addressId }).then(res => {
+          if (res && res.success) {
+             uni.showToast({ title: '下单成功', icon: 'success' })
+             // 移除已选商品
+             this.cart = this.cart.filter(it => !it.selected); this.sync(); this.fetchSummary()
+             
+             // 如果返回了订单ID，跳转到订单页
+             const orderId = res.data?.order_id || res.data?.id
+             if (orderId) {
+                 setTimeout(() => {
+                    uni.navigateTo({ url: '/pages/order/index?id=' + orderId })
+                 }, 1000)
+             } else {
+                 setTimeout(() => {
+                    uni.navigateTo({ url: '/pages/order/index' })
+                 }, 1000)
+             }
+          } else {
+             uni.showToast({ title: res.message || '下单失败', icon: 'none' })
+          }
+      }).catch(err => {
+          uni.showToast({ title: '下单出错', icon: 'none' })
+          console.error(err)
+      })
     },
-    exportExcel(order) {
-      // 生成简单的Excel（HTML表格）
-      try {
-        const header = ['房间', '商品', '型号', '色温', '长度', '单价', '数量', '金额']
-        let html = '<table border="1" cellspacing="0" cellpadding="4"><tr>' + header.map(h => `<th>${h}</th>`).join('') + '</tr>'
-        order.rooms.forEach(r => {
-          r.items.forEach(x => {
-            const row = [r.name, x.title, x.id, x.specTemp || '', x.specLength || '', x.price.toFixed(2), x.quantity, (x.price * x.quantity).toFixed(2)]
-            html += '<tr>' + row.map(v => `<td>${v}</td>`).join('') + '</tr>'
-          })
-        })
-        html += '</table>'
-        const blob = new Blob([`\ufeff${html}`], { type: 'application/vnd.ms-excel' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url; a.download = `订单_${order.id}.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url)
-      } catch (e) { /* 非H5端或环境不支持下载忽略 */ }
+    handleExportExcel() {
+      if (this.selectedCount === 0) {
+        uni.showToast({ title: '请选择商品', icon: 'none' })
+        return
+      }
+      
+      const selectedIds = this.cart.filter(it => it.selected).map(it => it.id)
+      
+      uni.showModal({
+        title: '导出提示',
+        content: '导出Excel将为您自动生成订单，确认继续？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({ title: '正在导出...' })
+            createOrderByIds({ ids: selectedIds }).then(res => {
+              if (res && res.success) {
+                const orderId = res.data?.order_id || res.data?.id
+                if (orderId) {
+                   exportOrderExcel({ order_id: orderId }).then(exportRes => {
+                     uni.hideLoading()
+                     if (exportRes && exportRes.url) {
+                       this.cart = this.cart.filter(it => !it.selected); this.sync(); this.fetchSummary()
+                       // #ifdef H5
+                       window.location.href = exportRes.url
+                       // #endif
+                       // #ifndef H5
+                       uni.downloadFile({
+                         url: exportRes.url,
+                         success: (downloadResult) => {
+                           if (downloadResult.statusCode === 200) {
+                             uni.openDocument({
+                               filePath: downloadResult.tempFilePath,
+                               showMenu: true
+                             })
+                           }
+                         }
+                       })
+                       // #endif
+                     } else {
+                       uni.showToast({ title: '未获取到导出链接', icon: 'none' })
+                     }
+                   }).catch(e => {
+                     uni.hideLoading()
+                     uni.showToast({ title: '导出请求失败', icon: 'none' })
+                   })
+                } else {
+                   uni.hideLoading()
+                   uni.showToast({ title: '订单创建异常', icon: 'none' })
+                }
+              } else {
+                uni.hideLoading()
+                uni.showToast({ title: res.message || '生成订单失败', icon: 'none' })
+              }
+            }).catch(e => {
+              uni.hideLoading()
+              uni.showToast({ title: '网络请求失败', icon: 'none' })
+            })
+          }
+        }
+      })
     },
     openSpecPopup(item) {
       this.editingItem = item
@@ -485,6 +587,7 @@ export default {
       const items = this.targetGroup.items
       // 批量更新该组下的商品到新房间
       // 由于API是单个更新，循环调用（优化：如果有批量接口更好，这里只能循环）
+
       uni.showLoading({ title: '移动中' })
       const promises = items.map(item => {
         return updateCartItem({
@@ -529,7 +632,35 @@ export default {
   display: flex;
   padding: 20rpx;
   border-bottom: 1px solid #f0f0f0;
+  position: relative;
 }
+
+.out-stock-mask {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.6);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.stock-tip {
+  position: absolute;
+  right: 20rpx;
+  bottom: 20rpx;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 4rpx 12rpx;
+  font-size: 24rpx;
+  border-radius: 4rpx;
+  z-index: 6;
+}
+
+.chk-ico.disabled {
+  background: #eee;
+  border-color: #ddd;
+}
+
+.item.out-of-stock .chk { pointer-events: none; }
 
 .cover {
   width: 160rpx;
@@ -598,6 +729,32 @@ export default {
   background: #ff5500;
   color: #fff;
 }
+
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+.action-buttons .checkout {
+  flex: 1;
+  margin: 0;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+.action-buttons .export-btn {
+  flex: 1;
+  margin: 0;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+}
+.action-buttons .export-btn::after { border: none; }
 
 /* 小程序端勾选样式 */
 .actions-left {
@@ -1148,7 +1305,8 @@ export default {
 }
 .h5-row .price {
   width: 140rpx;
-  font-size: 28rpx;
+  font-size: 36rpx;
+  font-weight: 700;
   color: #e1251b;
   text-align: center;
   flex-shrink: 0;
@@ -1158,6 +1316,12 @@ export default {
   margin: 0 20rpx;
   flex-shrink: 0;
   align-self: center;
+  height: 60rpx;
+}
+.h5-row .qty-box .qty-btn {
+  width: 60rpx;
+  height: 60rpx;
+  font-size: 32rpx;
 }
 .h5-row .del-btn {
   font-size: 26rpx;
@@ -1175,17 +1339,38 @@ export default {
 
 /* #ifndef H5 */
 .mp-room {
-  margin-left: 30rpx;
+  margin: 0 30rpx;
+  background: #fff9f5;
+  color: #ff7b2b;
+  padding: 16rpx;
+  border-radius: 8rpx;
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
 }
 
 .mp-qty-box {
   height: 60rpx;
+  background: #f8f8f8;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
 }
 
 .mp-qty-btn {
   width: 60rpx;
   height: 60rpx;
+  font-size: 36rpx;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mp-qty-box .count {
   font-size: 32rpx;
+  font-weight: bold;
+  margin: 0 10rpx;
 }
 
 .act-txt.del {

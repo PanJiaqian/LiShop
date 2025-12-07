@@ -13,9 +13,9 @@
         <text class="label">所在地区</text>
         <!-- For simplicity, we use simple inputs. In a real app, use a picker. -->
         <view class="region-inputs">
-            <input class="input region-input" v-model="form.province" placeholder="省" />
-            <input class="input region-input" v-model="form.city" placeholder="市" />
-            <input class="input region-input" v-model="form.district" placeholder="区" />
+          <input class="input region-input" v-model="form.province" placeholder="省" />
+          <input class="input region-input" v-model="form.city" placeholder="市" />
+          <input class="input region-input" v-model="form.district" placeholder="区" />
         </view>
       </view>
       <view class="form-item">
@@ -94,9 +94,9 @@ export default {
 
       const u = uni.getStorageSync('user')
       const token = (u && (u.token || (u.data && u.data.token))) || ''
-      
+
       const payload = { ...this.form, token }
-      
+
       let p
       if (this.id) {
         payload.addresses_id = this.id
@@ -129,49 +129,60 @@ export default {
   min-height: 100vh;
   padding-top: 20rpx;
 }
+
 .form {
   background-color: #fff;
   padding: 0 30rpx;
 }
+
 .form-item {
   display: flex;
   align-items: center;
   border-bottom: 1rpx solid #eee;
   padding: 30rpx 0;
 }
+
 .form-item:last-child {
   border-bottom: none;
 }
+
 .label {
   width: 160rpx;
   font-size: 30rpx;
   color: #333;
 }
+
 .input {
   flex: 1;
   font-size: 30rpx;
 }
+
 .region-inputs {
-    flex: 1;
-    display: flex;
-    gap: 10rpx;
+  flex: 1;
+  display: flex;
+  gap: 10rpx;
 }
+
 .region-input {
-    flex: 1;
+  flex: 1;
 }
+
 .textarea {
   flex: 1;
   height: 120rpx;
   font-size: 30rpx;
   padding-top: 10rpx;
 }
+
 .switch-item {
   justify-content: space-between;
 }
+
 .footer {
   margin-top: 60rpx;
   padding: 30rpx;
 }
+
 .btn-save {
   background-color: #e1251b;
   color: #fff;
@@ -180,7 +191,8 @@ export default {
 }
 
 .switch-item .label {
-  width: 240rpx; /* Increase width to prevent wrapping */
+  width: 240rpx;
+  /* Increase width to prevent wrapping */
 }
 
 /* #ifdef H5 */
@@ -188,21 +200,25 @@ export default {
   padding-left: 600rpx;
   padding-right: 600rpx;
   box-sizing: border-box;
-  padding-bottom: 140rpx; /* Add bottom padding to prevent content from being hidden */
+  padding-bottom: 140rpx;
+  /* Add bottom padding to prevent content from being hidden */
 }
+
 .btn-save {
   width: 30%;
   margin: 0 auto;
   display: block;
 }
+
 .footer {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   background: #fff;
-  box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
   z-index: 999;
 }
+
 /* #endif */
 </style>

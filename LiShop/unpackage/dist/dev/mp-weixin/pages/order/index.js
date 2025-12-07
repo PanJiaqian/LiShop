@@ -1,16 +1,16 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const api_index = require("../../api/index.js");
 const _sfc_main = {
   data() {
-    return { order: null, orders: [] };
+    return { order: null, orders: [], activeTab: "all" };
   },
   onLoad(query) {
-    const id = Number(query == null ? void 0 : query.id);
-    const list = common_vendor.index.getStorageSync("orders") || [];
+    const id = query == null ? void 0 : query.id;
     if (id) {
-      this.order = list.find((o) => o.id === id) || null;
+      this.fetchDetail(id);
     } else {
-      this.orders = list;
+      this.fetchOrders();
     }
   },
   methods: {
@@ -35,53 +35,185 @@ const _sfc_main = {
       try {
         const imgs = [];
         o.rooms.forEach((r) => r.items.forEach((x) => imgs.push(x.image || "/static/logo.png")));
-        return imgs.slice(0, 3);
+        return imgs.slice(0, 2);
       } catch {
         return [];
       }
     },
-    exportExcel(order) {
+    async exportExcel(order) {
       try {
-        const header = ["房间", "商品", "型号", "色温", "长度", "单价", "数量", "金额"];
-        let html = '<table border="1" cellspacing="0" cellpadding="4"><tr>' + header.map((h) => `<th>${h}</th>`).join("") + "</tr>";
-        order.rooms.forEach((r) => {
-          r.items.forEach((x) => {
-            const row = [r.name, x.title, x.id, x.specTemp || "", x.specLength || "", x.price.toFixed(2), x.quantity, (x.price * x.quantity).toFixed(2)];
-            html += "<tr>" + row.map((v) => `<td>${v}</td>`).join("") + "</tr>";
-          });
-        });
-        html += "</table>";
-        const blob = new Blob([`\uFEFF${html}`], { type: "application/vnd.ms-excel" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `订单_${order.id}.xls`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        common_vendor.index.showToast({ title: "已导出Excel", icon: "success" });
+        common_vendor.index.showLoading({ title: "请求导出" });
+        const res = await api_index.exportOrderExcel({ order_id: order.id });
+        common_vendor.index.hideLoading();
+        if (res.success) {
+          const msg = res.message || "导出请求已发送";
+          common_vendor.index.showToast({ title: msg, icon: "success" });
+          if (res.data && (res.data.url || typeof res.data === "string" && res.data.startsWith("http"))) {
+            const url = res.data.url || res.data;
+            common_vendor.index.setClipboardData({ data: url, success: () => common_vendor.index.showToast({ title: "下载链接已复制", icon: "none" }) });
+          }
+        } else {
+          common_vendor.index.showToast({ title: res.message || "导出失败", icon: "none" });
+        }
       } catch (e) {
-        common_vendor.index.showToast({ title: "导出仅支持H5", icon: "none" });
+        common_vendor.index.hideLoading();
+        common_vendor.index.showToast({ title: "导出出错", icon: "none" });
       }
+    },
+    mapApiOrderToLocal(apiOrder) {
+      const roomsMap = {};
+      (apiOrder.items || []).forEach((item) => {
+        const roomName = item.room_name || "默认房间";
+        if (!roomsMap[roomName]) {
+          roomsMap[roomName] = { name: roomName, roomTotal: 0, items: [] };
+        }
+        const localItem = {
+          title: item.product_name || item.available_product_name,
+          id: item.product_id || item.available_product_id,
+          specTemp: item.color_temperature !== "None" ? item.color_temperature : "",
+          specLength: item.length,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.main_picture
+        };
+        roomsMap[roomName].items.push(localItem);
+        roomsMap[roomName].roomTotal += item.price * item.quantity;
+      });
+      return {
+        id: apiOrder.order_id,
+        orderNo: apiOrder.order_id,
+        createdAt: null,
+        // API doesn't provide created time in list
+        total: apiOrder.total_price,
+        waybillNo: apiOrder["tracking number"],
+        tracking: apiOrder["logistics data"],
+        status: apiOrder.status || "unknown",
+        rooms: Object.values(roomsMap)
+      };
+    },
+    switchTab(tab) {
+      this.activeTab = tab;
+      this.fetchOrders();
+    },
+    async fetchOrders() {
+      common_vendor.index.showLoading({ title: "加载中" });
+      this.orders = [];
+      const allEndpoints = [
+        { fn: api_index.getPendingPaymentOrders, status: "pending_payment" },
+        { fn: api_index.getPendingShipmentOrders, status: "pending_shipment" },
+        { fn: api_index.getPendingReceiptOrders, status: "pending_receipt" },
+        { fn: api_index.getHistoryOrders, status: "" }
+      ];
+      let endpoints = [];
+      if (this.activeTab === "all") {
+        endpoints = allEndpoints;
+      } else {
+        const map = {
+          "pending_payment": { fn: api_index.getPendingPaymentOrders, status: "pending_payment" },
+          "pending_shipment": { fn: api_index.getPendingShipmentOrders, status: "pending_shipment" },
+          "pending_receipt": { fn: api_index.getPendingReceiptOrders, status: "pending_receipt" },
+          "history": { fn: api_index.getHistoryOrders, status: "" }
+        };
+        if (map[this.activeTab])
+          endpoints = [map[this.activeTab]];
+      }
+      const seenIds = /* @__PURE__ */ new Set();
+      const allOrders = [];
+      for (const { fn, status } of endpoints) {
+        try {
+          const res = await fn();
+          if (res.success && res.data && res.data.orders) {
+            res.data.orders.forEach((o) => {
+              if (!seenIds.has(o.order_id)) {
+                seenIds.add(o.order_id);
+                if (status && !o.status)
+                  o.status = status;
+                allOrders.push(this.mapApiOrderToLocal(o));
+              }
+            });
+          }
+        } catch (e) {
+        }
+      }
+      this.orders = allOrders;
+      common_vendor.index.hideLoading();
+    },
+    async fetchDetail(id) {
+      try {
+        const res = await api_index.getOrderDetail({ order_id: id });
+        if (res.success && res.data) {
+          this.order = this.mapApiOrderToLocal(res.data);
+        }
+      } catch (e) {
+      }
+    },
+    async confirmReceipt(id) {
+      try {
+        const res = await api_index.confirmOrderReceipt({ order_id: id });
+        if (res.success) {
+          common_vendor.index.showToast({ title: "确认收货成功", icon: "success" });
+          if (this.order && (this.order.id === id || this.order.orderNo === id)) {
+            this.fetchDetail(id);
+          } else {
+            this.fetchOrders();
+          }
+        }
+      } catch (e) {
+      }
+    },
+    async handleCancelOrder(id) {
+      common_vendor.index.showModal({
+        title: "提示",
+        content: "确定要取消该订单吗？",
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const res2 = await api_index.cancelOrder({ order_id: id });
+              if (res2.success) {
+                common_vendor.index.showToast({ title: "订单已取消", icon: "success" });
+                if (this.order && (this.order.id === id || this.order.orderNo === id)) {
+                  this.fetchDetail(id);
+                } else {
+                  this.fetchOrders();
+                }
+              }
+            } catch (e) {
+              common_vendor.index.showToast({ title: "取消失败", icon: "none" });
+            }
+          }
+        }
+      });
     }
   }
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: $data.order
-  }, $data.order ? common_vendor.e({
-    b: common_vendor.t($data.order.orderNo || $data.order.id),
-    c: common_vendor.t($options.formatTime($data.order.createdAt)),
-    d: common_vendor.t($data.order.total.toFixed(2)),
-    e: $data.order.waybillNo
-  }, $data.order.waybillNo ? {
-    f: common_vendor.t($data.order.waybillNo),
-    g: common_vendor.o(($event) => $options.copyWaybill($data.order.waybillNo))
+    a: !$data.order
+  }, !$data.order ? {
+    b: $data.activeTab === "all" ? 1 : "",
+    c: common_vendor.o(($event) => $options.switchTab("all")),
+    d: $data.activeTab === "pending_payment" ? 1 : "",
+    e: common_vendor.o(($event) => $options.switchTab("pending_payment")),
+    f: $data.activeTab === "pending_shipment" ? 1 : "",
+    g: common_vendor.o(($event) => $options.switchTab("pending_shipment")),
+    h: $data.activeTab === "pending_receipt" ? 1 : "",
+    i: common_vendor.o(($event) => $options.switchTab("pending_receipt"))
   } : {}, {
-    h: ($data.order.tracking || []).length
+    j: $data.order
+  }, $data.order ? common_vendor.e({
+    k: common_vendor.t($data.order.orderNo || $data.order.id),
+    l: $data.order.createdAt
+  }, $data.order.createdAt ? {
+    m: common_vendor.t($options.formatTime($data.order.createdAt))
+  } : {}, {
+    n: $data.order.waybillNo
+  }, $data.order.waybillNo ? {
+    o: common_vendor.t($data.order.waybillNo),
+    p: common_vendor.o(($event) => $options.copyWaybill($data.order.waybillNo))
+  } : {}, {
+    q: ($data.order.tracking || []).length
   }, ($data.order.tracking || []).length ? {
-    i: common_vendor.f($data.order.tracking, (ev, i, i0) => {
+    r: common_vendor.f($data.order.tracking, (ev, i, i0) => {
       return common_vendor.e({
         a: common_vendor.t(ev.status),
         b: common_vendor.t(ev.desc),
@@ -94,7 +226,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}, {
-    j: common_vendor.f($data.order.rooms, (r, k0, i0) => {
+    s: common_vendor.f($data.order.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: common_vendor.t(r.roomTotal.toFixed(2)),
@@ -106,31 +238,50 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
             d: common_vendor.t(x.specLength || "-"),
             e: common_vendor.t(x.price.toFixed(2)),
             f: common_vendor.t(x.quantity),
-            g: common_vendor.t((x.price * x.quantity).toFixed(2)),
-            h: x.id + "_" + x.specLength + "_" + x.specTemp
+            g: x.id + "_" + x.specLength + "_" + x.specTemp
           };
         }),
         d: r.name
       };
     }),
-    k: common_vendor.o(($event) => $options.exportExcel($data.order))
+    t: common_vendor.t($data.order.total.toFixed(2)),
+    v: $data.order.status === "pending_receipt"
+  }, $data.order.status === "pending_receipt" ? {
+    w: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+  } : {}, {
+    x: ["pending_payment", "pending_shipment"].includes($data.order.status)
+  }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
+    y: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+  } : {}, {
+    z: common_vendor.o(($event) => $options.exportExcel($data.order))
   }) : common_vendor.e({
-    l: $data.orders.length
+    A: $data.orders.length
   }, $data.orders.length ? {
-    m: common_vendor.f($data.orders, (o, k0, i0) => {
-      return {
+    B: common_vendor.f($data.orders, (o, k0, i0) => {
+      return common_vendor.e({
         a: common_vendor.t(o.orderNo || o.id),
-        b: common_vendor.t($options.formatTime(o.createdAt)),
-        c: common_vendor.t(o.total.toFixed(2)),
-        d: common_vendor.f($options.firstThumbs(o), (src, i, i1) => {
+        b: o.createdAt
+      }, o.createdAt ? {
+        c: common_vendor.t($options.formatTime(o.createdAt))
+      } : {}, {
+        d: common_vendor.t(o.total.toFixed(2)),
+        e: common_vendor.f($options.firstThumbs(o), (src, i, i1) => {
           return {
             a: i,
             b: src
           };
         }),
-        e: common_vendor.o(($event) => $options.openDetail(o.id), o.id),
-        f: o.id
-      };
+        f: o.status === "pending_receipt"
+      }, o.status === "pending_receipt" ? {
+        g: common_vendor.o(($event) => $options.confirmReceipt(o.orderNo || o.id), o.id)
+      } : {}, {
+        h: ["pending_payment", "pending_shipment"].includes(o.status)
+      }, ["pending_payment", "pending_shipment"].includes(o.status) ? {
+        i: common_vendor.o(($event) => $options.handleCancelOrder(o.orderNo || o.id), o.id)
+      } : {}, {
+        j: common_vendor.o(($event) => $options.openDetail(o.id), o.id),
+        k: o.id
+      });
     })
   } : {}));
 }
