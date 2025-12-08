@@ -25,7 +25,6 @@ const _sfc_main = {
         { id: "s3", title: "爆款秒杀3", price: 59, image: "/static/logo.png" }
       ],
       recommendList: [],
-      pinnedByClick: false,
       panelTop: 20,
       panelLeft: 0,
       panelRight: 0
@@ -73,8 +72,6 @@ const _sfc_main = {
   },
   methods: {
     hoverCategory(cat, e) {
-      if (this.pinnedByClick)
-        return;
       const id = (cat == null ? void 0 : cat.categories_id) || "";
       if (!id) {
         common_vendor.index.showToast({ title: "分类缺少ID", icon: "none" });
@@ -97,39 +94,9 @@ const _sfc_main = {
       }
     },
     closeCategory() {
-      if (this.pinnedByClick)
-        return;
       this.activeCateId = "";
       this.activeCateName = "";
       this.leftChildren = [];
-    },
-    toggleCategoryByClick(cat, e) {
-      const id = (cat == null ? void 0 : cat.categories_id) || "";
-      if (!id) {
-        common_vendor.index.showToast({ title: "分类缺少ID", icon: "none" });
-        return;
-      }
-      if (this.pinnedByClick && this.activeCateId === id) {
-        this.pinnedByClick = false;
-        this.activeCateId = "";
-        this.activeCateName = "";
-        this.leftChildren = [];
-        return;
-      }
-      this.pinnedByClick = true;
-      this.activeCateId = id;
-      this.activeCateName = (cat == null ? void 0 : cat.name) || "";
-      try {
-        api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id", categories_id: id }).then((res) => {
-          var _a;
-          const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
-          this.leftChildren = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "", icon: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : "") }));
-        }).catch(() => {
-          this.leftChildren = [];
-        });
-      } catch (e2) {
-        this.leftChildren = [];
-      }
     },
     onSearch(val) {
       const q = (val || this.keyword || "").trim();

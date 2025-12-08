@@ -6,11 +6,13 @@
   display: flex;
   flex-direction: column;
   gap: 16rpx;
+  overflow: visible !important;
 }
 .item.data-v-378faae9 {
   position: relative;
   width: 90rpx;
   height: 90rpx;
+  overflow: visible !important;
   border-radius: 12rpx;
   background: #ffffff;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, .08);
@@ -32,6 +34,7 @@
   position: absolute;
   top: -10rpx;
   right: -10rpx;
+  z-index: 10000;
   min-width: 36rpx;
   height: 36rpx;
   padding: 0 8rpx;

@@ -1,9 +1,11 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const RoomSelector = () => "../../components/RoomSelector.js";
 const _sfc_main = {
+  components: { RoomSelector },
   data() {
-    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0 };
+    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5" };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
@@ -178,8 +180,14 @@ const _sfc_main = {
     },
     // H5 房间选择弹窗
     openRoomSheet() {
-      this.roomInput = this.roomName || "";
-      this.roomSheet = true;
+      this.roomSelectorMode = "h5";
+      this.roomSelectorVisible = true;
+      this.fetchRooms();
+    },
+    closeRoomSheet() {
+      this.roomSelectorVisible = false;
+    },
+    fetchRooms() {
       api_index.getRooms().then((res) => {
         var _a, _b, _c;
         const raw = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : Array.isArray(res == null ? void 0 : res.items) ? res.items : Array.isArray((_b = res == null ? void 0 : res.data) == null ? void 0 : _b.children) ? res.data.children : Array.isArray((_c = res == null ? void 0 : res.data) == null ? void 0 : _c.list) ? res.data.list : Array.isArray(res == null ? void 0 : res.data) ? res.data : [];
@@ -189,34 +197,35 @@ const _sfc_main = {
         this.roomsList = [];
       });
     },
-    closeRoomSheet() {
-      this.roomSheet = false;
-    },
-    confirmRoomSelect() {
-      const name = (this.roomInput || "").trim();
-      if (!name) {
-        common_vendor.index.showToast({ title: "请填写房间名", icon: "none" });
-        return;
-      }
-      const isNew = !this.roomsList.includes(name);
-      if (isNew) {
-        api_index.createRoom({ name }).then(() => {
-          this.roomName = name;
-          this.roomSheet = false;
-          common_vendor.index.showToast({ title: "房间已创建", icon: "success" });
-        }).catch(() => {
-          common_vendor.index.showToast({ title: "创建房间失败", icon: "none" });
-        });
+    onRoomSelect(room) {
+      if (this.roomSelectorMode === "mp") {
+        this.mpRoom = room.name;
       } else {
-        this.roomName = name;
-        const found = (this.roomsRaw || []).find((it) => it.name === name);
-        this.roomId = found ? found.id : "";
-        this.roomSheet = false;
+        this.roomName = room.name;
+        this.roomId = room.id;
       }
+      this.roomSelectorVisible = false;
+    },
+    onRoomCreate(name) {
+      if (!name)
+        return;
+      api_index.createRoom({ name }).then((res) => {
+        common_vendor.index.showToast({ title: "房间已创建", icon: "success" });
+        if (this.roomSelectorMode === "mp") {
+          this.mpRoom = name;
+        } else {
+          this.roomName = name;
+        }
+        this.roomSelectorVisible = false;
+        this.fetchRooms();
+      }).catch(() => {
+        common_vendor.index.showToast({ title: "创建房间失败", icon: "none" });
+      });
     },
     confirmSpecToCart() {
       var _a;
-      if (!this.mpRoom || !this.mpLength || !this.mpQty) {
+      const needLength = this.selectedSpec && this.selectedSpec.has_length === 1;
+      if (!this.mpRoom || needLength && !this.mpLength || !this.mpQty) {
         common_vendor.index.showToast({ title: "请填写房间名、长度、数量", icon: "none" });
         return;
       }
@@ -247,43 +256,20 @@ const _sfc_main = {
     },
     // MP Room Sheet Methods
     openMpRoomSheet() {
-      this.roomInput = this.mpRoom || "";
-      this.mpRoomSheet = true;
-      api_index.getRooms().then((res) => {
-        var _a, _b, _c;
-        const raw = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : Array.isArray(res == null ? void 0 : res.items) ? res.items : Array.isArray((_b = res == null ? void 0 : res.data) == null ? void 0 : _b.children) ? res.data.children : Array.isArray((_c = res == null ? void 0 : res.data) == null ? void 0 : _c.list) ? res.data.list : Array.isArray(res == null ? void 0 : res.data) ? res.data : [];
-        this.roomsRaw = (raw || []).map((it) => typeof it === "string" ? { id: "", name: it } : { id: (it == null ? void 0 : it.id) || (it == null ? void 0 : it.room_id) || "", name: (it == null ? void 0 : it.name) || (it == null ? void 0 : it.room_name) || "" });
-        this.roomsList = this.roomsRaw.map((it) => it.name).filter((x) => !!x);
-      }).catch(() => {
-        this.roomsList = [];
-      });
+      this.roomSelectorMode = "mp";
+      this.roomSelectorVisible = true;
+      this.fetchRooms();
     },
     closeMpRoomSheet() {
-      this.mpRoomSheet = false;
+      this.roomSelectorVisible = false;
       this.lockScroll = false;
-    },
-    confirmMpRoomSelect() {
-      const name = (this.roomInput || "").trim();
-      if (!name) {
-        common_vendor.index.showToast({ title: "请填写房间名", icon: "none" });
-        return;
-      }
-      const isNew = !this.roomsList.includes(name);
-      if (isNew) {
-        api_index.createRoom({ name }).then(() => {
-          this.mpRoom = name;
-          this.mpRoomSheet = false;
-          common_vendor.index.showToast({ title: "房间已创建", icon: "success" });
-        }).catch(() => {
-          common_vendor.index.showToast({ title: "创建房间失败", icon: "none" });
-        });
-      } else {
-        this.mpRoom = name;
-        this.mpRoomSheet = false;
-      }
     }
   }
 };
+if (!Array) {
+  const _component_RoomSelector = common_vendor.resolveComponent("RoomSelector");
+  _component_RoomSelector();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: $data.product
@@ -360,29 +346,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     I: common_vendor.o(() => {
     })
   }) : {}, {
-    J: $data.mpRoomSheet
-  }, $data.mpRoomSheet ? common_vendor.e({
-    K: $data.roomInput,
-    L: common_vendor.o(($event) => $data.roomInput = $event.detail.value),
-    M: $data.roomsList && $data.roomsList.length
-  }, $data.roomsList && $data.roomsList.length ? {
-    N: common_vendor.f($data.roomsList, (name, i, i0) => {
-      return {
-        a: common_vendor.t(name),
-        b: "mpr" + i,
-        c: common_vendor.o(($event) => $data.roomInput = name, "mpr" + i)
-      };
-    })
-  } : {}, {
-    O: common_vendor.o((...args) => $options.closeMpRoomSheet && $options.closeMpRoomSheet(...args)),
-    P: common_vendor.o((...args) => $options.confirmMpRoomSelect && $options.confirmMpRoomSelect(...args)),
-    Q: common_vendor.o(() => {
+    J: common_vendor.o($options.closeRoomSheet),
+    K: common_vendor.o($options.onRoomSelect),
+    L: common_vendor.o($options.onRoomCreate),
+    M: common_vendor.p({
+      visible: $data.roomSelectorVisible,
+      rooms: $data.roomsRaw,
+      selectedName: $data.roomSelectorMode === "mp" ? $data.mpRoom : $data.roomName
     }),
-    R: common_vendor.o((...args) => $options.closeMpRoomSheet && $options.closeMpRoomSheet(...args)),
-    S: common_vendor.o(() => {
-    })
-  }) : {}, {
-    T: $data.mpSheet || $data.mpRoomSheet ? 1 : ""
+    N: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
   }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);

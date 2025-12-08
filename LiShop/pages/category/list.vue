@@ -1,9 +1,9 @@
 <template>
   <view class="page">
-    <view class="header">
+    <!-- <view class="header">
       <text class="title">分类商品</text>
       <text class="kw" v-if="activeName">{{ activeName }}</text>
-    </view>
+    </view> -->
 
     <scroll-view class="sub-nav" scroll-x>
       <view class="nav-wrap">
@@ -153,7 +153,7 @@ export default {
 .sub-nav { background: #fff; border-bottom: 1rpx solid #f0f0f0; }
 .nav-wrap { 
    display: flex;
-   gap: 40rpx; 
+   gap: 80rpx; 
    padding: 16rpx 60rpx; 
    white-space: nowrap;
   }
@@ -171,7 +171,7 @@ export default {
 
 .pager { display: flex; align-items: center; justify-content: center; padding: 20rpx; flex-direction: column; }
 .pg-bar { display: flex; align-items: center; justify-content: center; gap: 12rpx; }
-.pg-btn { margin: 0 12rpx; }
+.pg-btn { margin: 0 12rpx;font-weight: 900; }
 .pg-text { margin: 0 12rpx; color: #666; }
 
 .loading { text-align: center; color: #999; padding: 20rpx; }

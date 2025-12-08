@@ -77,19 +77,19 @@
                 <text class="label">共减</text>
                 <text class="value reduce">减 ¥{{ totalReduce.toFixed(2) }}</text>
               </view>
-              <view class="row small">
+              <!-- <view class="row small">
                 <text class="label">官方立减</text>
                 <text class="value reduce">减 ¥{{ officialReduce.toFixed(2) }}</text>
               </view>
               <view class="row small">
                 <text class="label">红包</text>
                 <text class="value reduce">减 ¥{{ redReduce.toFixed(2) }}</text>
-              </view>
+              </view> -->
             </view>
-            <view class="coupon-bar">
+            <!-- <view class="coupon-bar">
               <text class="coupon-txt">消费券｜再实付{{ needForCoupon }}享满800减80</text>
               <text class="coupon-action">凑单›</text>
-            </view>
+            </view> -->
             <view class="row total">
               <text class="label">合计：</text>
               <view class="total-box">
@@ -99,7 +99,7 @@
             </view>
             <view class="action-buttons">
               <button class="checkout" @click="checkout">结算({{ selectedCount }})</button>
-              <button class="export-btn" @click="handleExportExcel">导出Excel</button>
+              <!-- <button class="export-btn" @click="handleExportExcel">导出Excel</button> -->
             </view>
           </view>
           <view v-else class="sum-empty">
@@ -178,7 +178,7 @@
       <text>合计：<text class="sum">¥{{ selectedTotal.toFixed(2) }}</text></text>
       <view class="actions">
         <view class="footer-btn" @click="clear">清空</view>
-        <view class="footer-btn" @click="handleExportExcel">导出Excel</view>
+        <!-- <view class="footer-btn" @click="handleExportExcel">导出Excel</view> -->
         <view class="footer-btn" :class="{ disabled: selectedCount === 0 }" @click="checkout">去结算({{ selectedCount }})</view>
       </view>
     </view>
@@ -245,14 +245,23 @@
         </view>
       </view>
     </view>
+    
+    <RoomSelector 
+      :visible="showAddressSelector" 
+      :rooms="addressRooms" 
+      :selectedName="selectedAddress ? (selectedAddress.receiver + ' ' + selectedAddress.phone + ' ' + selectedAddress.full).trim() : ''"
+      @close="showAddressSelector = false" 
+      @select="onAddressSelect" 
+    />
   </view>
 </template>
 
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
+import RoomSelector from '@/components/RoomSelector.vue'
 import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses } from '../../api/index.js'
 export default {
-  components: { FloatingNav },
+  components: { FloatingNav, RoomSelector },
   data() {
     return {
       cart: [],
@@ -264,6 +273,7 @@ export default {
       targetGroup: null,
       addresses: [],
       selectedAddress: null,
+      showAddressSelector: false,
       summaryData: {
         total_price: 0,
         total_original: 0,
@@ -288,6 +298,12 @@ export default {
     totalReduce() { return Math.max(0, (this.summaryData.total_original || 0) - (this.summaryData.total_price || 0)) },
     payable() { return this.summaryData.total_price || 0 },
     needForCoupon() { const need = Math.max(0, 800 - this.payable); return need.toFixed(2) },
+    addressRooms() {
+      return this.addresses.map(a => ({
+        name: `${a.receiver} ${a.phone} ${a.full}`.trim(),
+        raw: a
+      }))
+    },
     groups: function () {
       try {
         const map = {};
@@ -336,11 +352,14 @@ export default {
     },
     openAddressPicker() {
       if (!this.addresses.length) { uni.showToast({ title: '请先添加收货地址', icon: 'none' }); return }
-      const items = this.addresses.map(a => `${a.receiver} ${a.phone} ${a.full}`.trim()).slice(0, 12)
-      uni.showActionSheet({ itemList: items, success: (r) => {
-        const addr = this.addresses[r.tapIndex]
-        if (addr) { this.selectedAddress = addr; uni.setStorageSync('selected_address_id', addr.id) }
-      } })
+      this.showAddressSelector = true
+    },
+    onAddressSelect(room) {
+      if (room && room.raw) {
+        this.selectedAddress = room.raw
+        uni.setStorageSync('selected_address_id', room.raw.id)
+        this.showAddressSelector = false
+      }
     },
     toAddressPage() { uni.navigateTo({ url: '/pages/address/index' }) },
     load() {
@@ -1006,12 +1025,24 @@ export default {
 .cart-aside {}
 
 .address-card {
+  position: relative;
   background: #fff;
   border-radius: 16rpx;
   padding: 20rpx;
+  padding-right: 180rpx; /* Make space for button */
   box-shadow: 0 4rpx 16rpx rgba(0,0,0,.06);
   border: 1rpx solid #eee;
   margin-bottom: 20rpx;
+}
+.address-card .addr-body .addr-line {
+  font-size: 32rpx;
+}
+.address-card .addr-actions {
+  position: absolute;
+  right: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
 }
 .addr-title { font-weight: 600; color: #333; font-size: 28rpx; }
 .addr-body { margin-top: 8rpx; color: #555; font-size: 24rpx; display: flex; flex-direction: column; gap: 6rpx; }
@@ -1406,7 +1437,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16rpx 20rpx;
+  padding: 24rpx 20rpx;
   background: #fff;
   border-bottom: 1rpx solid #f0f0f0;
 }
@@ -1422,7 +1453,7 @@ export default {
   padding: 16rpx;
   border-radius: 8rpx;
   display: block;
-  font-size: 26rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 

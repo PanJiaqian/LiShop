@@ -313,8 +313,8 @@ export default {
 .page { padding: 30rpx; box-sizing: border-box; }
 /* #endif */
 .order { margin: 20rpx 0; background: #fff; border-radius: 12rpx; padding: 20rpx; position: relative; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10rpx; }
-.title { font-size: 28rpx; font-weight: 600; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25rpx; }
+.title { font-size: 30rpx; font-weight: 600; }
 .time {
   color: #999;
   font-size: 24rpx;
@@ -329,7 +329,7 @@ export default {
 .item { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 8rpx; border-bottom: 1rpx solid #f0f0f0; }
 .item:last-child { border-bottom: none; }
 .meta { flex: 1; max-width: 50%; }
-.meta .title { display: block; font-size: 26rpx; color: #333; }
+.meta .title { display: block; font-size: 26rpx; color: #333;margin-bottom: 10rpx; }
 .meta .spec { display: block; font-size: 22rpx; color: #777; margin-top: 4rpx; }
 .price-row { display: flex; gap: 12rpx; align-items: center; color: #333; }
 .ops { margin-top: 16rpx; display: flex; justify-content: flex-end; align-items: center; gap: 20rpx; }
@@ -385,9 +385,44 @@ export default {
   align-items: center;
   gap: 20rpx;
   flex: 1;
+  margin: 0;
+  max-width: 50%;
 }
-.meta .title { margin-bottom: 0; }
-.meta .spec { margin-top: 0; margin-left: 20rpx; }
+.meta .title { margin-bottom: 0; width: 100%; text-align: left; }
+.meta .spec { margin-top: 0; margin-left: 0; width: 100%; text-align: center; }
 .price-row { font-size: 36rpx; font-weight: bold; }
+
+.header .title, .ops .total-text, .card-hd .id, .card-hd .total {
+    font-size: 36rpx;
+    font-weight: bold;
+}
+
+.btn, .btn-action {
+    height: 80rpx;
+    line-height: 80rpx;
+    padding: 0 40rpx;
+    font-size: 30rpx;
+    border-radius: 40rpx;
+}
+/* #endif */
+
+/* #ifdef MP-WEIXIN */
+.header .title {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  display: block;
+}
+.meta .title {
+  display: block;
+  margin-bottom: 10rpx;
+}
+.meta .spec {
+  display: block;
+  margin-top: 10rpx;
+}
+.total {
+  font-size: 36rpx;
+}
 /* #endif */
 </style>

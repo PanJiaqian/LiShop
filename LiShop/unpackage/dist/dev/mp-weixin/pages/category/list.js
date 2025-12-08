@@ -107,11 +107,7 @@ if (!Array) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: $data.activeName
-  }, $data.activeName ? {
-    b: common_vendor.t($data.activeName)
-  } : {}, {
-    c: common_vendor.f($data.subChildren, (s, i, i0) => {
+    a: common_vendor.f($data.subChildren, (s, i, i0) => {
       return {
         a: common_vendor.t(s.name),
         b: i,
@@ -119,7 +115,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.selectChild(s), i)
       };
     }),
-    d: common_vendor.f($data.items, (p, idx, i0) => {
+    b: common_vendor.f($data.items, (p, idx, i0) => {
       return {
         a: "17e22e15-0-" + i0,
         b: common_vendor.p({
@@ -128,9 +124,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         c: idx
       };
     }),
-    e: !$data.loading && $data.items.length === 0
+    c: !$data.loading && $data.items.length === 0
   }, !$data.loading && $data.items.length === 0 ? {} : {}, {
-    f: $data.loading
+    d: $data.loading
   }, $data.loading ? {} : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-17e22e15"]]);

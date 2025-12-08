@@ -1,5 +1,5 @@
 <template>
-  <view class="page product-page" :class="{ 'no-scroll': mpSheet || mpRoomSheet }" v-if="product">
+  <view class="page product-page" :class="{ 'no-scroll': mpSheet || roomSelectorVisible }" v-if="product">
     <!-- #ifdef H5 -->
     <view class="pd-grid">
       <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
@@ -20,17 +20,14 @@
         <view class="pd-card pd-params">
           <text class="pd-section-title">参数信息</text>
           <view class="pd-param-grid">
-            <view class="pd-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text>
-            </view>
+            <view class="pd-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text></view>
             <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
             <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
-            <view class="pd-param-item inline-params">
-              <view class="sub-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin ? product.shipping_origin.replace(/省|市/g, '') : '—'
-                  }}</text></view>
-              <view class="sub-item"><text class="key">单位</text><text class="val">件</text></view>
-              <view class="sub-item"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
-                  }}</text></view>
-            </view>
+            <view class="pd-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin ? product.shipping_origin.replace(/省|市/g, '') : '—' }}</text></view>
+            <view class="pd-param-item"><text class="key">单位</text><text class="val">件</text></view>
+            <view class="pd-param-item"><text class="key">价格</text><text class="val">¥{{ product.price.toFixed(2) }}</text></view>
+            <view class="pd-param-item"><text class="key">发货</text><text class="val">{{ product.shipping_time_hours ? (product.shipping_time_hours + '小时') : '待定' }}</text></view>
+            <view class="pd-param-item"><text class="key">售后</text><text class="val">{{ product.support_no_reason_return_7d ? '七天无理由' : '无' }}</text></view>
           </view>
         </view>
 
@@ -84,8 +81,8 @@
             </view> -->
             <view class="pd-field inline" v-if="selectedSpec && selectedSpec.has_length === 1">
               <text class="label">长度</text>
-              <input class="pd-input" v-model="specLength" placeholder="如 1m / 2m" />
-              <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #999; margin-left: 12rpx;">可填最长长度：{{ selectedSpec.specification }}</text>
+              <input class="pd-input" v-model="specLength" placeholder="填写阿拉伯数字" />
+              <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx;">最长：{{ selectedSpec.specification }}</text>
             </view>
           </view>
 
@@ -101,29 +98,6 @@
           <view class="pd-actions">
             <button class="btn-buy" @click="buyNow">立即购买</button>
             <button class="btn-cart" @click="addToCartWithQty">加入购物车</button>
-          </view>
-
-          <!-- 房间选择弹窗（H5） -->
-          <view v-if="roomSheet" class="h5-mask" @click="closeRoomSheet">
-            <view class="h5-sheet" @click.stop>
-              <view class="h5-title">选择房间</view>
-              <view class="pd-field inline">
-                <text class="label">新房间名</text>
-                <input class="pd-input" v-model="roomInput" placeholder="输入新的房间名" />
-              </view>
-              <view class="rooms-list" v-if="roomsList && roomsList.length">
-                <text class="rooms-title">已保存房间</text>
-                <view class="rooms-grid">
-                  <view class="room-item" v-for="(name, i) in roomsList" :key="'r' + i" @click="roomInput = name">
-                    <text class="room-name">{{ name }}</text>
-                  </view>
-                </view>
-              </view>
-              <view class="h5-actions">
-                <button class="h5-btn ghost" @click="closeRoomSheet">取消</button>
-                <button class="h5-btn primary" @click="confirmRoomSelect">确定</button>
-              </view>
-            </view>
           </view>
         </view>
       </view>
@@ -213,8 +187,8 @@
               placeholder="如 3000K" /></view> -->
           <view class="mp-field" v-if="selectedSpec && selectedSpec.has_length === 1">
             <text class="label">长度</text>
-            <input class="mp-input" v-model="mpLength" placeholder="如 2m" />
-            <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #999; margin-left: 12rpx; white-space: nowrap;">可填最长长度：{{ selectedSpec.specification }}</text>
+            <input class="mp-input" v-model="mpLength" placeholder="填写阿拉伯数字" />
+            <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx; white-space: nowrap;">最长：{{ selectedSpec.specification }}</text>
           </view>
           <view class="mp-field">
             <text class="label">数量</text>
@@ -232,39 +206,26 @@
       </view>
     </view>
     <!-- MP Room Selection Modal -->
-    <view v-if="mpRoomSheet" class="mp-mask" style="z-index: 10000;" @click="closeMpRoomSheet" catchtouchmove="true"
-      @touchmove.stop.prevent="() => { }">
-      <view class="mp-sheet room-sheet" @click.stop>
-        <view class="mp-title">选择房间</view>
-        <view class="mp-field">
-          <text class="label">新房间名</text>
-          <input class="mp-input" v-model="roomInput" placeholder="输入新的房间名" />
-        </view>
-        <scroll-view scroll-y class="mp-scroll-view">
-          <view class="rooms-list" v-if="roomsList && roomsList.length">
-            <text class="rooms-title">已保存房间</text>
-            <view class="rooms-grid">
-              <view class="room-item" v-for="(name, i) in roomsList" :key="'mpr' + i" @click="roomInput = name">
-                <text class="room-name">{{ name }}</text>
-              </view>
-            </view>
-          </view>
-        </scroll-view>
-        <view class="mp-actions">
-          <button class="mp-btn ghost" @click="closeMpRoomSheet">取消</button>
-          <button class="mp-btn primary" @click="confirmMpRoomSelect">确定</button>
-        </view>
-      </view>
-    </view>
     <!-- #endif -->
     <!-- #endif -->
+    <RoomSelector
+      :visible="roomSelectorVisible"
+      :rooms="roomsRaw"
+      :selectedName="roomSelectorMode === 'mp' ? mpRoom : roomName"
+      @close="closeRoomSheet"
+      @select="onRoomSelect"
+      @create="onRoomCreate"
+    />
   </view>
 </template>
 
 <script>
 import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem } from '../../api/index.js'
+import RoomSelector from '../../components/RoomSelector.vue'
+
 export default {
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0 } },
+  components: { RoomSelector },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5' } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -448,9 +409,13 @@ export default {
     closeSpecSheet() { this.mpSheet = false; this.lockScroll = false },
     // H5 房间选择弹窗
     openRoomSheet() {
-      this.roomInput = (this.roomName || '')
-      this.roomSheet = true
-      // 通过接口获取房间列表
+      this.roomSelectorMode = 'h5'
+      this.roomSelectorVisible = true
+      this.fetchRooms()
+    },
+    closeRoomSheet() { this.roomSelectorVisible = false },
+    
+    fetchRooms() {
       getRooms()
         .then((res) => {
           const raw = Array.isArray(res?.data?.items) ? res.data.items
@@ -463,32 +428,40 @@ export default {
         })
         .catch(() => { this.roomsList = [] })
     },
-    closeRoomSheet() { this.roomSheet = false },
-    confirmRoomSelect() {
-      const name = (this.roomInput || '').trim()
-      if (!name) { uni.showToast({ title: '请填写房间名', icon: 'none' }); return }
-      const isNew = !this.roomsList.includes(name)
-      if (isNew) {
-        // 输入了新的房间名：调用创建接口
-        createRoom({ name })
-          .then(() => {
-            this.roomName = name
-            this.roomSheet = false
-            uni.showToast({ title: '房间已创建', icon: 'success' })
-          })
-          .catch(() => {
-            uni.showToast({ title: '创建房间失败', icon: 'none' })
-          })
+
+    onRoomSelect(room) {
+      if (this.roomSelectorMode === 'mp') {
+        this.mpRoom = room.name
       } else {
-        // 已存在：直接选择
-        this.roomName = name
-        const found = (this.roomsRaw || []).find(it => it.name === name)
-        this.roomId = found ? found.id : ''
-        this.roomSheet = false
+        this.roomName = room.name
+        this.roomId = room.id
       }
+      this.roomSelectorVisible = false
     },
+
+    onRoomCreate(name) {
+      if (!name) return
+      createRoom({ name })
+        .then((res) => {
+          uni.showToast({ title: '房间已创建', icon: 'success' })
+          if (this.roomSelectorMode === 'mp') {
+            this.mpRoom = name
+          } else {
+            this.roomName = name
+            // Try to find ID if returned, otherwise leave empty or refetch
+            // For now, just set name as per old logic
+          }
+          this.roomSelectorVisible = false
+          this.fetchRooms()
+        })
+        .catch(() => {
+          uni.showToast({ title: '创建房间失败', icon: 'none' })
+        })
+    },
+
     confirmSpecToCart() {
-      if (!this.mpRoom || !this.mpLength || !this.mpQty) {
+      const needLength = this.selectedSpec && this.selectedSpec.has_length === 1
+      if (!this.mpRoom || (needLength && !this.mpLength) || !this.mpQty) {
         uni.showToast({ title: '请填写房间名、长度、数量', icon: 'none' })
         return
       }
@@ -522,41 +495,11 @@ export default {
     },
     // MP Room Sheet Methods
     openMpRoomSheet() {
-      this.roomInput = (this.mpRoom || '')
-      this.mpRoomSheet = true
-      // Reuse fetch rooms logic
-      getRooms()
-        .then((res) => {
-          const raw = Array.isArray(res?.data?.items) ? res.data.items
-            : (Array.isArray(res?.items) ? res.items
-              : (Array.isArray(res?.data?.children) ? res.data.children
-                : (Array.isArray(res?.data?.list) ? res.data.list
-                  : (Array.isArray(res?.data) ? res.data : []))))
-          this.roomsRaw = (raw || []).map((it) => (typeof it === 'string') ? { id: '', name: it } : { id: (it?.id || it?.room_id || ''), name: (it?.name || it?.room_name || '') })
-          this.roomsList = this.roomsRaw.map(it => it.name).filter((x) => !!x)
-        })
-        .catch(() => { this.roomsList = [] })
+      this.roomSelectorMode = 'mp'
+      this.roomSelectorVisible = true
+      this.fetchRooms()
     },
-    closeMpRoomSheet() { this.mpRoomSheet = false; this.lockScroll = false },
-    confirmMpRoomSelect() {
-      const name = (this.roomInput || '').trim()
-      if (!name) { uni.showToast({ title: '请填写房间名', icon: 'none' }); return }
-      const isNew = !this.roomsList.includes(name)
-      if (isNew) {
-        createRoom({ name })
-          .then(() => {
-            this.mpRoom = name
-            this.mpRoomSheet = false
-            uni.showToast({ title: '房间已创建', icon: 'success' })
-          })
-          .catch(() => {
-            uni.showToast({ title: '创建房间失败', icon: 'none' })
-          })
-      } else {
-        this.mpRoom = name
-        this.mpRoomSheet = false
-      }
-    }
+    closeMpRoomSheet() { this.roomSelectorVisible = false; this.lockScroll = false },
   }
 }
 </script>
@@ -862,31 +805,33 @@ export default {
 .pd-param-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-auto-flow: column;
-  grid-template-rows: repeat(3, auto);
-  gap: 12rpx;
+  gap: 16rpx 40rpx;
   background: #fafafa;
   border-radius: 10rpx;
+  padding: 20rpx;
 }
 
 .pd-param-item {
   display: flex;
   flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 20rpx;
   border: none;
-  padding: 10rpx;
+  padding: 4rpx 0;
 }
 
 .pd-param-item .key {
-  color: #666;
+  color: #999;
   font-size: 24rpx;
+  min-width: 80rpx;
 }
 
 .pd-param-item .val {
   color: #333;
   font-size: 26rpx;
   margin-top: 0rpx;
+  flex: 1;
 }
 
 .pd-detail-img {
@@ -906,10 +851,10 @@ export default {
   gap: 20rpx;
 }
 
-/* H5 规格列表左图右文排版：一行三列 */
+/* H5 规格列表左图右文排版：一行两列 */
 .specs-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-gap: 12rpx;
 }
 
@@ -954,7 +899,7 @@ export default {
   gap: 20rpx;
 }
 
-.pd-param-grid { display: flex; align-items: center; gap: 20rpx; white-space: nowrap; overflow: hidden; }
+/* .pd-param-grid { display: flex; align-items: center; gap: 20rpx; white-space: nowrap; overflow: hidden; } */
 .pd-param-item { display: inline-flex; align-items: center; gap: 8rpx; white-space: nowrap; }
 .pd-param-item .key, .pd-param-item .val { white-space: nowrap; }
 .pd-param-item.inline-params { display: inline-flex; align-items: center; gap: 16rpx; }
@@ -1190,6 +1135,7 @@ export default {
   color: #333;
   padding-bottom: 12rpx;
   border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 20rpx;
 }
 
 .mp-field {
@@ -1399,6 +1345,10 @@ export default {
 .mp-param-item .key {
   min-width: 120rpx;
   display: inline-block;
+}
+
+.pd-section-title {
+  margin-bottom: 16rpx;
 }
 /* #endif */
 </style>

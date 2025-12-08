@@ -188,6 +188,7 @@
   color: #333;
   padding-bottom: 12rpx;
   border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 20rpx;
 }
 .mp-field.data-v-a911e391 {
   display: flex;
@@ -373,5 +374,8 @@ to {
 .mp-param-item .key.data-v-a911e391 {
   min-width: 120rpx;
   display: inline-block;
+}
+.pd-section-title.data-v-a911e391 {
+  margin-bottom: 16rpx;
 }
 

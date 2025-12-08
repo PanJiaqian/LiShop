@@ -37,7 +37,11 @@ export default {
           let data = dataRaw
           if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) {} }
           const user = { username: this.username, ...(data || {}) }
-          try { uni.setStorageSync('user', user) } catch (e) { }
+          try {
+            uni.setStorageSync('user', user)
+            // 4 days expiration
+            uni.setStorageSync('token_expiration', Date.now() + 4 * 24 * 60 * 60 * 1000)
+          } catch (e) { }
           uni.showToast({ title: '登录成功', icon: 'success' })
           setTimeout(() => {
             try { uni.navigateBack() } catch (e) {
@@ -48,7 +52,7 @@ export default {
         })
         .catch((err) => {
           console.error('login error', err)
-          uni.showToast({ title: '登录失败', icon: 'none' })
+          uni.showToast({ title: '账号或密码错误', icon: 'none' })
         })
         .finally(() => { try { uni.hideLoading() } catch (e) {} })
     }

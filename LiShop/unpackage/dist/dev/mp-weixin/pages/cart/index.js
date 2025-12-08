@@ -2,8 +2,9 @@
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
+const RoomSelector = () => "../../components/RoomSelector.js";
 const _sfc_main = {
-  components: { FloatingNav },
+  components: { FloatingNav, RoomSelector },
   data() {
     return {
       cart: [],
@@ -15,6 +16,7 @@ const _sfc_main = {
       targetGroup: null,
       addresses: [],
       selectedAddress: null,
+      showAddressSelector: false,
       summaryData: {
         total_price: 0,
         total_original: 0,
@@ -54,6 +56,12 @@ const _sfc_main = {
     needForCoupon() {
       const need = Math.max(0, 800 - this.payable);
       return need.toFixed(2);
+    },
+    addressRooms() {
+      return this.addresses.map((a) => ({
+        name: `${a.receiver} ${a.phone} ${a.full}`.trim(),
+        raw: a
+      }));
     },
     groups: function() {
       try {
@@ -108,14 +116,14 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "请先添加收货地址", icon: "none" });
         return;
       }
-      const items = this.addresses.map((a) => `${a.receiver} ${a.phone} ${a.full}`.trim()).slice(0, 12);
-      common_vendor.index.showActionSheet({ itemList: items, success: (r) => {
-        const addr = this.addresses[r.tapIndex];
-        if (addr) {
-          this.selectedAddress = addr;
-          common_vendor.index.setStorageSync("selected_address_id", addr.id);
-        }
-      } });
+      this.showAddressSelector = true;
+    },
+    onAddressSelect(room) {
+      if (room && room.raw) {
+        this.selectedAddress = room.raw;
+        common_vendor.index.setStorageSync("selected_address_id", room.raw.id);
+        this.showAddressSelector = false;
+      }
     },
     toAddressPage() {
       common_vendor.index.navigateTo({ url: "/pages/address/index" });
@@ -419,6 +427,10 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_RoomSelector = common_vendor.resolveComponent("RoomSelector");
+  _component_RoomSelector();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: $data.selectedAddress
@@ -466,14 +478,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     j: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
     k: common_vendor.t($options.selectedTotal.toFixed(2)),
     l: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
-    m: common_vendor.o((...args) => $options.handleExportExcel && $options.handleExportExcel(...args)),
-    n: common_vendor.t($options.selectedCount),
-    o: $options.selectedCount === 0 ? 1 : "",
-    p: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
-    q: $data.showRoomModal
+    m: common_vendor.t($options.selectedCount),
+    n: $options.selectedCount === 0 ? 1 : "",
+    o: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
+    p: $data.showRoomModal
   }, $data.showRoomModal ? {
-    r: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
-    s: common_vendor.f($data.rooms, (r, k0, i0) => {
+    q: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
+    r: common_vendor.f($data.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: r.id,
@@ -481,22 +492,30 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.selectRoom(r), r.id)
       };
     }),
-    t: common_vendor.o(() => {
+    s: common_vendor.o(() => {
     }),
-    v: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
+    t: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
   } : {}, {
-    w: $data.showSpecModal
+    v: $data.showSpecModal
   }, $data.showSpecModal ? {
-    x: $data.editingItem.image || "/static/logo.png",
-    y: common_vendor.t($data.editingItem.price),
-    z: common_vendor.t($data.editingItem.attr),
+    w: $data.editingItem.image || "/static/logo.png",
+    x: common_vendor.t($data.editingItem.price),
+    y: common_vendor.t($data.editingItem.attr),
+    z: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
     A: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
     B: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    C: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    D: common_vendor.o(() => {
+    C: common_vendor.o(() => {
     }),
-    E: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
-  } : {});
+    D: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
+  } : {}, {
+    E: common_vendor.o(($event) => $data.showAddressSelector = false),
+    F: common_vendor.o($options.onAddressSelect),
+    G: common_vendor.p({
+      visible: $data.showAddressSelector,
+      rooms: $options.addressRooms,
+      selectedName: $data.selectedAddress ? ($data.selectedAddress.receiver + " " + $data.selectedAddress.phone + " " + $data.selectedAddress.full).trim() : ""
+    })
+  });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-8039fbf1"]]);
 wx.createPage(MiniProgramPage);

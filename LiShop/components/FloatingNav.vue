@@ -7,7 +7,7 @@
     <view class="item" @click="goCart">
       <text class="ico">🛒</text>
       <text class="txt">购物车</text>
-      <view v-if="cartCount > 0" class="badge">{{ cartCount }}</view>
+      <!-- <view v-if="cartCount > 0" class="badge">{{ cartCount }}</view> -->
     </view>
     <view class="item" @click="contact">
       <text class="ico">💬</text>
@@ -57,12 +57,14 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
+  overflow: visible !important;
 }
 
 .item {
   position: relative;
   width: 90rpx;
   height: 90rpx;
+  overflow: visible !important;
   border-radius: 12rpx;
   background: #ffffff;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, .08);
@@ -87,6 +89,7 @@ export default {
   position: absolute;
   top: -10rpx;
   right: -10rpx;
+  z-index: 10000;
   min-width: 36rpx;
   height: 36rpx;
   padding: 0 8rpx;

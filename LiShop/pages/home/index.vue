@@ -3,11 +3,10 @@
     <!-- H5 三栏布局（包含分类、我的、商品） -->
     <!-- #ifdef H5 -->
     <view class="h5-layout">
-      <view class="side-cate" @mouseleave="closeCategory">
+      <view class="side-cate">
         <view class="cate-title">全部分类</view>
         <view class="cate-list">
-          <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)"
-            @click="toggleCategoryByClick(c, $event)">
+          <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
             <text class="dot">•</text>
             <text class="cate-name">{{ c.name }}</text>
           </view>
@@ -142,7 +141,6 @@ export default {
         { id: 's3', title: '爆款秒杀3', price: 59, image: '/static/logo.png' }
       ],
       recommendList: []
-      , pinnedByClick: false
       , panelTop: 20
       , panelLeft: 0
       , panelRight: 0
@@ -195,7 +193,6 @@ export default {
   },
   methods: {
     hoverCategory(cat, e) {
-      if (this.pinnedByClick) return
       const id = cat?.categories_id || ''
       if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
       if (this.activeCateId === id && (this.leftChildren && this.leftChildren.length)) return
@@ -223,44 +220,9 @@ export default {
       } catch (e) { this.leftChildren = [] }
     },
     closeCategory() {
-      if (this.pinnedByClick) return
       this.activeCateId = ''
       this.activeCateName = ''
       this.leftChildren = []
-    },
-    toggleCategoryByClick(cat, e) {
-      const id = cat?.categories_id || ''
-      if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
-      if (this.pinnedByClick && this.activeCateId === id) {
-        this.pinnedByClick = false
-        this.activeCateId = ''
-        this.activeCateName = ''
-        this.leftChildren = []
-        return
-      }
-      this.pinnedByClick = true
-      this.activeCateId = id
-      this.activeCateName = cat?.name || ''
-      // #ifdef H5
-      try {
-        const main = document.querySelector('.main')
-        if (main && e && e.clientY != null) {
-          const rect = main.getBoundingClientRect()
-          const y = e.clientY - rect.top
-          this.panelTop = Math.max(20, Math.min(y - 40, rect.height - 200))
-          this.panelLeft = rect.left
-          this.panelRight = Math.max(0, document.documentElement.clientWidth - rect.right)
-        }
-      } catch (err) {}
-      // #endif
-      try {
-        getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
-          .then((res) => {
-            const items = Array.isArray(res?.data?.items) ? res.data.items : []
-            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '', icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : '' ) }))
-          })
-          .catch(() => { this.leftChildren = [] })
-      } catch (e) { this.leftChildren = [] }
     },
     onSearch(val) {
       const q = (val || this.keyword || '').trim()

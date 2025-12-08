@@ -25,6 +25,7 @@ const _sfc_main = {
         const user = { username: this.username, ...data || {} };
         try {
           common_vendor.index.setStorageSync("user", user);
+          common_vendor.index.setStorageSync("token_expiration", Date.now() + 4 * 24 * 60 * 60 * 1e3);
         } catch (e) {
         }
         common_vendor.index.showToast({ title: "登录成功", icon: "success" });
@@ -40,7 +41,7 @@ const _sfc_main = {
         }, 300);
       }).catch((err) => {
         console.error("login error", err);
-        common_vendor.index.showToast({ title: "登录失败", icon: "none" });
+        common_vendor.index.showToast({ title: "账号或密码错误", icon: "none" });
       }).finally(() => {
         try {
           common_vendor.index.hideLoading();

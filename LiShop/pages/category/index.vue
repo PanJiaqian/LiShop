@@ -185,4 +185,10 @@ export default {
   margin-top: 12rpx;
   font-size: 26rpx;
 }
+
+/* #ifdef MP-WEIXIN */
+.left-item, .sub-title, .sub-name {
+  font-size: 28rpx !important;
+}
+/* #endif */
 </style>

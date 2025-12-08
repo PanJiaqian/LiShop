@@ -3,6 +3,12 @@ const BASE_URL = 'http://182.61.54.90:6149'
 function getBearer(token) {
   if (token) return token.startsWith('Bearer ') ? token : `Bearer ${token}`
   try {
+    const expiration = uni.getStorageSync('token_expiration') || 0
+    if (expiration && Date.now() > expiration) {
+      uni.removeStorageSync('user')
+      uni.removeStorageSync('token_expiration')
+      return ''
+    }
     const u = uni.getStorageSync('user') || null
     const t = (u && (u.token || (u.data && u.data.token))) || ''
     if (t) return t.startsWith('Bearer ') ? t : `Bearer ${t}`
@@ -53,10 +59,13 @@ export function loginAdmin(payload) {
         data: payload,
         success: (res) => {
           const ok = res && res.statusCode >= 200 && res.statusCode < 300
-          if (ok) {
-            resolve(res.data)
+          let data = res?.data
+          if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) {} }
+          const bizOk = !!(data && data.success === true)
+          if (ok && bizOk) {
+            resolve(data)
           } else {
-            reject(res)
+            reject(data || res)
           }
         },
         fail: (err) => reject(err)

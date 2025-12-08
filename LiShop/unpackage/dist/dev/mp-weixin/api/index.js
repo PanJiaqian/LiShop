@@ -5,6 +5,12 @@ function getBearer(token) {
   if (token)
     return token.startsWith("Bearer ") ? token : `Bearer ${token}`;
   try {
+    const expiration = common_vendor.index.getStorageSync("token_expiration") || 0;
+    if (expiration && Date.now() > expiration) {
+      common_vendor.index.removeStorageSync("user");
+      common_vendor.index.removeStorageSync("token_expiration");
+      return "";
+    }
     const u = common_vendor.index.getStorageSync("user") || null;
     const t = u && (u.token || u.data && u.data.token) || "";
     if (t)
@@ -51,10 +57,18 @@ function loginAdmin(payload) {
         data: payload,
         success: (res) => {
           const ok = res && res.statusCode >= 200 && res.statusCode < 300;
-          if (ok) {
-            resolve(res.data);
+          let data = res == null ? void 0 : res.data;
+          if (typeof data === "string") {
+            try {
+              data = JSON.parse(data);
+            } catch (e) {
+            }
+          }
+          const bizOk = !!(data && data.success === true);
+          if (ok && bizOk) {
+            resolve(data);
           } else {
-            reject(res);
+            reject(data || res);
           }
         },
         fail: (err) => reject(err)

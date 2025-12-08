@@ -53,3 +53,7 @@
   margin-top: 12rpx;
   font-size: 26rpx;
 }
+.left-item.data-v-3cdc7548, .sub-title.data-v-3cdc7548, .sub-name.data-v-3cdc7548 {
+  font-size: 28rpx !important;
+}
+

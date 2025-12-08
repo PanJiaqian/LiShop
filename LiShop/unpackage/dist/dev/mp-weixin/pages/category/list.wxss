@@ -18,7 +18,7 @@
 }
 .nav-wrap.data-v-17e22e15 { 
    display: flex;
-   gap: 40rpx; 
+   gap: 80rpx; 
    padding: 16rpx 60rpx; 
    white-space: nowrap;
 }
@@ -40,7 +40,7 @@
 }
 .pg-bar.data-v-17e22e15 { display: flex; align-items: center; justify-content: center; gap: 12rpx;
 }
-.pg-btn.data-v-17e22e15 { margin: 0 12rpx;
+.pg-btn.data-v-17e22e15 { margin: 0 12rpx;font-weight: 900;
 }
 .pg-text.data-v-17e22e15 { margin: 0 12rpx; color: #666;
 }
