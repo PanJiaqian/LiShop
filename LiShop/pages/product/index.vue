@@ -180,7 +180,7 @@
           <view v-else class="mp-param-grid">
             <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
           </view>
-          <view class="mp-field"><text class="label">房间名</text>
+          <view class="mp-field"><text class="label">房间</text>
             <view class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
           </view>
           <!-- <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
@@ -1141,7 +1141,7 @@ export default {
 .mp-field {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* justify-content: space-between; */
   gap: 12rpx;
   margin: 16rpx 0;
 }
@@ -1352,11 +1352,3 @@ export default {
 }
 /* #endif */
 </style>
-  onPageScroll(e) {
-    if (this.mpSheet || this.mpRoomSheet) {
-      if (!this.lockScroll) { this.lockScrollTop = e.scrollTop; this.lockScroll = true }
-      else { try { uni.pageScrollTo({ scrollTop: this.lockScrollTop, duration: 0 }) } catch (err) {} }
-    } else {
-      this.lockScroll = false
-    }
-  },

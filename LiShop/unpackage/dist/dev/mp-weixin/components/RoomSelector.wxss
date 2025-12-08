@@ -53,6 +53,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16rpx;
   padding: 32rpx 24rpx;
   background: #fff;
   border-radius: 16rpx;
@@ -77,6 +78,10 @@
   font-size: 30rpx;
   color: #333;
 }
+.rs-arrow.data-v-9c17e027 {
+  font-size: 30rpx;
+  color: #999;
+}
 .rs-check-wrapper.data-v-9c17e027 {
   width: 40rpx;
   height: 40rpx;
@@ -94,6 +99,7 @@
   display: flex;
   flex-direction: column;
   gap: 16rpx;
+  margin-bottom: 20rpx;
 }
 .rs-create.data-v-9c17e027 {
   gap: 0;

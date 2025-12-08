@@ -1,5 +1,5 @@
 <template>
-  <view class="float" :style="styleFix">
+  <view class="float" v-if="globalShow" :style="styleFix">
     <view class="item" @click="goHome">
       <text class="ico">🏠</text>
       <text class="txt">首页</text>
@@ -24,7 +24,7 @@
 export default {
   name: 'FloatingNav',
   props: {
-    bottomSafe: { type: Number, default: 120 } // 与 tabBar 避让距离（rpx）
+    bottomSafe: { type: Number, default: 120 }
   },
   data() {
     return { cartCount: 0 }
@@ -32,6 +32,20 @@ export default {
   computed: {
     styleFix() {
       return `bottom:${this.bottomSafe}rpx;`
+    }
+    ,
+    globalShow() {
+      // #ifdef H5
+      return true
+      // #endif
+      try {
+        const app = typeof getApp === 'function' ? getApp() : null
+        const gd = app && app.globalData ? app.globalData : null
+        if (gd && gd.showFloatingNav === false) return false
+        return true
+      } catch (e) {
+        return true
+      }
     }
   },
   mounted() {
@@ -44,7 +58,17 @@ export default {
     goHome() { uni.switchTab ? uni.switchTab({ url: '/pages/home/index' }) : uni.navigateTo({ url: '/pages/home/index' }) },
     goCart() { uni.switchTab ? uni.switchTab({ url: '/pages/cart/index' }) : uni.navigateTo({ url: '/pages/cart/index' }) },
     contact() { uni.showToast({ title: '客服暂未接入', icon: 'none' }) },
-    toTop() { uni.pageScrollTo({ scrollTop: 0, duration: 300 }) }
+    toTop() {
+      // #ifdef H5
+      try {
+        const main = typeof document !== 'undefined' ? document.querySelector('.main') : null
+        if (main && typeof main.scrollTo === 'function') { main.scrollTo({ top: 0, behavior: 'smooth' }); return }
+        if (main) { main.scrollTop = 0; return }
+      } catch (err) {}
+      try { if (typeof window !== 'undefined' && window && typeof window.scrollTo === 'function') { window.scrollTo({ top: 0, behavior: 'smooth' }) } } catch (e) {}
+      // #endif
+      uni.pageScrollTo({ scrollTop: 0, duration: 300 })
+    }
   }
 }
 </script>

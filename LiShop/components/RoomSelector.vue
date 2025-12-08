@@ -7,6 +7,18 @@
       </view>
       
       <scroll-view scroll-y class="rs-body">
+        <view class="rs-create" v-if="!isAddressMode">
+          <text class="rs-subtitle">新建房间</text>
+          <view class="rs-input-box">
+            <input 
+              class="rs-input" 
+              v-model="newRoomName" 
+              placeholder="请输入房间名称" 
+              :cursor-spacing="20"
+            />
+          </view>
+        </view>
+
         <view class="rs-list">
           <view 
             class="rs-item" 
@@ -19,28 +31,15 @@
               <image src="/static/room.png" class="rs-icon" mode="aspectFit" />
               <text class="rs-name">{{ room.name }}</text>
             </view>
-            <!-- <view class="rs-check-wrapper" v-if="selectedName === room.name">
-               <text class="rs-check-icon">✓</text>
-            </view> -->
-          </view>
-        </view>
-
-        <view class="rs-create">
-          <text class="rs-subtitle">新建房间</text>
-          <view class="rs-input-box">
-            <input 
-              class="rs-input" 
-              v-model="newRoomName" 
-              placeholder="请输入房间名称" 
-              :cursor-spacing="20"
-            />
+            <text class="rs-arrow">›</text>
           </view>
         </view>
       </scroll-view>
 
       <view class="rs-footer">
         <button class="rs-btn cancel" @click="close">取消</button>
-        <button class="rs-btn create" @click="confirmCreate">创建</button>
+        <!-- <button class="rs-btn create"  @click="confirmSelect">选择地址</button> -->
+        <button class="rs-btn create" v-if="!isAddressMode" @click="confirmCreate">创建</button>
       </view>
     </view>
   </view>
@@ -59,6 +58,16 @@ export default {
       newRoomName: ''
     }
   },
+  computed: {
+    isAddressMode() {
+      const list = this.rooms || []
+      if (Array.isArray(list) && list.length > 0) {
+        const a = list[0]
+        return !!(a && a.raw)
+      }
+      return false
+    }
+  },
   watch: {
     visible(val) {
       if (val) {
@@ -72,6 +81,14 @@ export default {
     },
     select(room) {
       this.$emit('select', room)
+    },
+    confirmSelect() {
+      const list = this.rooms || []
+      const picked = list.find(r => r && r.name === this.selectedName)
+      if (picked) {
+        this.$emit('select', picked)
+        this.$emit('close')
+      }
     },
     confirmCreate() {
       if (!this.newRoomName.trim()) {
@@ -145,6 +162,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16rpx;
   padding: 32rpx 24rpx;
   background: #fff;
   border-radius: 16rpx;
@@ -174,6 +192,11 @@ export default {
   color: #333;
 }
 
+.rs-arrow {
+  font-size: 30rpx;
+  color: #999;
+}
+
 .rs-check-wrapper {
   width: 40rpx;
   height: 40rpx;
@@ -193,6 +216,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
+  margin-bottom: 20rpx;
 }
 
 /* #ifdef MP-WEIXIN */

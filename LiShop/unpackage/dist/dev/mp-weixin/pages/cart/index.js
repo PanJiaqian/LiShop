@@ -230,13 +230,41 @@ const _sfc_main = {
         if (res && res.success) {
           item.quantity = quantity;
           this.sync();
-          this.fetchSummary();
+          this.refreshItemPrice(item.id);
         } else {
           common_vendor.index.showToast({ title: "更新失败", icon: "none" });
         }
       }).catch((err) => {
         console.error(err);
         common_vendor.index.showToast({ title: "更新出错", icon: "none" });
+      });
+    },
+    refreshItemPrice(id) {
+      api_index.getCartItems().then((res) => {
+        const payload = res && res.data && typeof res.data === "object" ? res.data : res;
+        const groups = Array.isArray(payload == null ? void 0 : payload.groups) ? payload.groups : [];
+        let found = null;
+        for (const g of groups) {
+          const items = Array.isArray(g && g.items) ? g.items : [];
+          const x = items.find((xx) => xx && xx.id === id);
+          if (x) {
+            found = x;
+            break;
+          }
+        }
+        if (found) {
+          const i = this.findIndexById(id);
+          if (i >= 0) {
+            const it = this.cart[i];
+            it.price = Number(found.price !== void 0 ? found.price : it.price) || it.price;
+            it.quantity = Number(found.quantity !== void 0 ? found.quantity : it.quantity) || it.quantity;
+            it.inventory = found.inventory;
+            it.available = found.available_product_status;
+            it.isOutOfStock = found.inventory === 0 || found.available_product_status === 0;
+          }
+        }
+      }).finally(() => {
+        this.fetchSummary();
       });
     },
     removeById(id) {

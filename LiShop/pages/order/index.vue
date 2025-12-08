@@ -90,12 +90,17 @@
       </view>
       <view v-else class="empty">暂无订单</view>
     </view>
+    <!-- #ifdef H5 -->
+    <FloatingNav />
+    <!-- #endif -->
   </view>
 </template>
 
 <script>
 import { getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, cancelOrder, exportOrderExcel } from '../../api/index.js'
+import FloatingNav from '../../components/FloatingNav.vue'
 export default {
+  components: { FloatingNav },
   data() { return { order: null, orders: [], activeTab: 'all' } },
   onLoad(query) {
     const id = query?.id

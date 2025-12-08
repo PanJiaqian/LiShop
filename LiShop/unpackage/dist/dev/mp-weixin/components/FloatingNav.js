@@ -4,7 +4,6 @@ const _sfc_main = {
   name: "FloatingNav",
   props: {
     bottomSafe: { type: Number, default: 120 }
-    // 与 tabBar 避让距离（rpx）
   },
   data() {
     return { cartCount: 0 };
@@ -12,6 +11,17 @@ const _sfc_main = {
   computed: {
     styleFix() {
       return `bottom:${this.bottomSafe}rpx;`;
+    },
+    globalShow() {
+      try {
+        const app = typeof getApp === "function" ? getApp() : null;
+        const gd = app && app.globalData ? app.globalData : null;
+        if (gd && gd.showFloatingNav === false)
+          return false;
+        return true;
+      } catch (e) {
+        return true;
+      }
     }
   },
   mounted() {
@@ -40,13 +50,15 @@ const _sfc_main = {
   }
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return {
-    a: common_vendor.o((...args) => $options.goHome && $options.goHome(...args)),
-    b: common_vendor.o((...args) => $options.goCart && $options.goCart(...args)),
-    c: common_vendor.o((...args) => $options.contact && $options.contact(...args)),
-    d: common_vendor.o((...args) => $options.toTop && $options.toTop(...args)),
-    e: common_vendor.s($options.styleFix)
-  };
+  return common_vendor.e({
+    a: $options.globalShow
+  }, $options.globalShow ? {
+    b: common_vendor.o((...args) => $options.goHome && $options.goHome(...args)),
+    c: common_vendor.o((...args) => $options.goCart && $options.goCart(...args)),
+    d: common_vendor.o((...args) => $options.contact && $options.contact(...args)),
+    e: common_vendor.o((...args) => $options.toTop && $options.toTop(...args)),
+    f: common_vendor.s($options.styleFix)
+  } : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-378faae9"]]);
 wx.createComponent(Component);

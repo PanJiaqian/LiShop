@@ -1,7 +1,9 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const FloatingNav = () => "../../components/FloatingNav.js";
 const _sfc_main = {
+  components: { FloatingNav },
   data() {
     return { order: null, orders: [], activeTab: "all" };
   },
