@@ -8,6 +8,15 @@
   gap: 16rpx;
   overflow: visible !important;
 }
+.float.hover-reveal.data-v-378faae9 {
+  opacity: 0.2;
+  transition: opacity .2s ease, transform .2s ease;
+  transform: translateX(16rpx);
+}
+.float.hover-reveal.data-v-378faae9:hover {
+  opacity: 1;
+  transform: translateX(0);
+}
 .item.data-v-378faae9 {
   position: relative;
   width: 90rpx;

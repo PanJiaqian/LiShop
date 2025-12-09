@@ -1,9 +1,10 @@
 "use strict";
-const api_index = require("../../api/index.js");
 const common_vendor = require("../../common/vendor.js");
+const api_index = require("../../api/index.js");
 const ProductCard = () => "../../components/ProductCard.js";
+const FloatingNav = () => "../../components/FloatingNav.js";
 const _sfc_main = {
-  components: { ProductCard },
+  components: { ProductCard, FloatingNav },
   data() {
     return {
       parentId: "",
@@ -22,6 +23,10 @@ const _sfc_main = {
       const t = Number(this.total || 0);
       const ps = Number(this.page_size || 32);
       return t > 0 ? Math.ceil(t / ps) : 1;
+    },
+    activeChildTitle() {
+      const s = (this.subChildren || []).find((it) => it.categories_id === this.activeChildId);
+      return s ? s.name || "" : "";
     }
   },
   onLoad(query) {
@@ -40,6 +45,10 @@ const _sfc_main = {
       if (this.activeChildId)
         this.fetchPage(1);
     });
+    try {
+      common_vendor.index.setNavigationBarTitle({ title: this.activeName || "分类商品" });
+    } catch (e) {
+    }
   },
   methods: {
     cleanImage(url) {

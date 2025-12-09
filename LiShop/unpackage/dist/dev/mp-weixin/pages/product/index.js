@@ -2,10 +2,11 @@
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
 const RoomSelector = () => "../../components/RoomSelector.js";
+const FloatingNav = () => "../../components/FloatingNav.js";
 const _sfc_main = {
-  components: { RoomSelector },
+  components: { RoomSelector, FloatingNav },
   data() {
-    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5" };
+    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
@@ -60,6 +61,24 @@ const _sfc_main = {
     },
     selectedSpec() {
       return this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex] ? this.specs[this.selectedSpecIndex] : null;
+    },
+    addressRooms() {
+      return (this.addresses || []).map((a) => ({ name: `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(" ")}`.trim(), raw: a }));
+    },
+    selectorRooms() {
+      return this.roomSelectorMode === "addr" ? this.addressRooms : this.roomsRaw;
+    },
+    selectorSelectedName() {
+      if (this.roomSelectorMode === "mp")
+        return this.mpRoom || "";
+      if (this.roomSelectorMode === "h5")
+        return this.roomName || "";
+      const a = this.selectedAddress;
+      return a ? `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(" ")}`.trim() : "";
+    },
+    mpAddressDisplay() {
+      const a = this.selectedAddress;
+      return a ? `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(" ")}`.trim() : "";
     }
   },
   watch: {
@@ -75,6 +94,9 @@ const _sfc_main = {
       this.hls.destroy();
       this.hls = null;
     }
+  },
+  onShow() {
+    this.loadAddresses();
   },
   methods: {
     initHls(src) {
@@ -187,6 +209,11 @@ const _sfc_main = {
     closeRoomSheet() {
       this.roomSelectorVisible = false;
     },
+    openH5AddressSheet() {
+      this.roomSelectorMode = "addr";
+      this.roomSelectorVisible = true;
+      this.loadAddresses();
+    },
     fetchRooms() {
       api_index.getRooms().then((res) => {
         var _a, _b, _c;
@@ -197,8 +224,38 @@ const _sfc_main = {
         this.roomsList = [];
       });
     },
+    loadAddresses() {
+      api_index.getAddresses().then((res) => {
+        var _a;
+        const raw = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : Array.isArray(res == null ? void 0 : res.items) ? res.items : [];
+        this.addresses = raw.map((a) => ({
+          id: a.addresses_id || a.id || "",
+          receiver: a.receiver || "",
+          phone: a.phone || "",
+          province: a.province || "",
+          city: a.city || "",
+          district: a.district || "",
+          detail_address: a.detail_address || "",
+          is_default: a.is_default === 1
+        }));
+        const cached = common_vendor.index.getStorageSync("selected_address_id") || "";
+        let pick = this.addresses.find((x) => x.id === cached) || this.addresses.find((x) => x.is_default) || this.addresses[0];
+        this.selectedAddress = pick || null;
+      }).catch(() => {
+        this.addresses = [];
+        this.selectedAddress = null;
+      });
+    },
     onRoomSelect(room) {
-      if (this.roomSelectorMode === "mp") {
+      if (this.roomSelectorMode === "addr") {
+        if (room && room.raw) {
+          this.selectedAddress = room.raw;
+          try {
+            common_vendor.index.setStorageSync("selected_address_id", this.selectedAddress.id);
+          } catch (e) {
+          }
+        }
+      } else if (this.roomSelectorMode === "mp") {
         this.mpRoom = room.name;
       } else {
         this.roomName = room.name;
@@ -260,6 +317,11 @@ const _sfc_main = {
       this.roomSelectorVisible = true;
       this.fetchRooms();
     },
+    openMpAddressSheet() {
+      this.roomSelectorMode = "addr";
+      this.roomSelectorVisible = true;
+      this.loadAddresses();
+    },
     closeMpRoomSheet() {
       this.roomSelectorVisible = false;
       this.lockScroll = false;
@@ -301,9 +363,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     k: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
     l: $data.mpSheet
   }, $data.mpSheet ? common_vendor.e({
-    m: $data.specsLoading
+    m: $data.selectedAddress
+  }, $data.selectedAddress ? {
+    n: common_vendor.t($data.selectedAddress.receiver),
+    o: common_vendor.t($data.selectedAddress.phone)
+  } : {}, {
+    p: $data.selectedAddress
+  }, $data.selectedAddress ? {
+    q: common_vendor.t($data.selectedAddress.province),
+    r: common_vendor.t($data.selectedAddress.city),
+    s: common_vendor.t($data.selectedAddress.district),
+    t: common_vendor.t($data.selectedAddress.detail_address)
+  } : {}, {
+    v: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
+    w: $data.specsLoading
   }, $data.specsLoading ? {} : $data.specs && $data.specs.length ? common_vendor.e({
-    o: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
+    y: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
       return common_vendor.e({
         a: it.image_url || "/static/logo.png",
         b: common_vendor.t(it.name),
@@ -318,43 +393,43 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         i: common_vendor.o(($event) => $options.selectSpec(i), "mpsp" + i)
       });
     }),
-    p: $data.specs.length > 3
+    z: $data.specs.length > 3
   }, $data.specs.length > 3 ? {
-    q: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
-    r: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
-    s: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
+    A: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
+    B: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
+    C: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
   } : {}) : {}, {
-    n: $data.specs && $data.specs.length,
-    t: common_vendor.t($data.mpRoom || "请选择房间"),
-    v: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
-    w: $options.selectedSpec && $options.selectedSpec.has_length === 1
+    x: $data.specs && $data.specs.length,
+    D: common_vendor.t($data.mpRoom || "请选择房间"),
+    E: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
+    F: $options.selectedSpec && $options.selectedSpec.has_length === 1
   }, $options.selectedSpec && $options.selectedSpec.has_length === 1 ? common_vendor.e({
-    x: $data.mpLength,
-    y: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
-    z: $options.selectedSpec.specification
+    G: $data.mpLength,
+    H: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
+    I: $options.selectedSpec.specification
   }, $options.selectedSpec.specification ? {
-    A: common_vendor.t($options.selectedSpec.specification)
+    J: common_vendor.t($options.selectedSpec.specification)
   } : {}) : {}, {
-    B: common_vendor.o(($event) => $data.mpQty = Math.max(1, $data.mpQty - 1)),
-    C: common_vendor.t($data.mpQty),
-    D: common_vendor.o(($event) => $data.mpQty = $data.mpQty + 1),
-    E: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    F: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
-    G: common_vendor.o(() => {
+    K: common_vendor.o(($event) => $data.mpQty = Math.max(1, $data.mpQty - 1)),
+    L: common_vendor.t($data.mpQty),
+    M: common_vendor.o(($event) => $data.mpQty = $data.mpQty + 1),
+    N: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    O: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
+    P: common_vendor.o(() => {
     }),
-    H: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    I: common_vendor.o(() => {
+    Q: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    R: common_vendor.o(() => {
     })
   }) : {}, {
-    J: common_vendor.o($options.closeRoomSheet),
-    K: common_vendor.o($options.onRoomSelect),
-    L: common_vendor.o($options.onRoomCreate),
-    M: common_vendor.p({
+    S: common_vendor.o($options.closeRoomSheet),
+    T: common_vendor.o($options.onRoomSelect),
+    U: common_vendor.o($options.onRoomCreate),
+    V: common_vendor.p({
       visible: $data.roomSelectorVisible,
-      rooms: $data.roomsRaw,
-      selectedName: $data.roomSelectorMode === "mp" ? $data.mpRoom : $data.roomName
+      rooms: $options.selectorRooms,
+      selectedName: $options.selectorSelectedName
     }),
-    N: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
+    W: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
   }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);

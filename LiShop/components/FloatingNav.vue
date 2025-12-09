@@ -1,5 +1,5 @@
 <template>
-  <view class="float" v-if="globalShow" :style="styleFix">
+  <view class="float" v-if="globalShow" :style="styleFix" :class="{ 'hover-reveal': hoverReveal }">
     <view class="item" @click="goHome">
       <text class="ico">🏠</text>
       <text class="txt">首页</text>
@@ -24,7 +24,8 @@
 export default {
   name: 'FloatingNav',
   props: {
-    bottomSafe: { type: Number, default: 120 }
+    bottomSafe: { type: Number, default: 120 },
+    hoverReveal: { type: Boolean, default: false }
   },
   data() {
     return { cartCount: 0 }
@@ -82,6 +83,17 @@ export default {
   flex-direction: column;
   gap: 16rpx;
   overflow: visible !important;
+}
+
+.float.hover-reveal {
+  opacity: 0.2;
+  transition: opacity .2s ease, transform .2s ease;
+  transform: translateX(16rpx);
+}
+
+.float.hover-reveal:hover {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .item {

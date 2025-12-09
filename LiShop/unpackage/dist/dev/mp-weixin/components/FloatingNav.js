@@ -3,7 +3,8 @@ const common_vendor = require("../common/vendor.js");
 const _sfc_main = {
   name: "FloatingNav",
   props: {
-    bottomSafe: { type: Number, default: 120 }
+    bottomSafe: { type: Number, default: 120 },
+    hoverReveal: { type: Boolean, default: false }
   },
   data() {
     return { cartCount: 0 };
@@ -57,7 +58,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     c: common_vendor.o((...args) => $options.goCart && $options.goCart(...args)),
     d: common_vendor.o((...args) => $options.contact && $options.contact(...args)),
     e: common_vendor.o((...args) => $options.toTop && $options.toTop(...args)),
-    f: common_vendor.s($options.styleFix)
+    f: common_vendor.s($options.styleFix),
+    g: $props.hoverReveal ? 1 : ""
   } : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-378faae9"]]);

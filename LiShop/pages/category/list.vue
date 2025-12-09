@@ -36,16 +36,21 @@
     </view>
     <!-- #endif -->
 
+    <!-- #ifdef H5 -->
+    <FloatingNav :hoverReveal="true" />
+    <!-- #endif -->
+
     <view class="loading" v-if="loading">正在加载...</view>
   </view>
   </template>
 
 <script>
 import ProductCard from '@/components/ProductCard.vue'
+import FloatingNav from '@/components/FloatingNav.vue'
 import { getVisibleCategories, getVisibleProducts } from '../../api/index.js'
 
 export default {
-  components: { ProductCard },
+  components: { ProductCard, FloatingNav },
   data() {
     return {
       parentId: '',
@@ -64,6 +69,10 @@ export default {
       const t = Number(this.total || 0)
       const ps = Number(this.page_size || 32)
       return t > 0 ? Math.ceil(t / ps) : 1
+    },
+    activeChildTitle() {
+      const s = (this.subChildren || []).find(it => it.categories_id === this.activeChildId)
+      return s ? (s.name || '') : ''
     }
   },
   onLoad(query) {
@@ -80,6 +89,7 @@ export default {
       }
       if (this.activeChildId) this.fetchPage(1)
     })
+    try { uni.setNavigationBarTitle({ title: this.activeName || '分类商品' }) } catch (e) {}
   },
   methods: {
     cleanImage(url) {

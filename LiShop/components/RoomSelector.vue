@@ -2,7 +2,8 @@
   <view class="rs-mask" v-if="visible" @click="close" catchtouchmove="true">
     <view class="rs-content" @click.stop>
       <view class="rs-header">
-        <text class="rs-title">选择房间</text>
+        <text class="rs-title" v-if="isAddressMode">选择地址</text>
+        <text class="rs-title" v-else>选择房间</text>
         <view class="rs-close" @click="close">×</view>
       </view>
       

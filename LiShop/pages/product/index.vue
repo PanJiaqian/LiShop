@@ -49,6 +49,21 @@
             <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ? (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ? '七天无理由' : '不支持七天无理由' }}</text>
           </view>
 
+          <view class="pd-address">
+            <!-- <text class="pd-section-title">收货地址</text> -->
+            <view class="address-card">
+              <view class="addr-title">收货地址</view>
+              <view v-if="selectedAddress" class="addr-body">
+                <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
+                <text class="addr-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
+              </view>
+              <view v-else class="addr-empty">未选择收货地址</view>
+              <view class="addr-actions">
+                <button size="mini" class="addr-btn" @click="openH5AddressSheet">选择地址</button>
+              </view>
+            </view>
+          </view>
+
           <view>
             <text class="pd-section-title">规格明细</text>
             <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
@@ -81,27 +96,24 @@
             </view> -->
             <view class="pd-field inline" v-if="selectedSpec && selectedSpec.has_length === 1">
               <text class="label">长度</text>
-              <input class="pd-input" v-model="specLength" placeholder="填写阿拉伯数字" />
+              <input class="pd-input" v-model="specLength" placeholder="填写数字" />
               <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx;">最长：{{ selectedSpec.specification }}</text>
             </view>
           </view>
 
-          <view class="pd-qty">
-            <text class="label">数量</text>
-            <view class="qty-box">
+          <view class="pd-actions-row">
+            <view class="qty-box-large">
               <view class="qty-btn" @click="decQty">-</view>
               <text class="qty-num">{{ qty }}</text>
               <view class="qty-btn" @click="incQty">+</view>
             </view>
-          </view>
-
-          <view class="pd-actions">
-            <button class="btn-buy" @click="buyNow">立即购买</button>
-            <button class="btn-cart" @click="addToCartWithQty">加入购物车</button>
+            <button class="btn-action btn-cart" @click="addToCartWithQty">加入购物车</button>
+            <button class="btn-action btn-buy" @click="buyNow">立即购买</button>
           </view>
         </view>
       </view>
     </view>
+    <FloatingNav :hoverReveal="true" />
     <!-- #endif -->
 
     <!-- #ifndef H5 -->
@@ -152,6 +164,17 @@
       <view class="mp-sheet" @click.stop>
         <view class="mp-title">填写规格</view>
         <scroll-view scroll-y class="mp-scroll-view">
+          <view class="mp-address-bar" @click="openMpAddressSheet">
+            <view class="bar-left">
+              <text class="addr-icon">📍</text>
+              <view class="bar-info">
+                <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
+                <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
+                <text v-else class="bar-line">请选择收货地址</text>
+              </view>
+            </view>
+            <button size="mini" class="bar-btn">选择收货地址</button>
+          </view>
           <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
           <view class="mp-title">规格明细</view>
           <view v-if="specsLoading" class="mp-param-grid">
@@ -180,6 +203,7 @@
           <view v-else class="mp-param-grid">
             <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
           </view>
+
           <view class="mp-field"><text class="label">房间</text>
             <view class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
           </view>
@@ -187,7 +211,7 @@
               placeholder="如 3000K" /></view> -->
           <view class="mp-field" v-if="selectedSpec && selectedSpec.has_length === 1">
             <text class="label">长度</text>
-            <input class="mp-input" v-model="mpLength" placeholder="填写阿拉伯数字" />
+            <input class="mp-input" v-model="mpLength" placeholder="填写数字" />
             <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx; white-space: nowrap;">最长：{{ selectedSpec.specification }}</text>
           </view>
           <view class="mp-field">
@@ -210,8 +234,8 @@
     <!-- #endif -->
     <RoomSelector
       :visible="roomSelectorVisible"
-      :rooms="roomsRaw"
-      :selectedName="roomSelectorMode === 'mp' ? mpRoom : roomName"
+      :rooms="selectorRooms"
+      :selectedName="selectorSelectedName"
       @close="closeRoomSheet"
       @select="onRoomSelect"
       @create="onRoomCreate"
@@ -220,12 +244,13 @@
 </template>
 
 <script>
-import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem } from '../../api/index.js'
+import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getAddresses } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
+import FloatingNav from '@/components/FloatingNav.vue'
 
 export default {
-  components: { RoomSelector },
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5' } },
+  components: { RoomSelector, FloatingNav },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -277,6 +302,22 @@ export default {
     },
     selectedSpec() {
       return (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
+    },
+    addressRooms() {
+      return (this.addresses || []).map(a => ({ name: `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(' ')}`.trim(), raw: a }))
+    },
+    selectorRooms() {
+      return this.roomSelectorMode === 'addr' ? this.addressRooms : this.roomsRaw
+    },
+    selectorSelectedName() {
+      if (this.roomSelectorMode === 'mp') return this.mpRoom || ''
+      if (this.roomSelectorMode === 'h5') return this.roomName || ''
+      const a = this.selectedAddress
+      return a ? `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(' ')}`.trim() : ''
+    },
+    mpAddressDisplay() {
+      const a = this.selectedAddress
+      return a ? `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(' ')}`.trim() : ''
     }
   },
   watch: {
@@ -290,6 +331,9 @@ export default {
       this.hls.destroy()
       this.hls = null
     }
+  },
+  onShow() {
+    this.loadAddresses()
   },
   methods: {
     initHls(src) {
@@ -414,6 +458,11 @@ export default {
       this.fetchRooms()
     },
     closeRoomSheet() { this.roomSelectorVisible = false },
+    openH5AddressSheet() {
+      this.roomSelectorMode = 'addr'
+      this.roomSelectorVisible = true
+      this.loadAddresses()
+    },
     
     fetchRooms() {
       getRooms()
@@ -429,8 +478,32 @@ export default {
         .catch(() => { this.roomsList = [] })
     },
 
+    loadAddresses() {
+      getAddresses().then(res => {
+        const raw = Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.items) ? res.items : [])
+        this.addresses = raw.map(a => ({
+          id: a.addresses_id || a.id || '',
+          receiver: a.receiver || '',
+          phone: a.phone || '',
+          province: a.province || '',
+          city: a.city || '',
+          district: a.district || '',
+          detail_address: a.detail_address || '',
+          is_default: a.is_default === 1
+        }))
+        const cached = uni.getStorageSync('selected_address_id') || ''
+        let pick = this.addresses.find(x => x.id === cached) || this.addresses.find(x => x.is_default) || this.addresses[0]
+        this.selectedAddress = pick || null
+      }).catch(() => { this.addresses = []; this.selectedAddress = null })
+    },
+
     onRoomSelect(room) {
-      if (this.roomSelectorMode === 'mp') {
+      if (this.roomSelectorMode === 'addr') {
+        if (room && room.raw) {
+          this.selectedAddress = room.raw
+          try { uni.setStorageSync('selected_address_id', this.selectedAddress.id) } catch (e) {}
+        }
+      } else if (this.roomSelectorMode === 'mp') {
         this.mpRoom = room.name
       } else {
         this.roomName = room.name
@@ -498,6 +571,11 @@ export default {
       this.roomSelectorMode = 'mp'
       this.roomSelectorVisible = true
       this.fetchRooms()
+    },
+    openMpAddressSheet() {
+      this.roomSelectorMode = 'addr'
+      this.roomSelectorVisible = true
+      this.loadAddresses()
     },
     closeMpRoomSheet() { this.roomSelectorVisible = false; this.lockScroll = false },
   }
@@ -851,6 +929,30 @@ export default {
   gap: 20rpx;
 }
 
+.pd-address .addr-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  padding: 12rpx;
+  background: #fafafa;
+  border: 1rpx solid #eee;
+  border-radius: 10rpx;
+}
+
+.pd-address .addr-line {
+  display: block;
+  color: #333;
+  font-size: 24rpx;
+}
+
+.pd-address .addr-btn {
+  background: #f7f7f7;
+  color: #333;
+  border: 1rpx solid #e6e6e6;
+  border-radius: 8rpx;
+}
+
 /* H5 规格列表左图右文排版：一行两列 */
 .specs-list {
   display: grid;
@@ -970,7 +1072,7 @@ export default {
   margin-top: 12rpx;
 }
 
-.pd-qty {
+.pd-qty-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -981,48 +1083,47 @@ export default {
   border-radius: 10rpx;
 }
 
-.pd-qty .label {
-  color: #333;
-  margin-right: 16rpx;
-}
-
-.qty-stepper {
+.qty-wrapper {
   display: flex;
   align-items: center;
 }
 
-.qty-stepper .step {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 10rpx;
-  background: #fff;
-  border: 1rpx solid #ddd;
+.pd-qty-row .label {
   color: #333;
+  margin-right: 16rpx;
 }
 
-.qty-stepper .count {
-  width: 80rpx;
-  text-align: center;
-}
-
-.pd-actions {
+.actions-wrapper {
   display: flex;
-  gap: 16rpx;
-  margin-top: 24rpx;
+  align-items: center;
+  gap: 12rpx;
 }
 
-.btn-buy {
-  flex: 0 0 220rpx;
+.actions-wrapper .btn-buy {
+  width: auto;
+  min-width: 140rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 26rpx;
   background: linear-gradient(135deg, #ff6a00, #ff2d55);
   color: #fff;
-  border-radius: 10rpx;
+  border-radius: 30rpx;
+  padding: 0 20rpx;
+  margin: 0;
 }
 
-.pd-info .btn-cart {
-  flex: 1;
+.pd-info .actions-wrapper .btn-cart {
+  flex: none;
+  width: auto;
+  min-width: 140rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 26rpx;
   background: #ff8c3a;
   color: #fff;
-  border-radius: 10rpx;
+  border-radius: 30rpx;
+  padding: 0 20rpx;
+  margin: 0;
 }
 
 /* H5 房间选择弹窗 */
@@ -1351,4 +1452,99 @@ export default {
   margin-bottom: 16rpx;
 }
 /* #endif */
+
+/* Address Card Style from Cart Page (H5) */
+.address-card {
+  position: relative;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  padding-right: 180rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,.06);
+  border: 1rpx solid #eee;
+  margin-bottom: 20rpx;
+}
+.address-card .addr-title { font-weight: 600; color: #333; font-size: 28rpx; }
+.address-card .addr-body { margin-top: 8rpx; color: #555; font-size: 24rpx; display: flex; flex-direction: column; gap: 6rpx; }
+.address-card .addr-line { font-size: 26rpx; color: #333; }
+.address-card .addr-empty { margin-top: 8rpx; color: #999; font-size: 24rpx; }
+.address-card .addr-actions {
+  position: absolute;
+  right: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
+  display: flex;
+  gap: 12rpx;
+}
+.address-card .addr-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 24rpx; padding: 0 20rpx; height: 50rpx; line-height: 48rpx; }
+
+/* MP Address Bar Style from Cart Page */
+.mp-address-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx;
+  background: #fff;
+  border: 1rpx solid #e6e6e6;
+  border-radius: 12rpx;
+  margin: 16rpx 0;
+}
+.bar-left { display: flex; align-items: center; gap: 12rpx; flex: 1; overflow: hidden; }
+.addr-icon { font-size: 28rpx; flex-shrink: 0; }
+.bar-info { display: flex; flex-direction: column; font-size: 24rpx; color: #555; flex: 1; overflow: hidden; }
+.bar-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; margin: 0; font-size: 24rpx; padding: 0 24rpx; height: 50rpx; line-height: 48rpx; flex-shrink: 0; }
+
+/* H5 Actions Row (3 buttons layout) */
+.pd-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+.qty-box-large {
+  width: 200rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80rpx;
+  background: #f7f7f7;
+  border-radius: 40rpx;
+  padding: 0 4rpx;
+}
+.qty-box-large .qty-btn {
+  width: 64rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: #333;
+}
+.qty-box-large .qty-num {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+.btn-action {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  font-weight: 600;
+}
+.btn-action.btn-cart {
+  background: #ffaa00;
+  color: #fff;
+}
+.btn-action.btn-buy {
+  background: #ff5500;
+  color: #fff;
+}
 </style>
