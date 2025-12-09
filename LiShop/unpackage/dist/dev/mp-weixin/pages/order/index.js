@@ -2,10 +2,11 @@
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
-  components: { FloatingNav },
+  components: { FloatingNav, Skeleton },
   data() {
-    return { order: null, orders: [], activeTab: "all" };
+    return { order: null, orders: [], activeTab: "all", loading: true };
   },
   onLoad(query) {
     const id = query == null ? void 0 : query.id;
@@ -103,7 +104,7 @@ const _sfc_main = {
       this.fetchOrders();
     },
     async fetchOrders() {
-      common_vendor.index.showLoading({ title: "加载中" });
+      this.loading = true;
       this.orders = [];
       const allEndpoints = [
         { fn: api_index.getPendingPaymentOrders, status: "pending_payment" },
@@ -143,9 +144,10 @@ const _sfc_main = {
         }
       }
       this.orders = allOrders;
-      common_vendor.index.hideLoading();
+      this.loading = false;
     },
     async fetchDetail(id) {
+      this.loading = true;
       try {
         const res = await api_index.getOrderDetail({ order_id: id });
         if (res.success && res.data) {
@@ -153,6 +155,7 @@ const _sfc_main = {
         }
       } catch (e) {
       }
+      this.loading = false;
     },
     async confirmReceipt(id) {
       try {
@@ -193,34 +196,42 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
+  _component_Skeleton();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: !$data.order
+    a: common_vendor.p({
+      loading: $data.loading,
+      showTitle: true
+    }),
+    b: !$data.order
   }, !$data.order ? {
-    b: $data.activeTab === "all" ? 1 : "",
-    c: common_vendor.o(($event) => $options.switchTab("all")),
-    d: $data.activeTab === "pending_payment" ? 1 : "",
-    e: common_vendor.o(($event) => $options.switchTab("pending_payment")),
-    f: $data.activeTab === "pending_shipment" ? 1 : "",
-    g: common_vendor.o(($event) => $options.switchTab("pending_shipment")),
-    h: $data.activeTab === "pending_receipt" ? 1 : "",
-    i: common_vendor.o(($event) => $options.switchTab("pending_receipt"))
+    c: $data.activeTab === "all" ? 1 : "",
+    d: common_vendor.o(($event) => $options.switchTab("all")),
+    e: $data.activeTab === "pending_payment" ? 1 : "",
+    f: common_vendor.o(($event) => $options.switchTab("pending_payment")),
+    g: $data.activeTab === "pending_shipment" ? 1 : "",
+    h: common_vendor.o(($event) => $options.switchTab("pending_shipment")),
+    i: $data.activeTab === "pending_receipt" ? 1 : "",
+    j: common_vendor.o(($event) => $options.switchTab("pending_receipt"))
   } : {}, {
-    j: $data.order
+    k: $data.order
   }, $data.order ? common_vendor.e({
-    k: common_vendor.t($data.order.orderNo || $data.order.id),
-    l: $data.order.createdAt
+    l: common_vendor.t($data.order.orderNo || $data.order.id),
+    m: $data.order.createdAt
   }, $data.order.createdAt ? {
-    m: common_vendor.t($options.formatTime($data.order.createdAt))
+    n: common_vendor.t($options.formatTime($data.order.createdAt))
   } : {}, {
-    n: $data.order.waybillNo
+    o: $data.order.waybillNo
   }, $data.order.waybillNo ? {
-    o: common_vendor.t($data.order.waybillNo),
-    p: common_vendor.o(($event) => $options.copyWaybill($data.order.waybillNo))
+    p: common_vendor.t($data.order.waybillNo),
+    q: common_vendor.o(($event) => $options.copyWaybill($data.order.waybillNo))
   } : {}, {
-    q: ($data.order.tracking || []).length
+    r: ($data.order.tracking || []).length
   }, ($data.order.tracking || []).length ? {
-    r: common_vendor.f($data.order.tracking, (ev, i, i0) => {
+    s: common_vendor.f($data.order.tracking, (ev, i, i0) => {
       return common_vendor.e({
         a: common_vendor.t(ev.status),
         b: common_vendor.t(ev.desc),
@@ -233,7 +244,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}, {
-    s: common_vendor.f($data.order.rooms, (r, k0, i0) => {
+    t: common_vendor.f($data.order.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: common_vendor.t(r.roomTotal.toFixed(2)),
@@ -251,20 +262,20 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: r.name
       };
     }),
-    t: common_vendor.t($data.order.total.toFixed(2)),
-    v: $data.order.status === "pending_receipt"
+    v: common_vendor.t($data.order.total.toFixed(2)),
+    w: $data.order.status === "pending_receipt"
   }, $data.order.status === "pending_receipt" ? {
-    w: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+    x: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
   } : {}, {
-    x: ["pending_payment", "pending_shipment"].includes($data.order.status)
+    y: ["pending_payment", "pending_shipment"].includes($data.order.status)
   }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
-    y: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+    z: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
   } : {}, {
-    z: common_vendor.o(($event) => $options.exportExcel($data.order))
+    A: common_vendor.o(($event) => $options.exportExcel($data.order))
   }) : common_vendor.e({
-    A: $data.orders.length
+    B: $data.orders.length
   }, $data.orders.length ? {
-    B: common_vendor.f($data.orders, (o, k0, i0) => {
+    C: common_vendor.f($data.orders, (o, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(o.orderNo || o.id),
         b: o.createdAt

@@ -6,10 +6,12 @@ const BannerSwiper = () => "../../components/BannerSwiper.js";
 const CategoryGrid = () => "../../components/CategoryGrid.js";
 const ProductCard = () => "../../components/ProductCard.js";
 const FloatingNav = () => "../../components/FloatingNav.js";
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav },
+  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton },
   data() {
     return {
+      loading: true,
       keyword: "",
       roomName: "",
       user: null,
@@ -32,7 +34,7 @@ const _sfc_main = {
   },
   onShow() {
     try {
-      api_index.getVisibleCategories({ page: 1, page_size: 20, sort_by: "id" }).then((res) => {
+      const p1 = api_index.getVisibleCategories({ page: 1, page_size: 20, sort_by: "id" }).then((res) => {
         var _a;
         const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
         const mapped = items.map((it, i) => ({
@@ -44,7 +46,7 @@ const _sfc_main = {
         this.subCategoryList = mapped;
       }).catch(() => {
       });
-      api_index.getRecommendedProducts({ page: 1, page_size: 20 }).then((res) => {
+      const p2 = api_index.getRecommendedProducts({ page: 1, page_size: 20 }).then((res) => {
         var _a, _b, _c;
         const carousel = ((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.carousel) && Array.isArray(res.data.carousel) ? res.data.carousel : ((_b = res == null ? void 0 : res.data) == null ? void 0 : _b.carousel) && Array.isArray(res.data.carousel.items) ? res.data.carousel.items : [];
         this.banners = carousel.map((it) => {
@@ -62,7 +64,11 @@ const _sfc_main = {
         this.recommendList = mapped;
       }).catch(() => {
       });
+      Promise.allSettled([p1, p2]).then(() => {
+        this.loading = false;
+      });
     } catch (e) {
+      this.loading = false;
     }
   },
   onPullDownRefresh() {
@@ -125,6 +131,7 @@ const _sfc_main = {
         return;
       }
       const url = `/pages/category/list?parent_id=${pid}&category_id=${cid}&active=${pname}`;
+      this.closeCategory();
       common_vendor.index.navigateTo({ url });
     },
     addToCart(product) {
@@ -180,22 +187,28 @@ const _sfc_main = {
   }
 };
 if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
   const _component_SearchBar = common_vendor.resolveComponent("SearchBar");
   const _component_BannerSwiper = common_vendor.resolveComponent("BannerSwiper");
   const _component_ProductCard = common_vendor.resolveComponent("ProductCard");
-  (_component_SearchBar + _component_BannerSwiper + _component_ProductCard)();
+  (_component_Skeleton + _component_SearchBar + _component_BannerSwiper + _component_ProductCard)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_vendor.o($options.onSearch),
-    b: common_vendor.o(($event) => $data.keyword = $event),
-    c: common_vendor.p({
+    a: common_vendor.p({
+      loading: $data.loading,
+      showTitle: true,
+      showGrid: true
+    }),
+    b: common_vendor.o($options.onSearch),
+    c: common_vendor.o(($event) => $data.keyword = $event),
+    d: common_vendor.p({
       modelValue: $data.keyword
     }),
-    d: common_vendor.p({
+    e: common_vendor.p({
       images: $data.banners
     }),
-    e: common_vendor.f($data.subCategoryList, (c, i, i0) => {
+    f: common_vendor.f($data.subCategoryList, (c, i, i0) => {
       return {
         a: c.icon || "/static/logo.png",
         b: common_vendor.t(c.name),
@@ -203,9 +216,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.openCategory(c), "mc" + i)
       };
     }),
-    f: common_vendor.f($data.recommendList, (p, idx, i0) => {
+    g: common_vendor.f($data.recommendList, (p, idx, i0) => {
       return {
-        a: "4978fed5-2-" + i0,
+        a: "4978fed5-3-" + i0,
         b: common_vendor.p({
           product: p
         }),

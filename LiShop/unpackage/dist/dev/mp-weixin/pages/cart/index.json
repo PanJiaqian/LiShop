@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "购物车",
   "usingComponents": {
-    "room-selector": "../../components/RoomSelector"
+    "room-selector": "../../components/RoomSelector",
+    "skeleton": "../../components/Skeleton"
   }
 }

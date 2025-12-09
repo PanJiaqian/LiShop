@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "商品详情",
   "usingComponents": {
-    "room-selector": "../../components/RoomSelector"
+    "room-selector": "../../components/RoomSelector",
+    "skeleton": "../../components/Skeleton"
   }
 }

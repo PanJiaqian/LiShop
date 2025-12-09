@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" />
     <!-- 顶部导航 -->
     <view class="nav" v-if="!order">
       <view class="nav-item" :class="{ active: activeTab === 'all' }" @click="switchTab('all')">全部订单</view>
@@ -99,9 +100,11 @@
 <script>
 import { getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, cancelOrder, exportOrderExcel } from '../../api/index.js'
 import FloatingNav from '../../components/FloatingNav.vue'
+import Skeleton from '@/components/Skeleton.vue'
+
 export default {
-  components: { FloatingNav },
-  data() { return { order: null, orders: [], activeTab: 'all' } },
+  components: { FloatingNav, Skeleton },
+  data() { return { order: null, orders: [], activeTab: 'all', loading: true } },
   onLoad(query) {
     const id = query?.id
     if (id) {
@@ -204,7 +207,7 @@ export default {
       this.fetchOrders()
     },
     async fetchOrders() {
-        uni.showLoading({ title: '加载中' })
+        this.loading = true
         this.orders = []
         
         const allEndpoints = [
@@ -244,15 +247,17 @@ export default {
           } catch (e) {}
         }
         this.orders = allOrders
-        uni.hideLoading()
+        this.loading = false
     },
     async fetchDetail(id) {
+        this.loading = true
         try {
             const res = await getOrderDetail({ order_id: id })
             if (res.success && res.data) {
                 this.order = this.mapApiOrderToLocal(res.data)
             }
         } catch (e) {}
+        this.loading = false
     },
     async confirmReceipt(id) {
         try {
@@ -337,7 +342,7 @@ export default {
 .meta .title { display: block; font-size: 26rpx; color: #333;margin-bottom: 10rpx; }
 .meta .spec { display: block; font-size: 22rpx; color: #777; margin-top: 4rpx; }
 .price-row { display: flex; gap: 12rpx; align-items: center; color: #333; }
-.ops { margin-top: 16rpx; display: flex; justify-content: flex-end; align-items: center; gap: 20rpx; }
+.ops { margin-top: 16rpx; display: flex; justify-content: space-between; align-items: center; gap: 20rpx; }
 .total-text { font-size: 28rpx; font-weight: 600; color: #e1251b; }
 .btns { display: flex; gap: 20rpx; }
 .btn { background: #ff8c3a; color: #fff; border-radius: 100rpx; margin: 0; padding: 0 30rpx; height: 60rpx; line-height: 60rpx; font-size: 26rpx; }

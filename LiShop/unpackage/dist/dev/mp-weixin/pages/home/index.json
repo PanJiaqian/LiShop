@@ -4,6 +4,7 @@
   "usingComponents": {
     "search-bar": "../../components/SearchBar",
     "banner-swiper": "../../components/BannerSwiper",
-    "product-card": "../../components/ProductCard"
+    "product-card": "../../components/ProductCard",
+    "skeleton": "../../components/Skeleton"
   }
 }

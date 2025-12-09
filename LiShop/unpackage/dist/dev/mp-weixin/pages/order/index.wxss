@@ -54,7 +54,7 @@
 }
 .price-row.data-v-17a44f9d { display: flex; gap: 12rpx; align-items: center; color: #333;
 }
-.ops.data-v-17a44f9d { margin-top: 16rpx; display: flex; justify-content: flex-end; align-items: center; gap: 20rpx;
+.ops.data-v-17a44f9d { margin-top: 16rpx; display: flex; justify-content: space-between; align-items: center; gap: 20rpx;
 }
 .total-text.data-v-17a44f9d { font-size: 28rpx; font-weight: 600; color: #e1251b;
 }

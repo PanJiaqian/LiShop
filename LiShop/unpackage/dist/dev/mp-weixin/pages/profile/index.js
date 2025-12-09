@@ -3,10 +3,12 @@ const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
 const common_assets = require("../../common/assets.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
-  components: { FloatingNav },
+  components: { FloatingNav, Skeleton },
   data() {
     return {
+      loading: true,
       loggedIn: false,
       displayName: "",
       fetchedProfile: {},
@@ -51,9 +53,12 @@ const _sfc_main = {
       this.displayName = (u == null ? void 0 : u.username) || "";
       if (this.loggedIn) {
         const token = u && (u.token || u.data && u.data.token) || "";
-        this.loadUserProfile(token);
+        this.loadUserProfile(token).finally(() => this.loading = false);
+      } else {
+        this.loading = false;
       }
     } catch (e) {
+      this.loading = false;
     }
   },
   methods: {
@@ -67,8 +72,8 @@ const _sfc_main = {
     },
     loadUserProfile(token) {
       if (!token)
-        return;
-      api_index.getUserProfile({ token }).then((res) => {
+        return Promise.resolve();
+      return api_index.getUserProfile({ token }).then((res) => {
         if (res && res.success) {
           this.fetchedProfile = res.data;
           if (res.data.username)
@@ -246,79 +251,87 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
+  _component_Skeleton();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_assets._imports_0,
-    b: common_vendor.t($data.loggedIn ? $data.displayName : "未登录"),
-    c: common_vendor.t($data.loggedIn ? "退出登录" : "登录"),
-    d: common_vendor.o((...args) => $options.onAuthButton && $options.onAuthButton(...args)),
-    e: $data.loggedIn
-  }, $data.loggedIn ? common_vendor.e({
-    f: !$data.isEditing
-  }, !$data.isEditing ? {
-    g: common_vendor.o((...args) => $options.handleEdit && $options.handleEdit(...args))
-  } : {
-    h: common_vendor.o((...args) => $options.handleCancel && $options.handleCancel(...args)),
-    i: common_vendor.o((...args) => $options.handleSave && $options.handleSave(...args))
-  }) : {}, {
-    j: $data.isEditing
-  }, $data.isEditing ? {
-    k: $data.editForm.username,
-    l: common_vendor.o(($event) => $data.editForm.username = $event.detail.value)
-  } : {
-    m: common_vendor.t($options.profile.username)
-  }, {
-    n: common_vendor.t($options.profile.phone),
-    o: $data.loggedIn
-  }, $data.loggedIn ? {
-    p: common_vendor.o(($event) => $options.openSecurityModal("phone"))
-  } : {}, {
-    q: common_vendor.t($options.profile.email),
-    r: $data.loggedIn
-  }, $data.loggedIn ? {
-    s: common_vendor.o(($event) => $options.openSecurityModal("email"))
-  } : {}, {
-    t: $data.loggedIn
-  }, $data.loggedIn ? {
-    v: common_vendor.o(($event) => $options.openSecurityModal("password"))
-  } : {}, {
-    w: $data.isEditing
-  }, $data.isEditing ? {
-    x: $data.editForm.company_name,
-    y: common_vendor.o(($event) => $data.editForm.company_name = $event.detail.value)
-  } : {
-    z: common_vendor.t($options.profile.companyName)
-  }, {
-    A: $data.isEditing
-  }, $data.isEditing ? {
-    B: $data.editForm.contact_name,
-    C: common_vendor.o(($event) => $data.editForm.contact_name = $event.detail.value)
-  } : {
-    D: common_vendor.t($options.profile.contactName)
-  }, {
-    E: $data.isEditing
-  }, $data.isEditing ? {
-    F: $data.editForm.region,
-    G: common_vendor.o(($event) => $data.editForm.region = $event.detail.value)
-  } : {
-    H: common_vendor.t($options.profile.region)
-  }, {
-    I: $data.showSecurityModal
-  }, $data.showSecurityModal ? {
-    J: common_vendor.t($options.securityTitle),
-    K: $options.securityPlaceholder,
-    L: $data.securityForm.value,
-    M: common_vendor.o(($event) => $data.securityForm.value = $event.detail.value),
-    N: $data.securityForm.code,
-    O: common_vendor.o(($event) => $data.securityForm.code = $event.detail.value),
-    P: common_vendor.t($data.countdown > 0 ? `${$data.countdown}s` : "获取验证码"),
-    Q: $data.countdown > 0,
-    R: common_vendor.o((...args) => $options.sendCode && $options.sendCode(...args)),
-    S: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args)),
-    T: common_vendor.o((...args) => $options.confirmSecurityEdit && $options.confirmSecurityEdit(...args)),
-    U: common_vendor.o(() => {
+    a: common_vendor.p({
+      loading: $data.loading,
+      showTitle: true
     }),
-    V: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args))
+    b: common_assets._imports_0,
+    c: common_vendor.t($data.loggedIn ? $data.displayName : "未登录"),
+    d: common_vendor.t($data.loggedIn ? "退出登录" : "登录"),
+    e: common_vendor.o((...args) => $options.onAuthButton && $options.onAuthButton(...args)),
+    f: $data.loggedIn
+  }, $data.loggedIn ? common_vendor.e({
+    g: !$data.isEditing
+  }, !$data.isEditing ? {
+    h: common_vendor.o((...args) => $options.handleEdit && $options.handleEdit(...args))
+  } : {
+    i: common_vendor.o((...args) => $options.handleCancel && $options.handleCancel(...args)),
+    j: common_vendor.o((...args) => $options.handleSave && $options.handleSave(...args))
+  }) : {}, {
+    k: $data.isEditing
+  }, $data.isEditing ? {
+    l: $data.editForm.username,
+    m: common_vendor.o(($event) => $data.editForm.username = $event.detail.value)
+  } : {
+    n: common_vendor.t($options.profile.username)
+  }, {
+    o: common_vendor.t($options.profile.phone),
+    p: $data.loggedIn
+  }, $data.loggedIn ? {
+    q: common_vendor.o(($event) => $options.openSecurityModal("phone"))
+  } : {}, {
+    r: common_vendor.t($options.profile.email),
+    s: $data.loggedIn
+  }, $data.loggedIn ? {
+    t: common_vendor.o(($event) => $options.openSecurityModal("email"))
+  } : {}, {
+    v: $data.loggedIn
+  }, $data.loggedIn ? {
+    w: common_vendor.o(($event) => $options.openSecurityModal("password"))
+  } : {}, {
+    x: $data.isEditing
+  }, $data.isEditing ? {
+    y: $data.editForm.company_name,
+    z: common_vendor.o(($event) => $data.editForm.company_name = $event.detail.value)
+  } : {
+    A: common_vendor.t($options.profile.companyName)
+  }, {
+    B: $data.isEditing
+  }, $data.isEditing ? {
+    C: $data.editForm.contact_name,
+    D: common_vendor.o(($event) => $data.editForm.contact_name = $event.detail.value)
+  } : {
+    E: common_vendor.t($options.profile.contactName)
+  }, {
+    F: $data.isEditing
+  }, $data.isEditing ? {
+    G: $data.editForm.region,
+    H: common_vendor.o(($event) => $data.editForm.region = $event.detail.value)
+  } : {
+    I: common_vendor.t($options.profile.region)
+  }, {
+    J: $data.showSecurityModal
+  }, $data.showSecurityModal ? {
+    K: common_vendor.t($options.securityTitle),
+    L: $options.securityPlaceholder,
+    M: $data.securityForm.value,
+    N: common_vendor.o(($event) => $data.securityForm.value = $event.detail.value),
+    O: $data.securityForm.code,
+    P: common_vendor.o(($event) => $data.securityForm.code = $event.detail.value),
+    Q: common_vendor.t($data.countdown > 0 ? `${$data.countdown}s` : "获取验证码"),
+    R: $data.countdown > 0,
+    S: common_vendor.o((...args) => $options.sendCode && $options.sendCode(...args)),
+    T: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args)),
+    U: common_vendor.o((...args) => $options.confirmSecurityEdit && $options.confirmSecurityEdit(...args)),
+    V: common_vendor.o(() => {
+    }),
+    W: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-201c0da5"]]);

@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" :showGrid="true" />
     <view class="container">
       <scroll-view class="left" scroll-y>
         <view v-for="(c, idx) in categories" :key="idx" :class="['left-item', activeIndex === idx ? 'active' : '']"
@@ -27,11 +28,13 @@
 
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { getVisibleCategories } from '../../api/index.js'
 export default {
-  components: { FloatingNav },
+  components: { FloatingNav, Skeleton },
   data() {
     return {
+      loading: true,
       activeIndex: 0,
       categories: [],
       pendingActiveName: '',
@@ -77,9 +80,10 @@ export default {
               if (firstId) this.loadChildrenById(firstId)
             }
           }
+          this.loading = false
         })
-        .catch(() => {})
-    } catch (e) {}
+        .catch(() => { this.loading = false })
+    } catch (e) { this.loading = false }
   },
   onLoad(query) {
     const q = decodeURIComponent(query?.active || '')

@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" />
     <!-- #ifdef H5 -->
     <view class="h5-nav-bar">
       <view class="nav-back" @click="goBack">
@@ -117,10 +118,12 @@
 
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail } from '../../api/index.js'
 export default {
-  components: { FloatingNav },
+  components: { FloatingNav, Skeleton },
   data() { return { 
+    loading: true,
     loggedIn: false, displayName: '', fetchedProfile: {}, isEditing: false, editForm: {},
     showSecurityModal: false, securityType: '', securityForm: { value: '', code: '' }, countdown: 0, timer: null
   } },
@@ -157,9 +160,11 @@ export default {
       this.displayName = u?.username || ''
       if (this.loggedIn) {
         const token = (u && (u.token || (u.data && u.data.token))) || ''
-        this.loadUserProfile(token)
+        this.loadUserProfile(token).finally(() => this.loading = false)
+      } else {
+        this.loading = false
       }
-    } catch (e) { }
+    } catch (e) { this.loading = false }
   },
   methods: {
     goBack() {
@@ -171,8 +176,8 @@ export default {
       }
     },
     loadUserProfile(token) {
-      if (!token) return
-      getUserProfile({ token }).then(res => {
+      if (!token) return Promise.resolve()
+      return getUserProfile({ token }).then(res => {
         if (res && res.success) {
           this.fetchedProfile = res.data
           if (res.data.username) this.displayName = res.data.username

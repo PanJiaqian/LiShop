@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" />
     <!-- #ifdef H5 -->
     <view class="h5-nav-bar">
       <view class="nav-back" @click="goBack">
@@ -259,11 +260,13 @@
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
 import RoomSelector from '@/components/RoomSelector.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses } from '../../api/index.js'
 export default {
-  components: { FloatingNav, RoomSelector },
+  components: { FloatingNav, RoomSelector, Skeleton },
   data() {
     return {
+      loading: true,
       cart: [],
       showSpecModal: false,
       editingItem: {},
@@ -400,6 +403,7 @@ export default {
           }
           this.cart = list
           this.fetchSummary()
+          this.loading = false
         })
         .catch((err) => {
           console.error('Get cart failed', err)
@@ -409,6 +413,7 @@ export default {
             quantity: it.quantity || 1,
             selected: !!it.selected
           }))
+          this.loading = false
         })
     },
     fetchSummary() {

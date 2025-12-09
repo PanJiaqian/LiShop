@@ -2,10 +2,12 @@
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
-  components: { FloatingNav },
+  components: { FloatingNav, Skeleton },
   data() {
     return {
+      loading: true,
       activeIndex: 0,
       categories: [],
       pendingActiveName: "",
@@ -50,9 +52,12 @@ const _sfc_main = {
               this.loadChildrenById(firstId);
           }
         }
+        this.loading = false;
       }).catch(() => {
+        this.loading = false;
       });
     } catch (e) {
+      this.loading = false;
     }
   },
   onLoad(query) {
@@ -99,9 +104,18 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
+  _component_Skeleton();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_vendor.f($data.categories, (c, idx, i0) => {
+    a: common_vendor.p({
+      loading: $data.loading,
+      showTitle: true,
+      showGrid: true
+    }),
+    b: common_vendor.f($data.categories, (c, idx, i0) => {
       return {
         a: common_vendor.t(c.name),
         b: idx,
@@ -109,8 +123,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.selectCategory(idx), idx)
       };
     }),
-    b: common_vendor.t($options.activeCategory.name),
-    c: common_vendor.f($data.rightChildren, (s, i, i0) => {
+    c: common_vendor.t($options.activeCategory.name),
+    d: common_vendor.f($data.rightChildren, (s, i, i0) => {
       return {
         a: s.icon || "/static/logo.png",
         b: common_vendor.t(s.name),

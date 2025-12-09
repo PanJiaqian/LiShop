@@ -410,6 +410,10 @@ to {
 }
 .address-card .addr-btn.data-v-a911e391 { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 24rpx; padding: 0 20rpx; height: 50rpx; line-height: 48rpx;
 }
+.address-card .addr-btn.data-v-a911e391 { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 30rpx; padding: 0 40rpx; height: 72rpx; line-height: 70rpx;
+}
+.address-card.data-v-a911e391 { padding-right: 220rpx;
+}
 
 /* MP Address Bar Style from Cart Page */
 .mp-address-bar.data-v-a911e391 {

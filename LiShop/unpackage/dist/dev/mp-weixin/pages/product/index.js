@@ -3,8 +3,9 @@ const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
 const RoomSelector = () => "../../components/RoomSelector.js";
 const FloatingNav = () => "../../components/FloatingNav.js";
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
-  components: { RoomSelector, FloatingNav },
+  components: { RoomSelector, FloatingNav, Skeleton },
   data() {
     return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null };
   },
@@ -329,14 +330,19 @@ const _sfc_main = {
   }
 };
 if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
   const _component_RoomSelector = common_vendor.resolveComponent("RoomSelector");
-  _component_RoomSelector();
+  (_component_Skeleton + _component_RoomSelector)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: $data.product
+    a: common_vendor.p({
+      loading: !$data.product,
+      showTitle: true
+    }),
+    b: $data.product
   }, $data.product ? common_vendor.e({
-    b: common_vendor.f($options.images, (item, index, i0) => {
+    c: common_vendor.f($options.images, (item, index, i0) => {
       return common_vendor.e({
         a: $options.isVideo(item)
       }, $options.isVideo(item) ? {
@@ -347,38 +353,38 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: index
       });
     }),
-    c: common_vendor.t($data.product.title),
-    d: common_vendor.t($data.product.price.toFixed(2)),
-    e: common_vendor.t($data.product.sales),
-    f: common_vendor.t($data.product.id || "默认款"),
-    g: common_vendor.t($data.product.title),
-    h: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
-    i: common_vendor.t($data.product.price.toFixed(2)),
-    j: common_vendor.f($data.product.details_images, (src, i, i0) => {
+    d: common_vendor.t($data.product.title),
+    e: common_vendor.t($data.product.price.toFixed(2)),
+    f: common_vendor.t($data.product.sales),
+    g: common_vendor.t($data.product.id || "默认款"),
+    h: common_vendor.t($data.product.title),
+    i: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
+    j: common_vendor.t($data.product.price.toFixed(2)),
+    k: common_vendor.f($data.product.details_images, (src, i, i0) => {
       return {
         a: "md" + i,
         b: src
       };
     }),
-    k: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
-    l: $data.mpSheet
+    l: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
+    m: $data.mpSheet
   }, $data.mpSheet ? common_vendor.e({
-    m: $data.selectedAddress
+    n: $data.selectedAddress
   }, $data.selectedAddress ? {
-    n: common_vendor.t($data.selectedAddress.receiver),
-    o: common_vendor.t($data.selectedAddress.phone)
+    o: common_vendor.t($data.selectedAddress.receiver),
+    p: common_vendor.t($data.selectedAddress.phone)
   } : {}, {
-    p: $data.selectedAddress
+    q: $data.selectedAddress
   }, $data.selectedAddress ? {
-    q: common_vendor.t($data.selectedAddress.province),
-    r: common_vendor.t($data.selectedAddress.city),
-    s: common_vendor.t($data.selectedAddress.district),
-    t: common_vendor.t($data.selectedAddress.detail_address)
+    r: common_vendor.t($data.selectedAddress.province),
+    s: common_vendor.t($data.selectedAddress.city),
+    t: common_vendor.t($data.selectedAddress.district),
+    v: common_vendor.t($data.selectedAddress.detail_address)
   } : {}, {
-    v: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
-    w: $data.specsLoading
+    w: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
+    x: $data.specsLoading
   }, $data.specsLoading ? {} : $data.specs && $data.specs.length ? common_vendor.e({
-    y: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
+    z: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
       return common_vendor.e({
         a: it.image_url || "/static/logo.png",
         b: common_vendor.t(it.name),
@@ -393,44 +399,44 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         i: common_vendor.o(($event) => $options.selectSpec(i), "mpsp" + i)
       });
     }),
-    z: $data.specs.length > 3
+    A: $data.specs.length > 3
   }, $data.specs.length > 3 ? {
-    A: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
-    B: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
-    C: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
+    B: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
+    C: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
+    D: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
   } : {}) : {}, {
-    x: $data.specs && $data.specs.length,
-    D: common_vendor.t($data.mpRoom || "请选择房间"),
-    E: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
-    F: $options.selectedSpec && $options.selectedSpec.has_length === 1
+    y: $data.specs && $data.specs.length,
+    E: common_vendor.t($data.mpRoom || "请选择房间"),
+    F: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
+    G: $options.selectedSpec && $options.selectedSpec.has_length === 1
   }, $options.selectedSpec && $options.selectedSpec.has_length === 1 ? common_vendor.e({
-    G: $data.mpLength,
-    H: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
-    I: $options.selectedSpec.specification
+    H: $data.mpLength,
+    I: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
+    J: $options.selectedSpec.specification
   }, $options.selectedSpec.specification ? {
-    J: common_vendor.t($options.selectedSpec.specification)
+    K: common_vendor.t($options.selectedSpec.specification)
   } : {}) : {}, {
-    K: common_vendor.o(($event) => $data.mpQty = Math.max(1, $data.mpQty - 1)),
-    L: common_vendor.t($data.mpQty),
-    M: common_vendor.o(($event) => $data.mpQty = $data.mpQty + 1),
-    N: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    O: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
-    P: common_vendor.o(() => {
+    L: common_vendor.o(($event) => $data.mpQty = Math.max(1, $data.mpQty - 1)),
+    M: common_vendor.t($data.mpQty),
+    N: common_vendor.o(($event) => $data.mpQty = $data.mpQty + 1),
+    O: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    P: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
+    Q: common_vendor.o(() => {
     }),
-    Q: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    R: common_vendor.o(() => {
+    R: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    S: common_vendor.o(() => {
     })
-  }) : {}, {
-    S: common_vendor.o($options.closeRoomSheet),
-    T: common_vendor.o($options.onRoomSelect),
-    U: common_vendor.o($options.onRoomCreate),
-    V: common_vendor.p({
+  }) : {}) : {}, {
+    T: common_vendor.o($options.closeRoomSheet),
+    U: common_vendor.o($options.onRoomSelect),
+    V: common_vendor.o($options.onRoomCreate),
+    W: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       selectedName: $options.selectorSelectedName
     }),
-    W: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
-  }) : {});
+    X: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
+  });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);
 wx.createPage(MiniProgramPage);

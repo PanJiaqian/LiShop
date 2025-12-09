@@ -3,10 +3,12 @@ const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
 const RoomSelector = () => "../../components/RoomSelector.js";
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
-  components: { FloatingNav, RoomSelector },
+  components: { FloatingNav, RoomSelector, Skeleton },
   data() {
     return {
+      loading: true,
       cart: [],
       showSpecModal: false,
       editingItem: {},
@@ -167,6 +169,7 @@ const _sfc_main = {
         }
         this.cart = list;
         this.fetchSummary();
+        this.loading = false;
       }).catch((err) => {
         console.error("Get cart failed", err);
         try {
@@ -179,6 +182,7 @@ const _sfc_main = {
           quantity: it.quantity || 1,
           selected: !!it.selected
         }));
+        this.loading = false;
       });
     },
     fetchSummary() {
@@ -456,24 +460,29 @@ const _sfc_main = {
   }
 };
 if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
   const _component_RoomSelector = common_vendor.resolveComponent("RoomSelector");
-  _component_RoomSelector();
+  (_component_Skeleton + _component_RoomSelector)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: $data.selectedAddress
+    a: common_vendor.p({
+      loading: $data.loading,
+      showTitle: true
+    }),
+    b: $data.selectedAddress
   }, $data.selectedAddress ? {
-    b: common_vendor.t($data.selectedAddress.receiver),
-    c: common_vendor.t($data.selectedAddress.phone)
+    c: common_vendor.t($data.selectedAddress.receiver),
+    d: common_vendor.t($data.selectedAddress.phone)
   } : {}, {
-    d: $data.selectedAddress
+    e: $data.selectedAddress
   }, $data.selectedAddress ? {
-    e: common_vendor.t($data.selectedAddress.full)
+    f: common_vendor.t($data.selectedAddress.full)
   } : {}, {
-    f: common_vendor.o((...args) => $options.openAddressPicker && $options.openAddressPicker(...args)),
-    g: $data.cart.length
+    g: common_vendor.o((...args) => $options.openAddressPicker && $options.openAddressPicker(...args)),
+    h: $data.cart.length
   }, $data.cart.length ? {
-    h: common_vendor.f($options.groups, (grp, gi, i0) => {
+    i: common_vendor.f($options.groups, (grp, gi, i0) => {
       return {
         a: common_vendor.t(grp.name),
         b: common_vendor.o(($event) => $options.openRoomPopup(grp), grp.name),
@@ -502,17 +511,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    i: $options.isAllSelected ? 1 : "",
-    j: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
-    k: common_vendor.t($options.selectedTotal.toFixed(2)),
-    l: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
-    m: common_vendor.t($options.selectedCount),
-    n: $options.selectedCount === 0 ? 1 : "",
-    o: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
-    p: $data.showRoomModal
+    j: $options.isAllSelected ? 1 : "",
+    k: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
+    l: common_vendor.t($options.selectedTotal.toFixed(2)),
+    m: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
+    n: common_vendor.t($options.selectedCount),
+    o: $options.selectedCount === 0 ? 1 : "",
+    p: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
+    q: $data.showRoomModal
   }, $data.showRoomModal ? {
-    q: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
-    r: common_vendor.f($data.rooms, (r, k0, i0) => {
+    r: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
+    s: common_vendor.f($data.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: r.id,
@@ -520,25 +529,25 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.selectRoom(r), r.id)
       };
     }),
-    s: common_vendor.o(() => {
+    t: common_vendor.o(() => {
     }),
-    t: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
+    v: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
   } : {}, {
-    v: $data.showSpecModal
+    w: $data.showSpecModal
   }, $data.showSpecModal ? {
-    w: $data.editingItem.image || "/static/logo.png",
-    x: common_vendor.t($data.editingItem.price),
-    y: common_vendor.t($data.editingItem.attr),
-    z: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    x: $data.editingItem.image || "/static/logo.png",
+    y: common_vendor.t($data.editingItem.price),
+    z: common_vendor.t($data.editingItem.attr),
     A: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
     B: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    C: common_vendor.o(() => {
+    C: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    D: common_vendor.o(() => {
     }),
-    D: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
+    E: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
   } : {}, {
-    E: common_vendor.o(($event) => $data.showAddressSelector = false),
-    F: common_vendor.o($options.onAddressSelect),
-    G: common_vendor.p({
+    F: common_vendor.o(($event) => $data.showAddressSelector = false),
+    G: common_vendor.o($options.onAddressSelect),
+    H: common_vendor.p({
       visible: $data.showAddressSelector,
       rooms: $options.addressRooms,
       selectedName: $data.selectedAddress ? ($data.selectedAddress.receiver + " " + $data.selectedAddress.phone + " " + $data.selectedAddress.full).trim() : ""

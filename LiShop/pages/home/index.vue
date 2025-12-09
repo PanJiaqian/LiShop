@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" :showGrid="true" />
     <!-- H5 三栏布局（包含分类、我的、商品） -->
     <!-- #ifdef H5 -->
     <view class="h5-layout">
@@ -120,12 +121,14 @@ import BannerSwiper from '@/components/BannerSwiper.vue'
 import CategoryGrid from '@/components/CategoryGrid.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { getRecommendedProducts, getVisibleCategories, searchProducts } from '../../api/index.js'
 
 export default {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav },
+  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton },
   data() {
     return {
+      loading: true,
       keyword: '',
       roomName: '',
       user: null,
@@ -154,7 +157,7 @@ export default {
     // #endif
     // 拉取分类与推荐商品（最小接入，不影响现有交互）
     try {
-      getVisibleCategories({ page: 1, page_size: 20, sort_by: 'id' })
+      const p1 = getVisibleCategories({ page: 1, page_size: 20, sort_by: 'id' })
         .then((res) => {
           const items = Array.isArray(res?.data?.items) ? res.data.items : []
           const mapped = items.map((it, i) => ({
@@ -166,7 +169,8 @@ export default {
           this.subCategoryList = mapped
         })
         .catch(() => { })
-      getRecommendedProducts({ page: 1, page_size: 20 })
+      
+      const p2 = getRecommendedProducts({ page: 1, page_size: 20 })
         .then((res) => {
           const carousel = (res?.data?.carousel && Array.isArray(res.data.carousel)) ? res.data.carousel 
               : ((res?.data?.carousel && Array.isArray(res.data.carousel.items)) ? res.data.carousel.items : [])
@@ -186,7 +190,11 @@ export default {
           this.recommendList = mapped
         })
         .catch(() => { })
-    } catch (e) { }
+
+      Promise.allSettled([p1, p2]).then(() => {
+        this.loading = false
+      })
+    } catch (e) { this.loading = false }
   },
   onPullDownRefresh() {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
@@ -278,6 +286,7 @@ export default {
       const pname = encodeURIComponent(this.activeCateName || '')
       if (!cid) { uni.showToast({ title: '子分类缺少ID', icon: 'none' }); return }
       const url = `/pages/category/list?parent_id=${pid}&category_id=${cid}&active=${pname}`
+      this.closeCategory()
       uni.navigateTo({ url })
     },
     addToCart(product) {

@@ -1,5 +1,7 @@
 <template>
-  <view class="page product-page" :class="{ 'no-scroll': mpSheet || roomSelectorVisible }" v-if="product">
+  <view class="page product-page" :class="{ 'no-scroll': mpSheet || roomSelectorVisible }">
+    <Skeleton :loading="!product" :showTitle="true" />
+    <block v-if="product">
     <!-- #ifdef H5 -->
     <view class="pd-grid">
       <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
@@ -50,16 +52,16 @@
           </view>
 
           <view class="pd-address">
-            <!-- <text class="pd-section-title">收货地址</text> -->
+            <text class="pd-section-title">收货地址</text>
             <view class="address-card">
-              <view class="addr-title">收货地址</view>
+              <!-- <view class="addr-title">收货地址</view> -->
               <view v-if="selectedAddress" class="addr-body">
                 <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
                 <text class="addr-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
               </view>
               <view v-else class="addr-empty">未选择收货地址</view>
               <view class="addr-actions">
-                <button size="mini" class="addr-btn" @click="openH5AddressSheet">选择地址</button>
+                <button class="addr-btn" @click="openH5AddressSheet">选择地址</button>
               </view>
             </view>
           </view>
@@ -87,7 +89,7 @@
 
           <view class="pd-form">
             <view class="pd-field inline">
-              <text class="label">房间</text>
+              <text class="pd-section-title">房间</text>
               <view class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
             </view>
             <!-- <view class="pd-field inline">
@@ -232,6 +234,7 @@
     <!-- MP Room Selection Modal -->
     <!-- #endif -->
     <!-- #endif -->
+    </block>
     <RoomSelector
       :visible="roomSelectorVisible"
       :rooms="selectorRooms"
@@ -247,9 +250,10 @@
 import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getAddresses } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
+import Skeleton from '@/components/Skeleton.vue'
 
 export default {
-  components: { RoomSelector, FloatingNav },
+  components: { RoomSelector, FloatingNav, Skeleton },
   data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
@@ -1478,6 +1482,8 @@ export default {
   gap: 12rpx;
 }
 .address-card .addr-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 24rpx; padding: 0 20rpx; height: 50rpx; line-height: 48rpx; }
+.address-card .addr-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 30rpx; padding: 0 40rpx; height: 72rpx; line-height: 70rpx; }
+.address-card { padding-right: 220rpx; }
 
 /* MP Address Bar Style from Cart Page */
 .mp-address-bar {
