@@ -3,73 +3,95 @@
     <Skeleton :loading="loading" :showTitle="true" :showGrid="true" />
     <!-- H5 三栏布局（包含分类、我的、商品） -->
     <!-- #ifdef H5 -->
-    <view class="h5-layout">
-      <view class="side-cate">
-        <view class="cate-title">全部分类</view>
-        <view class="cate-list">
-          <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
-            <text class="dot">•</text>
-            <text class="cate-name">{{ c.name }}</text>
+    <view class="h5-container">
+      <!-- 顶部 Header -->
+      <view class="h5-header">
+        <view class="h5-logo-area">
+          <image src="/static/logo.png" style="width:60rpx;height:60rpx;margin-right:20rpx;" mode="aspectFit" />
+          <text class="logo-text">SHOP</text>
+        </view>
+        <view class="h5-search-wrapper">
+           <view class="search-bar-box">
+              <view class="search-type">宝贝<text class="arrow-down">∨</text></view>
+              <view class="divider-v"></view>
+              <input class="search-input-field" v-model="keyword" confirm-type="search" @confirm="onSearch(null)" />
+              <button class="search-btn-black" @click="onSearch(null)">搜索</button>
+           </view>
+        </view>
+      </view>
+
+      <view class="h5-middle-layout">
+        <view class="side-cate">
+          <view class="cate-title">
+             <text style="color:#000;margin-right:8rpx;font-weight:900;">☰</text>分类
+          </view>
+          <view class="cate-list">
+            <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
+              <image v-if="c.icon" :src="c.icon" class="cate-icon" mode="aspectFit" />
+              <text v-else class="dot-icon">●</text>
+              <text class="cate-name">{{ c.name }}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="center-content">
+          <BannerSwiper :images="banners" class="full-height-banner" />
+          
+          <view v-if="activeCateId" class="sub-panel" :style="{ top: panelTop + 'px', left: panelLeft + 'px', right: panelRight + 'px' }" @mouseleave="closeCategory">
+            <view class="panel-title">
+              <text>{{ activeCateName || '二级分类' }}</text>
+            </view>
+            <view class="panel-columns">
+              <view class="panel-link" v-for="(s, si) in leftChildren" :key="si" @click="goSubList(s)">{{ s.name }}</view>
+            </view>
+            <view v-if="!leftChildren || leftChildren.length === 0" class="sub-empty">暂无子分类</view>
+          </view>
+        </view>
+
+        <view class="side-user">
+          <view class="user-card-new">
+            <view class="uc-header">
+               <!-- <image class="uc-avatar" :src="user?.avatar || '/static/logo.png'" @click="onAvatarClick" /> -->
+               <view class="uc-info">
+                  <text class="uc-greet">下午好 {{ user?.username || 'XXX' }}</text>
+               </view>
+            </view>
+            
+            <view class="uc-links">
+               <navigator class="uc-link-item" url="/pages/cart/index" open-type="switchTab">
+                  <text class="uc-icon">🛒</text>
+                  <text>我的购物车</text>
+               </navigator>
+               <navigator class="uc-link-item" url="/pages/order/index">
+                  <text class="uc-icon">📋</text>
+                  <text>我的订单</text>
+               </navigator>
+               <navigator class="uc-link-item" url="/pages/messages/index">
+                   <text class="uc-icon">💬</text>
+                  <text>信息</text>
+               </navigator>
+               <navigator class="uc-link-item" url="/pages/settings/index">
+                   <text class="uc-icon">⚙️</text>
+                  <text>设置</text>
+               </navigator>
+            </view>
+            
+            <button v-if="!user" class="uc-login-btn" @click="goLogin">立即登录</button>
+            <button v-else class="uc-login-btn" @click="logout">退出登录</button>
           </view>
         </view>
       </view>
 
-      <view class="main">
-        <SearchBar v-model="keyword" @search="onSearch" />
-        <BannerSwiper :images="banners" />
-
-        <!-- #ifdef H5 -->
-        <view v-if="activeCateId" class="sub-panel" :style="{ top: panelTop + 'px', left: panelLeft + 'px', right: panelRight + 'px' }" @mouseleave="closeCategory">
-          <view class="panel-title">
-            <text>{{ activeCateName || '二级分类' }}</text>
-          </view>
-          <view class="panel-columns">
-            <view class="panel-link" v-for="(s, si) in leftChildren" :key="si" @click="goSubList(s)">{{ s.name }}</view>
-          </view>
-          <view v-if="!leftChildren || leftChildren.length === 0" class="sub-empty">暂无子分类</view>
-        </view>
-        <!-- #endif -->
-
-        <!-- <view class="block">
-          <view class="block-title">
-            <text>京东秒杀</text>
-            <navigator url="/pages/category/index" open-type="switchTab" class="more">更多</navigator>
-          </view>
-          <scroll-view class="seckill" scroll-x>
-            <view class="sk-item" v-for="(item, idx) in seckillList" :key="idx">
-              <image class="sk-img" :src="item.image || '/static/logo.png'" mode="aspectFill" />
-              <text class="sk-price">¥{{ item.price }}</text>
-            </view>
-          </scroll-view>
-        </view> -->
-
-        <view class="block">
-          <view class="block-title">
-            <text>猜你喜欢</text>
+      <view class="h5-bottom-section">
+          <view class="guess-header">
+             <view class="guess-icon">❤</view>
+             <text class="guess-title">猜你喜欢</text>
           </view>
           <view class="grid2">
             <view class="grid2-item" v-for="(p, idx) in recommendList" :key="idx">
               <ProductCard :product="p" />
             </view>
           </view>
-        </view>
-      </view>
-
-      <view class="side-user">
-        <view class="user-card">
-          <image class="avatar" src="/static/logo.png" @click="onAvatarClick" />
-          <view class="u-row">
-            <text class="u-name">{{ user?.username || '未登录' }}</text>
-            <button v-if="!user" class="u-btn" size="mini" @click="goLogin">去登录</button>
-          </view>
-          <view class="u-links">
-            <navigator class="u-link" url="/pages/cart/index" open-type="switchTab">我的购物车</navigator>
-            <navigator class="u-link" url="/pages/order/index">我的订单</navigator>
-            <navigator class="u-link" url="/pages/messages/index">消息</navigator>
-            <navigator class="u-link" url="/pages/settings/index">设置</navigator>
-            <view class="u-link" v-if="user" @click="logout">退出登录</view>
-          </view>
-        </view>
       </view>
     </view>
     <FloatingNav />
@@ -178,6 +200,9 @@ export default {
              const img = (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '')
              return { image: img || '/static/logo.png', id: it?.available_product_id || '' }
           })
+          if (this.banners.length === 0) {
+             this.banners = ['/static/logo.png', '/static/logo.png']
+          }
 
           const fixed = ((res?.data?.fixed && Array.isArray(res.data.fixed.items)) ? res.data.fixed.items : [])
           const mapped = fixed.map((it, i) => ({
@@ -208,7 +233,7 @@ export default {
       this.activeCateName = cat?.name || ''
       // #ifdef H5
       try {
-        const main = document.querySelector('.main')
+        const main = document.querySelector('.center-content')
         if (main && e && e.clientY != null) {
           const rect = main.getBoundingClientRect()
           const y = e.clientY - rect.top
@@ -327,7 +352,10 @@ export default {
         uni.removeStorageSync('user')
       } catch (e) { }
       this.user = null
-      uni.showToast({ title: '已退出登录', icon: 'success' })
+      // uni.showToast({ title: '已退出登录', icon: 'success' })
+      setTimeout(() => {
+        uni.navigateTo({ url: '/pages/login/index' })
+      }, 500)
     }
   }
 }
@@ -335,10 +363,9 @@ export default {
 
 <style scoped>
 .page {
-  background: #f7f7f7;
+  background: white;
   /* #ifdef H5 */
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   /* #endif */
   /* #ifndef H5 */
   min-height: 100vh;
@@ -346,200 +373,360 @@ export default {
   /* #endif */
 }
 
-/* H5 三栏布局样式 */
+/* H5 New Layout Styles */
 /* #ifdef H5 */
-.h5-layout {
-  display: grid;
-  grid-template-columns: 300rpx 1fr 320rpx;
-  grid-gap: 70rpx;
-  padding-left: 60rpx;
-  padding-right: 160rpx;
-  padding-top: 20rpx;
-  /* padding: 50rpx; */
+.h5-container {
+  max-width: 1350px;
+  margin: 0 auto;
+  padding: 0 100rpx;
+  min-height: 100vh;
+  background-color: #fff;
+  padding-bottom: 60rpx;
+}
+
+/* Header */
+.h5-header {
+  display: flex;
+  align-items: center;
+  height: 140rpx; /* Increased height for better top spacing */
+  padding: 30rpx 0;
+  margin-bottom: 20rpx;
+}
+
+.h5-logo-area {
+  width: 260rpx; /* Match side-cate width */
+  display: flex;
+  align-items: center;
+}
+
+.logo-text {
+  font-size: 48rpx;
+  font-weight: bold;
+  font-family: serif;
+  color: #000;
+  letter-spacing: 2rpx;
+}
+
+.h5-search-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 20rpx; /* Align with gap */
+}
+
+.search-bar-box {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 80rpx;
+  border: 3rpx solid #000;
+  border-radius: 40rpx;
+  padding: 4rpx;
+  background: #fff;
+}
+
+.search-type {
+  padding: 0 30rpx;
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.arrow-down {
+  font-size: 20rpx;
+  margin-left: 10rpx;
+  color: #666;
+}
+
+.divider-v {
+  width: 2rpx;
+  height: 30rpx;
+  background: #ddd;
+  margin-right: 16rpx;
+}
+
+.search-input-field {
+  flex: 1;
   height: 100%;
+  font-size: 30rpx;
+}
+
+.search-btn-black {
+  background: #000;
+  color: #fff;
+  border-radius: 36rpx;
+  font-size: 30rpx;
+  font-weight: bold;
+  height: 70rpx;
+  line-height: 70rpx;
+  padding: 0 50rpx;
+  margin-right: 4rpx;
+}
+
+/* Middle Layout */
+.h5-middle-layout {
+  display: grid;
+  grid-template-columns: 260rpx 1fr 300rpx;
+  gap: 20rpx;
+  height: 520rpx;
+  margin-bottom: 40rpx;
 }
 
 .side-cate {
-  background: #fff;
+  background: #f8f8f8;
   border-radius: 12rpx;
-  overflow: hidden;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, .06);
-  height: 100%;
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
 }
 
 .cate-title {
-  font-weight: 600;
-  padding: 20rpx;
-  border-bottom: 1rpx solid #f0f0f0;
-  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  padding-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  color: #000;
+  border-bottom: 1rpx solid #eee;
+  margin-bottom: 10rpx;
 }
 
 .cate-list {
-  padding: 10rpx 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: space-between; */
+  overflow-y: auto;
 }
 
 .cate-item {
   display: flex;
   align-items: center;
-  padding: 16rpx 20rpx;
-}
-
-.cate-item .dot {
-  color: #ff5500;
-  margin-right: 12rpx;
-  font-size: 52rpx;
-}
-
-.cate-item .cate-name {
+  padding: 12rpx 0;
+  cursor: pointer;
   color: #333;
-  font-size: 32rpx;
+  font-size: 28rpx;
+  transition: all 0.2s;
 }
 
-.sub-cat-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-gap: 12rpx;
-  padding: 0 20rpx 20rpx;
+.cate-item:hover {
+  color: #000;
+  font-weight: bold;
 }
 
-.sub-cat-item .sub-cat-card {
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+.cate-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 16rpx;
 }
 
-.sub-cat-name {
+.dot-icon {
+  margin-right: 16rpx;
+  font-size: 24rpx;
   color: #333;
-  font-size: 26rpx;
 }
 
-.main {
+/* Center Banner */
+.center-content {
   position: relative;
+  border-radius: 12rpx;
+  overflow: hidden;
   height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: #ffffff;
 }
-/* #ifdef H5 */
-.main::-webkit-scrollbar { width: 0; height: 0; }
-.main { scrollbar-width: none; -ms-overflow-style: none; }
-/* #endif */
- 
 
+.full-height-banner {
+  height: 100%;
+}
+
+.center-content :deep(.banner), .center-content :deep(.swiper) {
+  height: 100% !important;
+  padding: 0 !important;
+}
+
+.center-content :deep(.uni-swiper-wrapper) {
+  border-radius: 12rpx;
+}
+
+/* User Card */
 .side-user {
   height: 100%;
 }
 
-.user-card {
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, .06);
-  text-align: center;
+.user-card-new {
+  background: #f8f8f8;
+  border-radius: 24rpx;
+  height: 100%;
+  padding: 40rpx 30rpx;
   display: flex;
   flex-direction: column;
+  box-shadow: none;
+}
+
+.uc-header {
+  display: flex;
   align-items: center;
+  margin-bottom: 50rpx;
 }
 
-.avatar {
-  width: 100rpx;
-  height: 100rpx;
+.uc-avatar {
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 50%;
-  background: #f0f0f0;
-  margin: 0 auto;
+  margin-right: 20rpx;
+  background: #fff;
+  border: 2rpx solid #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
 }
 
-.u-row {
+.uc-info {
+  flex: 1;
+}
+
+.uc-greet {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.4;
+}
+
+.uc-links {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 36rpx;
+}
+
+.uc-link-item {
+  display: flex;
+  align-items: center;
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.uc-link-item:hover {
+  color: #000;
+}
+
+.uc-icon {
+  margin-right: 24rpx;
+  font-size: 36rpx;
+  width: 40rpx;
+  text-align: center;
+  filter: grayscale(100%) brightness(0);
+  opacity: 1;
+}
+
+.uc-link-item:hover .uc-icon {
+  filter: grayscale(100%) brightness(0);
+  opacity: 0.8;
+}
+
+.uc-login-btn {
+  background: #000;
+  color: #fff;
+  border-radius: 999rpx;
+  width: 100%;
+  font-size: 32rpx;
+  font-weight: bold;
+  height: 80rpx;
+  line-height: 80rpx;
+  margin-top: auto;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.2);
+}
+
+.uc-login-btn:active {
+  transform: scale(0.98);
+}
+
+/* Bottom Section */
+.h5-bottom-section {
+  margin-top: 120rpx;
+}
+
+.guess-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40rpx;
+  padding-left: 20rpx;
+}
+
+.guess-icon {
+  width: 64rpx;
+  height: 64rpx;
+  background: #000;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12rpx;
-  margin-top: 10rpx;
-}
-
-.u-name {
-  font-size: 30rpx;
-  font-weight: 600;
-}
-
-.u-btn {
-  background: #e1251b;
   color: #fff;
-  border-radius: 10rpx;
-}
-
-.u-links {
-  margin-top: 16rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.u-link {
-  padding: 18rpx 0;
-  color: #555;
-  border-bottom: 1rpx solid #f0f0f0;
-  text-align: center;
-  width: 100%;
-}
-
-/* 右侧快捷入口与 H5 专属布局优化 */
-
-.main .grid2 {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-gap: 60rpx;
-  padding-left: 80rpx;
-  padding-right: 80rpx;
-}
-
-.main :deep(.search-bar) {
-  padding: 26rpx 40rpx;
-  margin: 0 80rpx;
-}
-
-.main :deep(.search-input) {
-  padding: 18rpx 28rpx;
-}
-
-.main :deep(.icon) {
-  font-size: 34rpx;
-}
-
-.main :deep(.input) {
+  margin-right: 24rpx;
   font-size: 32rpx;
 }
 
-.main :deep(.swiper) {
-  height: 500rpx;
+.guess-title {
+  font-size: 40rpx;
+  font-weight: 900;
+  color: #333;
 }
 
-.main :deep(.banner) {
-  margin: 0 120rpx;
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr) !important;
+  gap: 30rpx;
 }
 
-:deep(.card) {
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .04);
+/* Sub Panel */
+.sub-panel {
+  position: fixed;
+  z-index: 999;
+  background: rgba(255,255,255,0.98);
+  border: 1rpx solid #eee;
+  padding: 40rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
+  border-radius: 12rpx;
+  min-width: 600rpx;
 }
 
-:deep(.cover) {
-  height: 220rpx;
+.panel-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
 }
 
-.seckill {
-  padding: 0 12rpx 20rpx;
+.panel-columns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20rpx;
 }
 
-.sk-item {
-  width: 180rpx;
+.panel-link {
+  color: #666;
+  font-size: 28rpx;
+  cursor: pointer;
 }
 
-.sk-img {
-  width: 180rpx;
-  height: 180rpx;
+.panel-link:hover {
+  color: #e1251b;
 }
 
+/* Responsive */
+/* @media (max-width: 1200px) {
+  .grid2 { grid-template-columns: repeat(4, 1fr); }
+  .h5-middle-layout { grid-template-columns: 220rpx 1fr 260rpx; }
+} */
+
+/* Hide original components overrides */
+.main :deep(.search-bar), .main :deep(.banner) {
+  display: none;
+}
 /* #endif */
 
 .block {
@@ -591,7 +778,7 @@ export default {
 .grid2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-gap: 16rpx;
+  grid-gap: 40rpx;
   padding: 0 20rpx 20rpx;
 }
 

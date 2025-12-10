@@ -1,10 +1,22 @@
 {
 	"pages": [
 		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"h5": {
+					"navigationStyle": "custom"
+				}
+			}
+		},
+		{
 			"path": "pages/home/index",
 			"style": {
 				"navigationBarTitleText": "LiShop",
-				"enablePullDownRefresh": true
+				"enablePullDownRefresh": true,
+				"h5": {
+					"navigationStyle": "custom"
+				}
 			}
 		},
 		{
@@ -42,13 +54,6 @@
 			"path": "pages/order/index",
 			"style": {
 				"navigationBarTitleText": "我的订单"
-			}
-		}
-		,
-		{
-			"path": "pages/login/index",
-			"style": {
-				"navigationBarTitleText": "登录"
 			}
 		},
 		{

@@ -27,13 +27,7 @@
     <view class="empty" v-if="!loading && items.length === 0">暂无该子分类下的商品</view>
 
     <!-- #ifdef H5 -->
-    <view class="pager" v-if="items.length > 0">
-      <view class="pg-bar">
-        <button size="mini" class="pg-btn" :disabled="page<=1 || loading" @click="goPrev"><</button>
-        <text class="pg-text">第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条</text>
-        <button size="mini" class="pg-btn" :disabled="page>=totalPages || loading" @click="goNext">></button>
-      </view>
-    </view>
+    <!-- Pager removed for infinite scroll -->
     <!-- #endif -->
 
     <!-- #ifdef H5 -->
@@ -41,6 +35,7 @@
     <!-- #endif -->
 
     <view class="loading" v-if="loading">正在加载...</view>
+    <view class="nomore" v-if="!loading && page >= totalPages && items.length > 0">没有更多了</view>
   </view>
   </template>
 
@@ -80,6 +75,10 @@ export default {
     this.activeChildId = decodeURIComponent(query?.category_id || '')
     this.activeName = decodeURIComponent(query?.active || '')
   },
+  onReachBottom() {
+    if (this.page >= this.totalPages || this.loading) return
+    this.fetchPage(this.page + 1, true)
+  },
   onShow() {
     if (!this.parentId && !this.activeChildId) return
     this.loadSubChildren().then(() => {
@@ -115,14 +114,19 @@ export default {
         this.subChildren = []
       }
     },
-    async fetchPage(nextPage = 1) {
+    async fetchPage(nextPage = 1, append = false) {
       if (!this.activeChildId) return
       this.loading = true
       try {
         const res = await getVisibleProducts({ page: nextPage, page_size: this.page_size, sort_by: 'id', category_id: this.activeChildId })
         const rows = Array.isArray(res?.data?.items) ? res.data.items : []
         const total = Number(res?.data?.total ?? rows.length)
-        this.items = this.normalize(rows)
+        const newItems = this.normalize(rows)
+        if (append) {
+             this.items = [...this.items, ...newItems]
+        } else {
+             this.items = newItems
+        }
         this.total = total
         this.page = nextPage
       } catch (e) {}
@@ -179,13 +183,9 @@ export default {
 }
 .grid2-item { background: #fff; border-radius: 12rpx; overflow: hidden; }
 
-.pager { display: flex; align-items: center; justify-content: center; padding: 20rpx; flex-direction: column; }
-.pg-bar { display: flex; align-items: center; justify-content: center; gap: 12rpx; }
-.pg-btn { margin: 0 12rpx;font-weight: 900; }
-.pg-text { margin: 0 12rpx; color: #666; }
-
 .loading { text-align: center; color: #999; padding: 20rpx; }
 .empty { height: 40vh; display: flex; align-items: center; justify-content: center; color: #999; }
+.nomore { text-align: center; color: #999; padding: 30rpx; font-size: 26rpx; }
 
 /* #ifdef H5 */
 .grid2 { 
@@ -203,19 +203,8 @@ export default {
 .kw { font-size: 32rpx !important; }
 .nav-text { font-size: 32rpx !important; }
 
-.pager {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  /* background: #fff; */
-  z-index: 99;
-  /* box-shadow: 0 -4rpx 16rpx rgba(0,0,0,0.05); */
-  padding: 30rpx;
-}
-.pg-text { font-size: 28rpx; }
 .page {
-  padding-bottom: 160rpx; /* Space for fixed pager */
+  padding-bottom: 40rpx;
 }
 
 @media (max-width: 1440px) {

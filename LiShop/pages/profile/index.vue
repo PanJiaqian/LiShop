@@ -195,6 +195,9 @@ export default {
       this.displayName = ''
       this.fetchedProfile = {}
       uni.showToast({ title: '已退出登录', icon: 'success' })
+      setTimeout(() => {
+        uni.navigateTo({ url: '/pages/login/index' })
+      }, 500)
     },
     onAuthButton() {
       if (this.loggedIn) this.logout()

@@ -1,19 +1,20 @@
 <template>
-  <view class="page">
-    <view class="brand">
-      <image class="brand-logo" src="/static/logo.png" mode="aspectFit" />
-      <text class="brand-name">LiShop</text>
+  <view class="login-container">
+    <image class="bg-image" src="/static/login_background.jpg" mode="aspectFill" />
+    
+    <view class="top-bar">
+      <text class="brand-title">Light Strip Mall</text>
+      <text class="menu-icon">☰</text>
     </view>
-    <view class="form">
-      <view class="field">
-        <text class="label">账号</text>
-        <input class="input" type="text" v-model="username" placeholder="请输入账号" />
+
+    <view class="login-card">
+      <view class="input-group">
+        <input class="glass-input" type="text" v-model="username" placeholder="账号" placeholder-class="ph-style" />
       </view>
-      <view class="field">
-        <text class="label">密码</text>
-        <input class="input" type="password" v-model="password" placeholder="请输入密码" />
+      <view class="input-group">
+        <input class="glass-input" type="password" v-model="password" placeholder="密码" placeholder-class="ph-style" />
       </view>
-      <button class="btn" @tap="login">登录</button>
+      <button class="login-btn" @tap="login">LOGIN</button>
     </view>
   </view>
 </template>
@@ -27,11 +28,11 @@ export default {
   methods: {
     login() {
       if (!this.username || !this.password) {
-        uni.showToast({ title: '请输入账号和密码', icon: 'none' })
+        uni.showToast({ title: 'Please enter username and password', icon: 'none' })
         return
       }
       const payload = { phone: this.username, password: this.password }
-      uni.showLoading({ title: '登录中...', mask: true })
+      uni.showLoading({ title: 'Logging in...', mask: true })
       loginAdmin(payload)
         .then((dataRaw) => {
           let data = dataRaw
@@ -39,15 +40,11 @@ export default {
           const user = { username: this.username, ...(data || {}) }
           try {
             uni.setStorageSync('user', user)
-            // 4 days expiration
             uni.setStorageSync('token_expiration', Date.now() + 4 * 24 * 60 * 60 * 1000)
           } catch (e) { }
-          uni.showToast({ title: '登录成功', icon: 'success' })
+          // uni.showToast({ title: 'Login Success', icon: 'success' })
           setTimeout(() => {
-            try { uni.navigateBack() } catch (e) {
-              if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
-              else uni.navigateTo({ url: '/pages/home/index' })
-            }
+            uni.switchTab({ url: '/pages/home/index' })
           }, 300)
         })
         .catch((err) => {
@@ -61,76 +58,101 @@ export default {
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  padding: 60rpx 30rpx;
-  background: linear-gradient(180deg, #fff4f2 0%, #f7f7f7 40%, #f7f7f7 100%);
+.login-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 40rpx 60rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+.brand-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #000;
+  font-family: sans-serif;
+}
+
+.menu-icon {
+  font-size: 48rpx;
+  color: #000;
+}
+
+.login-card {
+  position: absolute;
+  top: 50%;
+  left: 15%; /* Adjust to match the image (left side) */
+  transform: translateY(-50%);
+  width: 600rpx;
+  padding: 60rpx 40rpx;
+  background: rgba(255, 255, 255, 0.2); /* Glassmorphism */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 30rpx;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 40rpx;
 }
 
-.brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.input-group {
+  width: 100%;
 }
 
-.brand-logo {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 24rpx;
-  background: #fff;
-  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, .06);
-}
-
-.brand-name {
-  margin-top: 12rpx;
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #333;
-  letter-spacing: 1rpx;
-}
-
-.form {
-  width: 640rpx;
-  max-width: 90vw;
-  margin-top: 30rpx;
-  background: #ffffff;
+.glass-input {
+  width: 100%;
+  height: 100rpx;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 16rpx;
-  padding: 32rpx;
-  box-shadow: 0 12rpx 40rpx rgba(225, 37, 27, .08);
+  padding: 0 30rpx;
+  font-size: 32rpx;
+  color: #333;
+  box-sizing: border-box;
 }
 
-.field {
-  margin-bottom: 28rpx;
-}
-
-.label {
-  font-size: 26rpx;
+.ph-style {
   color: #666;
-  display: block;
-  margin-bottom: 10rpx;
 }
 
-.input {
-  height: 84rpx;
-  line-height: 84rpx;
-  background: #fafafa;
-  border: 1rpx solid #eee;
-  border-radius: 12rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-}
-
-.btn {
-  margin-top: 6rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  background: linear-gradient(90deg, #ff6b4b, #e1251b);
+.login-btn {
+  width: 100%;
+  height: 100rpx;
+  line-height: 100rpx;
+  background: #000;
   color: #fff;
-  border-radius: 12rpx;
-  font-weight: 600;
-  box-shadow: 0 6rpx 18rpx rgba(225, 37, 27, .25);
+  font-size: 36rpx;
+  font-weight: bold;
+  border-radius: 16rpx;
+  margin-top: 20rpx;
+  letter-spacing: 2rpx;
+}
+
+.login-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
 }
 </style>
