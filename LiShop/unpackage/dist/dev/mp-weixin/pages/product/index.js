@@ -280,6 +280,29 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "创建房间失败", icon: "none" });
       });
     },
+    onCreateAddress(payload) {
+      const u = common_vendor.index.getStorageSync("user");
+      const token = u && (u.token || u.data && u.data.token) || "";
+      const data = { receiver: payload.receiver, phone: payload.phone, province: payload.province, city: payload.city, district: payload.district, detail_address: payload.detail_address, is_default: payload.is_default };
+      api_index.addAddress({ ...data, token }).then((res) => {
+        if (res && res.success) {
+          const id = res && res.data && (res.data.addresses_id || res.data.id) || "";
+          const item = { id, receiver: data.receiver, phone: data.phone, province: data.province, city: data.city, district: data.district, detail_address: data.detail_address, is_default: data.is_default === 1 };
+          this.addresses = [item, ...this.addresses];
+          this.selectedAddress = item;
+          try {
+            common_vendor.index.setStorageSync("selected_address_id", id);
+          } catch (e) {
+          }
+          common_vendor.index.showToast({ title: "已保存", icon: "success" });
+          this.roomSelectorVisible = false;
+        } else {
+          common_vendor.index.showToast({ title: res && res.message ? res.message : "保存失败", icon: "none" });
+        }
+      }).catch(() => {
+        common_vendor.index.showToast({ title: "保存失败", icon: "none" });
+      });
+    },
     confirmSpecToCart() {
       var _a;
       const needLength = this.selectedSpec && this.selectedSpec.has_length === 1;
@@ -430,12 +453,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     T: common_vendor.o($options.closeRoomSheet),
     U: common_vendor.o($options.onRoomSelect),
     V: common_vendor.o($options.onRoomCreate),
-    W: common_vendor.p({
+    W: common_vendor.o($options.onCreateAddress),
+    X: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       selectedName: $options.selectorSelectedName
     }),
-    X: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
+    Y: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);

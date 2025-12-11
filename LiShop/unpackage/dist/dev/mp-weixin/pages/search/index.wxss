@@ -22,30 +22,12 @@
 }
 .grid2-item.data-v-2dab939d { background: #fff; border-radius: 12rpx; overflow: hidden;
 }
-.pager.data-v-2dab939d { display: flex; align-items: center; justify-content: center; padding: 20rpx; flex-direction: column;
-}
-.pg-bar.data-v-2dab939d { display: flex; align-items: center; justify-content: center; gap: 12rpx;
-}
-.pg-btn.data-v-2dab939d { margin: 0 12rpx;
-}
-.pg-text.data-v-2dab939d { margin: 0 12rpx; color: #666;
-}
 .loading.data-v-2dab939d { text-align: center; color: #999; padding: 20rpx;
 }
 .empty.data-v-2dab939d { height: 40vh; display: flex; align-items: center; justify-content: center; color: #999;
 }
 .nomore.data-v-2dab939d { text-align: center; color: #999; padding: 12rpx;
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

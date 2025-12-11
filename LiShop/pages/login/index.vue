@@ -2,19 +2,17 @@
   <view class="login-container">
     <image class="bg-image" src="/static/login_background.jpg" mode="aspectFill" />
     
-    <view class="top-bar">
-      <text class="brand-title">Light Strip Mall</text>
-      <text class="menu-icon">☰</text>
-    </view>
+    
 
     <view class="login-card">
+      <image src="/static/logo.png?v=20251211" style="width:200rpx;height:200rpx;display:block;margin:0 auto;" mode="aspectFit" />
       <view class="input-group">
         <input class="glass-input" type="text" v-model="username" placeholder="账号" placeholder-class="ph-style" />
       </view>
       <view class="input-group">
         <input class="glass-input" type="password" v-model="password" placeholder="密码" placeholder-class="ph-style" />
       </view>
-      <button class="login-btn" @tap="login">LOGIN</button>
+      <button class="login-btn" @tap="login">登录</button>
     </view>
   </view>
 </template>
@@ -102,8 +100,8 @@ export default {
 .login-card {
   position: absolute;
   top: 50%;
-  left: 15%; /* Adjust to match the image (left side) */
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 600rpx;
   padding: 60rpx 40rpx;
   background: rgba(255, 255, 255, 0.2); /* Glassmorphism */

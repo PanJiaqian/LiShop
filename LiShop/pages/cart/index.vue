@@ -253,6 +253,7 @@
       :selectedName="selectedAddress ? (selectedAddress.receiver + ' ' + selectedAddress.phone + ' ' + selectedAddress.full).trim() : ''"
       @close="showAddressSelector = false" 
       @select="onAddressSelect" 
+      @createAddress="onCreateAddress"
     />
   </view>
 </template>
@@ -261,7 +262,7 @@
 import FloatingNav from '@/components/FloatingNav.vue'
 import RoomSelector from '@/components/RoomSelector.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses } from '../../api/index.js'
+import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses, addAddress } from '../../api/index.js'
 export default {
   components: { FloatingNav, RoomSelector, Skeleton },
   data() {
@@ -363,6 +364,26 @@ export default {
         uni.setStorageSync('selected_address_id', room.raw.id)
         this.showAddressSelector = false
       }
+    },
+    onCreateAddress(payload) {
+      const u = uni.getStorageSync('user')
+      const token = (u && (u.token || (u.data && u.data.token))) || ''
+      const data = { receiver: payload.receiver, phone: payload.phone, province: payload.province, city: payload.city, district: payload.district, detail_address: payload.detail_address, is_default: payload.is_default }
+      addAddress({ ...data, token }).then(res => {
+        if (res && res.success) {
+          const id = (res && res.data && (res.data.addresses_id || res.data.id)) || ''
+          const item = { id, receiver: data.receiver, phone: data.phone, full: [data.province, data.city, data.district, data.detail_address].filter(Boolean).join(' '), is_default: data.is_default === 1 }
+          this.addresses = [item, ...this.addresses]
+          this.selectedAddress = item
+          try { uni.setStorageSync('selected_address_id', id) } catch (e) {}
+          uni.showToast({ title: '已保存', icon: 'success' })
+          this.showAddressSelector = false
+        } else {
+          uni.showToast({ title: (res && res.message) ? res.message : '保存失败', icon: 'none' })
+        }
+      }).catch(() => {
+        uni.showToast({ title: '保存失败', icon: 'none' })
+      })
     },
     toAddressPage() { uni.navigateTo({ url: '/pages/address/index' }) },
     load() {

@@ -242,12 +242,13 @@
       @close="closeRoomSheet"
       @select="onRoomSelect"
       @create="onRoomCreate"
+      @createAddress="onCreateAddress"
     />
   </view>
 </template>
 
 <script>
-import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getAddresses } from '../../api/index.js'
+import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getAddresses, addAddress } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -534,6 +535,27 @@ export default {
         .catch(() => {
           uni.showToast({ title: '创建房间失败', icon: 'none' })
         })
+    },
+
+    onCreateAddress(payload) {
+      const u = uni.getStorageSync('user')
+      const token = (u && (u.token || (u.data && u.data.token))) || ''
+      const data = { receiver: payload.receiver, phone: payload.phone, province: payload.province, city: payload.city, district: payload.district, detail_address: payload.detail_address, is_default: payload.is_default }
+      addAddress({ ...data, token }).then(res => {
+        if (res && res.success) {
+          const id = (res && res.data && (res.data.addresses_id || res.data.id)) || ''
+          const item = { id, receiver: data.receiver, phone: data.phone, province: data.province, city: data.city, district: data.district, detail_address: data.detail_address, is_default: data.is_default === 1 }
+          this.addresses = [item, ...this.addresses]
+          this.selectedAddress = item
+          try { uni.setStorageSync('selected_address_id', id) } catch (e) {}
+          uni.showToast({ title: '已保存', icon: 'success' })
+          this.roomSelectorVisible = false
+        } else {
+          uni.showToast({ title: (res && res.message) ? res.message : '保存失败', icon: 'none' })
+        }
+      }).catch(() => {
+        uni.showToast({ title: '保存失败', icon: 'none' })
+      })
     },
 
     confirmSpecToCart() {

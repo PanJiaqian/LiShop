@@ -95,6 +95,9 @@ const _sfc_main = {
       this.displayName = "";
       this.fetchedProfile = {};
       common_vendor.index.showToast({ title: "已退出登录", icon: "success" });
+      setTimeout(() => {
+        common_vendor.index.navigateTo({ url: "/pages/login/index" });
+      }, 500);
     },
     onAuthButton() {
       if (this.loggedIn)
@@ -261,7 +264,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       loading: $data.loading,
       showTitle: true
     }),
-    b: common_assets._imports_0,
+    b: common_assets._imports_0$1,
     c: common_vendor.t($data.loggedIn ? $data.displayName : "未登录"),
     d: common_vendor.t($data.loggedIn ? "退出登录" : "登录"),
     e: common_vendor.o((...args) => $options.onAuthButton && $options.onAuthButton(...args)),

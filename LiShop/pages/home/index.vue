@@ -58,6 +58,10 @@
             </view>
             
             <view class="uc-links">
+               <navigator class="uc-link-item" url="/pages/profile/index" open-type="switchTab">
+                  <text class="uc-icon">👤</text>
+                  <text>我的</text>
+               </navigator>
                <navigator class="uc-link-item" url="/pages/cart/index" open-type="switchTab">
                   <text class="uc-icon">🛒</text>
                   <text>我的购物车</text>

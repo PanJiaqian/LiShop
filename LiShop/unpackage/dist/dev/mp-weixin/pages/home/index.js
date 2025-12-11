@@ -53,6 +53,9 @@ const _sfc_main = {
           const img = typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "";
           return { image: img || "/static/logo.png", id: (it == null ? void 0 : it.available_product_id) || "" };
         });
+        if (this.banners.length === 0) {
+          this.banners = ["/static/logo.png", "/static/logo.png"];
+        }
         const fixed = ((_c = res == null ? void 0 : res.data) == null ? void 0 : _c.fixed) && Array.isArray(res.data.fixed.items) ? res.data.fixed.items : [];
         const mapped = fixed.map((it, i) => ({
           id: (it == null ? void 0 : it.available_product_id) || "p" + i,
@@ -182,7 +185,9 @@ const _sfc_main = {
       } catch (e) {
       }
       this.user = null;
-      common_vendor.index.showToast({ title: "已退出登录", icon: "success" });
+      setTimeout(() => {
+        common_vendor.index.navigateTo({ url: "/pages/login/index" });
+      }, 500);
     }
   }
 };

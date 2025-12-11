@@ -10,7 +10,17 @@ const _sfc_main = {
   },
   data() {
     return {
-      newRoomName: ""
+      newRoomName: "",
+      createAddressMode: false,
+      addrForm: {
+        receiver: "",
+        phone: "",
+        province: "",
+        city: "",
+        district: "",
+        detail_address: "",
+        is_default: 0
+      }
     };
   },
   computed: {
@@ -27,6 +37,8 @@ const _sfc_main = {
     visible(val) {
       if (val) {
         this.newRoomName = "";
+        this.createAddressMode = false;
+        this.addrForm = { receiver: "", phone: "", province: "", city: "", district: "", detail_address: "", is_default: 0 };
       }
     }
   },
@@ -50,6 +62,23 @@ const _sfc_main = {
         return;
       }
       this.$emit("create", this.newRoomName.trim());
+    },
+    toggleCreateAddress() {
+      this.createAddressMode = true;
+    },
+    onAddrSwitchChange(e) {
+      this.addrForm.is_default = e.detail.value ? 1 : 0;
+    },
+    saveAddress() {
+      const f = this.addrForm;
+      if (!f.receiver || !f.phone || !f.province || !f.city || !f.district || !f.detail_address) {
+        try {
+          common_vendor.index.showToast({ title: "请填写完整地址信息", icon: "none" });
+        } catch (e) {
+        }
+        return;
+      }
+      this.$emit("createAddress", { ...f });
     }
   }
 };
@@ -65,7 +94,24 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: $data.newRoomName,
     f: common_vendor.o(($event) => $data.newRoomName = $event.detail.value)
   } : {}, {
-    g: common_vendor.f($props.rooms, (room, index, i0) => {
+    g: $options.isAddressMode && $data.createAddressMode
+  }, $options.isAddressMode && $data.createAddressMode ? {
+    h: $data.addrForm.receiver,
+    i: common_vendor.o(($event) => $data.addrForm.receiver = $event.detail.value),
+    j: $data.addrForm.phone,
+    k: common_vendor.o(($event) => $data.addrForm.phone = $event.detail.value),
+    l: $data.addrForm.province,
+    m: common_vendor.o(($event) => $data.addrForm.province = $event.detail.value),
+    n: $data.addrForm.city,
+    o: common_vendor.o(($event) => $data.addrForm.city = $event.detail.value),
+    p: $data.addrForm.district,
+    q: common_vendor.o(($event) => $data.addrForm.district = $event.detail.value),
+    r: $data.addrForm.detail_address,
+    s: common_vendor.o(($event) => $data.addrForm.detail_address = $event.detail.value),
+    t: $data.addrForm.is_default === 1,
+    v: common_vendor.o((...args) => $options.onAddrSwitchChange && $options.onAddrSwitchChange(...args))
+  } : {}, {
+    w: common_vendor.f($props.rooms, (room, index, i0) => {
       return {
         a: common_vendor.t(room.name),
         b: index,
@@ -73,15 +119,23 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.select(room), index)
       };
     }),
-    h: common_assets._imports_0$1,
-    i: common_vendor.o((...args) => $options.close && $options.close(...args)),
-    j: !$options.isAddressMode
+    x: common_assets._imports_0$2,
+    y: common_vendor.o((...args) => $options.close && $options.close(...args)),
+    z: !$options.isAddressMode
   }, !$options.isAddressMode ? {
-    k: common_vendor.o((...args) => $options.confirmCreate && $options.confirmCreate(...args))
+    A: common_vendor.o((...args) => $options.confirmCreate && $options.confirmCreate(...args))
   } : {}, {
-    l: common_vendor.o(() => {
+    B: $options.isAddressMode && !$data.createAddressMode
+  }, $options.isAddressMode && !$data.createAddressMode ? {
+    C: common_vendor.o((...args) => $options.toggleCreateAddress && $options.toggleCreateAddress(...args))
+  } : {}, {
+    D: $options.isAddressMode && $data.createAddressMode
+  }, $options.isAddressMode && $data.createAddressMode ? {
+    E: common_vendor.o((...args) => $options.saveAddress && $options.saveAddress(...args))
+  } : {}, {
+    F: common_vendor.o(() => {
     }),
-    m: common_vendor.o((...args) => $options.close && $options.close(...args))
+    G: common_vendor.o((...args) => $options.close && $options.close(...args))
   }) : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-9c17e027"]]);

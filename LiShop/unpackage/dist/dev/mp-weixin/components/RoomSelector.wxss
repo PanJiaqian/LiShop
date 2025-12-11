@@ -152,3 +152,34 @@
   background: #000;
   color: #fff;
 }
+.addr-form.data-v-9c17e027 {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+.form-item.data-v-9c17e027 {
+  display: flex;
+  align-items: center;
+  border-bottom: 1rpx solid #eee;
+  padding: 20rpx 0;
+}
+.form-item.data-v-9c17e027:last-child { border-bottom: none;
+}
+.label.data-v-9c17e027 { width: 160rpx; font-size: 28rpx; color: #333;
+}
+.input.data-v-9c17e027 { flex: 1; font-size: 28rpx;
+}
+.region-inputs.data-v-9c17e027 { flex: 1; display: flex; gap: 10rpx;
+}
+.region-input.data-v-9c17e027 { flex: 1;
+}
+.textarea.data-v-9c17e027 { flex: 1; height: 120rpx; font-size: 28rpx; padding-top: 10rpx;
+}
+.switch-item.data-v-9c17e027 { justify-content: space-between;
+}
+
+
+
+
+

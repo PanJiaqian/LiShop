@@ -34,6 +34,11 @@ const _sfc_main = {
     this.activeChildId = decodeURIComponent((query == null ? void 0 : query.category_id) || "");
     this.activeName = decodeURIComponent((query == null ? void 0 : query.active) || "");
   },
+  onReachBottom() {
+    if (this.page >= this.totalPages || this.loading)
+      return;
+    this.fetchPage(this.page + 1, true);
+  },
   onShow() {
     if (!this.parentId && !this.activeChildId)
       return;
@@ -76,7 +81,7 @@ const _sfc_main = {
         this.subChildren = [];
       }
     },
-    async fetchPage(nextPage = 1) {
+    async fetchPage(nextPage = 1, append = false) {
       var _a, _b;
       if (!this.activeChildId)
         return;
@@ -85,7 +90,12 @@ const _sfc_main = {
         const res = await api_index.getVisibleProducts({ page: nextPage, page_size: this.page_size, sort_by: "id", category_id: this.activeChildId });
         const rows = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
         const total = Number(((_b = res == null ? void 0 : res.data) == null ? void 0 : _b.total) ?? rows.length);
-        this.items = this.normalize(rows);
+        const newItems = this.normalize(rows);
+        if (append) {
+          this.items = [...this.items, ...newItems];
+        } else {
+          this.items = newItems;
+        }
         this.total = total;
         this.page = nextPage;
       } catch (e) {
@@ -136,7 +146,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     c: !$data.loading && $data.items.length === 0
   }, !$data.loading && $data.items.length === 0 ? {} : {}, {
     d: $data.loading
-  }, $data.loading ? {} : {});
+  }, $data.loading ? {} : {}, {
+    e: !$data.loading && $data.page >= $options.totalPages && $data.items.length > 0
+  }, !$data.loading && $data.page >= $options.totalPages && $data.items.length > 0 ? {} : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-17e22e15"]]);
 wx.createPage(MiniProgramPage);

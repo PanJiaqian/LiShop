@@ -127,6 +127,29 @@ const _sfc_main = {
         this.showAddressSelector = false;
       }
     },
+    onCreateAddress(payload) {
+      const u = common_vendor.index.getStorageSync("user");
+      const token = u && (u.token || u.data && u.data.token) || "";
+      const data = { receiver: payload.receiver, phone: payload.phone, province: payload.province, city: payload.city, district: payload.district, detail_address: payload.detail_address, is_default: payload.is_default };
+      api_index.addAddress({ ...data, token }).then((res) => {
+        if (res && res.success) {
+          const id = res && res.data && (res.data.addresses_id || res.data.id) || "";
+          const item = { id, receiver: data.receiver, phone: data.phone, full: [data.province, data.city, data.district, data.detail_address].filter(Boolean).join(" "), is_default: data.is_default === 1 };
+          this.addresses = [item, ...this.addresses];
+          this.selectedAddress = item;
+          try {
+            common_vendor.index.setStorageSync("selected_address_id", id);
+          } catch (e) {
+          }
+          common_vendor.index.showToast({ title: "已保存", icon: "success" });
+          this.showAddressSelector = false;
+        } else {
+          common_vendor.index.showToast({ title: res && res.message ? res.message : "保存失败", icon: "none" });
+        }
+      }).catch(() => {
+        common_vendor.index.showToast({ title: "保存失败", icon: "none" });
+      });
+    },
     toAddressPage() {
       common_vendor.index.navigateTo({ url: "/pages/address/index" });
     },
@@ -547,7 +570,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     F: common_vendor.o(($event) => $data.showAddressSelector = false),
     G: common_vendor.o($options.onAddressSelect),
-    H: common_vendor.p({
+    H: common_vendor.o($options.onCreateAddress),
+    I: common_vendor.p({
       visible: $data.showAddressSelector,
       rooms: $options.addressRooms,
       selectedName: $data.selectedAddress ? ($data.selectedAddress.receiver + " " + $data.selectedAddress.phone + " " + $data.selectedAddress.full).trim() : ""

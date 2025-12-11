@@ -36,29 +36,12 @@
 }
 .grid2-item.data-v-17e22e15 { background: #fff; border-radius: 12rpx; overflow: hidden;
 }
-.pager.data-v-17e22e15 { display: flex; align-items: center; justify-content: center; padding: 20rpx; flex-direction: column;
-}
-.pg-bar.data-v-17e22e15 { display: flex; align-items: center; justify-content: center; gap: 12rpx;
-}
-.pg-btn.data-v-17e22e15 { margin: 0 12rpx;font-weight: 900;
-}
-.pg-text.data-v-17e22e15 { margin: 0 12rpx; color: #666;
-}
 .loading.data-v-17e22e15 { text-align: center; color: #999; padding: 20rpx;
 }
 .empty.data-v-17e22e15 { height: 40vh; display: flex; align-items: center; justify-content: center; color: #999;
 }
-
-
-
-
-
-
-
-
-
-
-
+.nomore.data-v-17e22e15 { text-align: center; color: #999; padding: 30rpx; font-size: 26rpx;
+}
 
 
 
