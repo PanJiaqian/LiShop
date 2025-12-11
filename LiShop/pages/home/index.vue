@@ -26,7 +26,7 @@
           <view class="cate-title">
              <text style="color:#000;margin-right:8rpx;font-weight:900;">☰</text>分类
           </view>
-          <view class="cate-list">
+          <view class="cate-list" @mouseleave="onCateListLeave">
             <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
               <text class="cate-dot">●</text>
               <text class="cate-name">{{ c.name }}</text>
@@ -40,7 +40,7 @@
         <view class="center-content">
           <BannerSwiper :images="banners" class="full-height-banner" />
           
-          <view v-if="activeCateId" class="sub-panel" :style="{ top: panelTop + 'px', left: panelLeft + 'px', right: panelRight + 'px' }" @mouseleave="closeCategory">
+          <view v-if="activeCateId" class="sub-panel" :style="{ top: panelTop + 'px', left: panelLeft + 'px', right: panelRight + 'px' }" @mouseenter="onPanelEnter" @mouseleave="onPanelLeave">
             <view class="panel-title">
               <text>{{ activeCateName || '二级分类' }}</text>
             </view>
@@ -179,6 +179,8 @@ export default {
       , panelTop: 20
       , panelLeft: 0
       , panelRight: 0
+      , hoveringPanel: false
+      , leaveTimer: null
     }
   },
   onShow() {
@@ -234,8 +236,8 @@ export default {
   onPullDownRefresh() {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
   },
-  methods: {
-    hoverCategory(cat, e) {
+    methods: {
+      hoverCategory(cat, e) {
       const id = cat?.categories_id || ''
       if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
       if (this.activeCateId === id && (this.leftChildren && this.leftChildren.length)) return
@@ -246,8 +248,8 @@ export default {
         const main = document.querySelector('.center-content')
         if (main && e && e.clientY != null) {
           const rect = main.getBoundingClientRect()
-          const y = e.clientY - rect.top
-          this.panelTop = Math.max(20, Math.min(y - 40, rect.height - 200))
+          const y = e.clientY
+          this.panelTop = Math.max(0, y)
           const w = Math.min(560, rect.width * 0.6)
           this.panelLeft = Math.max(0, rect.left - 20)
           this.panelRight = Math.max(0, document.documentElement.clientWidth - (this.panelLeft + w))
@@ -262,12 +264,24 @@ export default {
           })
           .catch(() => { this.leftChildren = [] })
       } catch (e) { this.leftChildren = [] }
-    },
-    closeCategory() {
-      this.activeCateId = ''
-      this.activeCateName = ''
-      this.leftChildren = []
-    },
+      },
+      onCateListLeave() {
+        try { if (this.leaveTimer) { clearTimeout(this.leaveTimer) } } catch (e) {}
+        this.leaveTimer = setTimeout(() => { if (!this.hoveringPanel) this.closeCategory() }, 120)
+      },
+      onPanelEnter() {
+        this.hoveringPanel = true
+        try { if (this.leaveTimer) { clearTimeout(this.leaveTimer) } } catch (e) {}
+      },
+      onPanelLeave() {
+        this.hoveringPanel = false
+        this.closeCategory()
+      },
+      closeCategory() {
+        this.activeCateId = ''
+        this.activeCateName = ''
+        this.leftChildren = []
+      },
     onSearch(val) {
       const q = (val || this.keyword || '').trim()
       if (!q) { uni.showToast({ title: '请输入关键字', icon: 'none' }); return }
@@ -706,7 +720,7 @@ export default {
   border-radius: 12rpx;
   min-width: 600rpx;
   margin-left: -90rpx;
-  margin-top: 80rpx;
+  /* margin-top: 80rpx; */
 }
 
 .panel-title {

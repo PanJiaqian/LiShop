@@ -329,11 +329,29 @@ export default {
     this.loadAddresses()
     // #ifdef H5
     try { uni.hideTabBar({ animation: false }) } catch (e) { }
+    try {
+      const cur = (typeof location !== 'undefined' && location.href) ? location.href : ''
+      const ref = (typeof document !== 'undefined' && document.referrer) ? document.referrer : ''
+      if (ref && (!cur || ref !== cur)) {
+        uni.setStorageSync('last_cart_back', ref)
+      }
+    } catch (e) {}
     // #endif
   },
   methods: {
     goBack() {
-      if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
+      const cur = (typeof location !== 'undefined' && location.href) ? location.href : ''
+      let isReload = false
+      try {
+        const navs = (typeof performance !== 'undefined' && performance.getEntriesByType) ? performance.getEntriesByType('navigation') : []
+        const nav = navs && navs[0]
+        isReload = !!(nav && nav.type === 'reload')
+      } catch (e) {}
+      if (!isReload && typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
+      try {
+        const back = uni.getStorageSync('last_cart_back') || (typeof document !== 'undefined' ? document.referrer : '') || ''
+        if (back && back !== cur && typeof location !== 'undefined') { location.assign(back); return }
+      } catch (e) {}
       if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
       if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
     },
