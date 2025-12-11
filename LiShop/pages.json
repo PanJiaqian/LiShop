@@ -22,11 +22,7 @@
 		{
 			"path": "pages/category/index",
 			"style": {
-				"navigationBarTitleText": "分类",
-				"enablePullDownRefresh": true,
-				"h5": {
-					"navigationStyle": "custom"
-				}
+				"navigationBarTitleText": "分类"
 			}
 		},
 		{

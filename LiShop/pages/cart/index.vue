@@ -3,7 +3,7 @@
     <Skeleton :loading="loading" :showTitle="true" />
     <!-- #ifdef H5 -->
     <view class="h5-nav-bar">
-      <view class="nav-back" @click="goBack">
+      <view class="nav-back" @click="goHome">
         <view class="back-arrow"></view>
       </view>
       <text class="nav-title">购物车</text>
@@ -339,19 +339,7 @@ export default {
     // #endif
   },
   methods: {
-    goBack() {
-      const cur = (typeof location !== 'undefined' && location.href) ? location.href : ''
-      let isReload = false
-      try {
-        const navs = (typeof performance !== 'undefined' && performance.getEntriesByType) ? performance.getEntriesByType('navigation') : []
-        const nav = navs && navs[0]
-        isReload = !!(nav && nav.type === 'reload')
-      } catch (e) {}
-      if (!isReload && typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
-      try {
-        const back = uni.getStorageSync('last_cart_back') || (typeof document !== 'undefined' ? document.referrer : '') || ''
-        if (back && back !== cur && typeof location !== 'undefined') { location.assign(back); return }
-      } catch (e) {}
+    goHome() {
       if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
       if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
     },
