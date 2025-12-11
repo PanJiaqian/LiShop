@@ -693,13 +693,13 @@ export default {
   padding: 12rpx;
   border: 1rpx solid #eee;
   border-radius: 12rpx;
-  background: #fafafa;
+  /* background: #fafafa; */
   transition: all .2s;
 }
 
 .spec-item.active {
-  border-color: #ff5500;
-  background: #fff5f0;
+  border-color: #d5d1d1;
+  /* background: #fff5f0; */
 }
 
 .spec-thumb {
@@ -821,7 +821,7 @@ export default {
 }
 
 .h5-product-card {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   /* background: rgba(255, 255, 255, 0.95); */
   border-radius: 24rpx;
@@ -834,7 +834,7 @@ export default {
 .pd-grid {
   display: grid;
   grid-template-columns: 3fr 2fr;
-  grid-gap: 40rpx;
+  grid-gap: 80rpx;
   padding: 60rpx;
   align-items: start;
 }
@@ -878,14 +878,27 @@ export default {
   color: #333;
 }
 
-.pd-left,
-.pd-right {
+.pd-left{
   height: 100%;
-  background: rgba(255,255,255,0.96);
-  border: 1rpx solid #eee;
+  background: transparent;
+  /* border: 1rpx solid rgba(255,255,255,0.35); */
   border-radius: 16rpx;
   padding: 24rpx;
   box-sizing: border-box;
+  /* box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.08); */
+  -webkit-backdrop-filter: saturate(120%) blur(8px);
+  backdrop-filter: saturate(120%) blur(8px);
+}
+.pd-right {
+  height: 100%;
+  background: transparent;
+  border: 1rpx solid rgba(255,255,255,0.35);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-sizing: border-box;
+  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.08);
+  -webkit-backdrop-filter: saturate(120%) blur(8px);
+  backdrop-filter: saturate(120%) blur(8px);
 }
 
 /* 右侧卡片置顶且自适应高度，仅影响 H5 */
@@ -900,15 +913,17 @@ export default {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 50rpx;
   padding-right: 6rpx;
 }
 
 .pd-gallery {
-  background: #fff;
+  /* background: #fff; */
   border-radius: 12rpx;
   padding: 20rpx;
   position: relative;
+  border: 1rpx solid rgba(255,255,255,0.35);
+  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.08);
 }
 
 .pd-main {
@@ -923,10 +938,14 @@ export default {
   display: flex;
   flex-direction: row;
   gap: 12rpx;
-  margin-top: 12rpx;
+  /* margin-top: 12rpx; */
   overflow-x: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  /* background: rgba(255,255,255,0.5); */
+  border-radius: 12rpx;
+  /* padding: 12rpx; */
+  /* box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.06); */
 }
 .pd-thumbs::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
@@ -943,9 +962,13 @@ export default {
 }
 
 .pd-card {
-  background: #fff;
+  background: transparent;
   border-radius: 12rpx;
   padding: 20rpx;
+  border: 1rpx solid rgba(255,255,255,0.35);
+  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.08);
+  -webkit-backdrop-filter: saturate(120%) blur(8px);
+  backdrop-filter: saturate(120%) blur(8px);
 }
 
 .pd-section-title {
@@ -960,7 +983,7 @@ export default {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16rpx 40rpx;
-  background: #fafafa;
+  /* background: #fafafa; */
   border-radius: 10rpx;
   padding: 20rpx;
 }
@@ -1531,12 +1554,12 @@ export default {
 /* Address Card Style from Cart Page (H5) */
 .address-card {
   position: relative;
-  background: #fff;
+  /* background: #fff; */
   border-radius: 16rpx;
   padding: 20rpx;
   padding-right: 180rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,.06);
-  border: 1rpx solid #eee;
+  /* box-shadow: 0 4rpx 16rpx rgba(0,0,0,.06); */
+  /* border: 1rpx solid #eee; */
   margin-bottom: 20rpx;
 }
 .address-card .addr-title { font-weight: 600; color: #333; font-size: 28rpx; }
