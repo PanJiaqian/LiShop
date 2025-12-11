@@ -21,18 +21,21 @@
       </view>
 
       <view class="h5-middle-layout">
-        <view class="side-cate">
+        <view class="side-user">
+                  <view class="side-cate">
           <view class="cate-title">
              <text style="color:#000;margin-right:8rpx;font-weight:900;">☰</text>分类
           </view>
           <view class="cate-list">
             <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
-              <image v-if="c.icon" :src="c.icon" class="cate-icon" mode="aspectFit" />
-              <text v-else class="dot-icon">●</text>
+              <text class="cate-dot">●</text>
               <text class="cate-name">{{ c.name }}</text>
             </view>
           </view>
         </view>
+
+        </view>
+
 
         <view class="center-content">
           <BannerSwiper :images="banners" class="full-height-banner" />
@@ -42,7 +45,10 @@
               <text>{{ activeCateName || '二级分类' }}</text>
             </view>
             <view class="panel-columns">
-              <view class="panel-link" v-for="(s, si) in leftChildren" :key="si" @click="goSubList(s)">{{ s.name }}</view>
+              <view class="panel-link" v-for="(s, si) in leftChildren" :key="si" @click="goSubList(s)">
+                <text class="sub-icon">●</text>
+                {{ s.name }}
+              </view>
             </view>
             <view v-if="!leftChildren || leftChildren.length === 0" class="sub-empty">暂无子分类</view>
           </view>
@@ -208,13 +214,27 @@ export default {
              this.banners = ['/static/logo.png', '/static/logo.png']
           }
 
-          const fixed = ((res?.data?.fixed && Array.isArray(res.data.fixed.items)) ? res.data.fixed.items : [])
+          const pick = (d) => {
+            const candidates = [
+              d?.data?.fixed?.items,
+              d?.data?.recommended?.items,
+              d?.data?.items,
+              d?.items,
+              Array.isArray(d) ? d : []
+            ]
+            for (let i = 0; i < candidates.length; i++) {
+              const arr = candidates[i]
+              if (Array.isArray(arr) && arr.length) return arr
+            }
+            return []
+          }
+          const fixed = pick(res)
           const mapped = fixed.map((it, i) => ({
-            id: it?.available_product_id || ('p' + i),
-            title: it?.name || ('推荐商品 ' + (i + 1)),
-            price: Number(it?.price ?? 0) || 0,
-            sales: 0,
-            image: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || '/static/logo.png'
+            id: it?.available_product_id || it?.id || ('p' + i),
+            title: it?.name || it?.title || ('推荐商品 ' + (i + 1)),
+            price: Number(it?.price ?? it?.sale_price ?? 0) || 0,
+            sales: Number(it?.sales ?? 0) || 0,
+            image: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.image === 'string' ? it.image.replace(/`/g, '').trim() : '') || '/static/logo.png'
           }))
           this.recommendList = mapped
         })
@@ -392,9 +412,10 @@ export default {
 }
 
 .h5-logo-area {
-  width: 260rpx; /* Match side-cate width */
+  width: 300px; /* Match side-cate width */
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .logo-text {
@@ -410,6 +431,7 @@ export default {
   display: flex;
   justify-content: flex-start;
   padding-left: 20rpx; /* Align with gap */
+  padding-right: 120rpx;
 }
 
 .search-bar-box {
@@ -467,10 +489,11 @@ export default {
 /* Middle Layout */
 .h5-middle-layout {
   display: grid;
-  grid-template-columns: 260rpx 1fr 300rpx;
+  grid-template-columns: 300px 1fr 300px;
   gap: 20rpx;
-  height: 520rpx;
+  height: 720rpx;
   margin-bottom: 40rpx;
+  align-items: stretch;
 }
 
 .side-cate {
@@ -479,6 +502,11 @@ export default {
   padding: 20rpx;
   display: flex;
   flex-direction: column;
+  width:60%;
+  /* align-items: center; */
+  /* text-align: center; */
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .cate-title {
@@ -486,7 +514,8 @@ export default {
   font-weight: bold;
   padding-bottom: 20rpx;
   display: flex;
-  align-items: center;
+  /* align-items: center; */
+  /* justify-content: center; */
   color: #000;
   border-bottom: 1rpx solid #eee;
   margin-bottom: 10rpx;
@@ -503,11 +532,12 @@ export default {
 .cate-item {
   display: flex;
   align-items: center;
-  padding: 12rpx 0;
+  padding: 16rpx 0;
   cursor: pointer;
   color: #333;
-  font-size: 28rpx;
+  font-size: 32rpx; /* 分类字体加大 */
   transition: all 0.2s;
+  /* justify-content: center; */
 }
 
 .cate-item:hover {
@@ -515,17 +545,8 @@ export default {
   font-weight: bold;
 }
 
-.cate-icon {
-  width: 32rpx;
-  height: 32rpx;
-  margin-right: 16rpx;
-}
-
-.dot-icon {
-  margin-right: 16rpx;
-  font-size: 24rpx;
-  color: #333;
-}
+.cate-dot { margin-right: 12rpx; font-size: 32rpx; color: #000; }
+.cate-name { font-size: 32rpx; }
 
 /* Center Banner */
 .center-content {
@@ -533,6 +554,7 @@ export default {
   border-radius: 12rpx;
   overflow: hidden;
   height: 100%;
+  box-sizing: border-box;
 }
 
 .full-height-banner {
@@ -551,6 +573,10 @@ export default {
 /* User Card */
 .side-user {
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .user-card-new {
@@ -561,6 +587,7 @@ export default {
   display: flex;
   flex-direction: column;
   box-shadow: none;
+  box-sizing: border-box;
 }
 
 .uc-header {
@@ -645,6 +672,8 @@ export default {
 /* Bottom Section */
 .h5-bottom-section {
   margin-top: 120rpx;
+  padding-left: 110rpx;
+  padding-right: 110rpx;
 }
 
 .guess-header {
@@ -709,6 +738,9 @@ export default {
   color: #666;
   font-size: 28rpx;
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .panel-link:hover {
@@ -834,18 +866,29 @@ export default {
 
 .panel-columns {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 20rpx 24rpx;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30rpx 40rpx;
 }
 
 .panel-link {
   font-size: 32rpx;
   color: #333;
   line-height: 48rpx;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .panel-link:hover {
   color: #e1251b;
+}
+
+.sub-icon {
+  margin-right: 12rpx;
+  font-size: 28rpx;
 }
 
 .sub-empty {

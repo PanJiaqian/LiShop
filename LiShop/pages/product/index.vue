@@ -3,7 +3,9 @@
     <Skeleton :loading="!product" :showTitle="true" />
     <block v-if="product">
     <!-- #ifdef H5 -->
-    <view class="pd-grid">
+    <view class="h5-product-bg">
+      <view class="h5-product-card">
+        <view class="pd-grid">
       <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
       <view class="pd-left">
         <view class="pd-gallery">
@@ -51,21 +53,6 @@
             <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ? (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ? '七天无理由' : '不支持七天无理由' }}</text>
           </view>
 
-          <view class="pd-address">
-            <text class="pd-section-title">收货地址</text>
-            <view class="address-card">
-              <!-- <view class="addr-title">收货地址</view> -->
-              <view v-if="selectedAddress" class="addr-body">
-                <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
-                <text class="addr-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
-              </view>
-              <view v-else class="addr-empty">未选择收货地址</view>
-              <view class="addr-actions">
-                <button class="addr-btn" @click="openH5AddressSheet">选择地址</button>
-              </view>
-            </view>
-          </view>
-
           <view>
             <text class="pd-section-title">规格明细</text>
             <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
@@ -85,6 +72,20 @@
               </view>
             </view>
             <view v-else><text class="pd-meta">暂无规格数据</text></view>
+          </view>
+
+          <view class="pd-address">
+            <text class="pd-section-title">收货地址</text>
+            <view class="address-card">
+              <view v-if="selectedAddress" class="addr-body">
+                <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
+                <text class="addr-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
+              </view>
+              <view v-else class="addr-empty">未选择收货地址</view>
+              <view class="addr-actions">
+                <button class="addr-btn" @click="openH5AddressSheet">选择地址</button>
+              </view>
+            </view>
           </view>
 
           <view class="pd-form">
@@ -113,6 +114,8 @@
             <button class="btn-action btn-buy" @click="buyNow">立即购买</button>
           </view>
         </view>
+      </view>
+    </view>
       </view>
     </view>
     <FloatingNav :hoverReveal="true" />
@@ -802,12 +805,37 @@ export default {
   display: none;
 }
 
+/* H5 Card Layout */
+.h5-product-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/static/product_detail_background.jpg');
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  overflow-y: auto;
+  padding: 40rpx;
+}
+
+.h5-product-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  /* background: rgba(255, 255, 255, 0.95); */
+  border-radius: 24rpx;
+  /* box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.1); */
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
 .pd-grid {
   display: grid;
   grid-template-columns: 3fr 2fr;
-  grid-gap: 24rpx;
-  padding: 20rpx 160rpx;
-  height: calc(100vh - 40rpx);
+  grid-gap: 40rpx;
+  padding: 60rpx;
   align-items: start;
 }
 
@@ -853,6 +881,11 @@ export default {
 .pd-left,
 .pd-right {
   height: 100%;
+  background: rgba(255,255,255,0.96);
+  border: 1rpx solid #eee;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-sizing: border-box;
 }
 
 /* 右侧卡片置顶且自适应高度，仅影响 H5 */
@@ -886,14 +919,16 @@ export default {
 }
 
 .pd-thumbs {
-  position: absolute;
-  left: 20rpx;
-  top: 20rpx;
+  position: static;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 12rpx;
-  margin-left: 30rpx;
+  margin-top: 12rpx;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+.pd-thumbs::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 .pd-thumb {
   width: 88rpx;
@@ -961,13 +996,12 @@ export default {
 }
 
 .pd-info {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  box-shadow: 0 8rpx 28rpx rgba(0, 0, 0, 0.06);
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 24rpx;
 }
 
 .pd-address .addr-box {
@@ -1583,11 +1617,11 @@ export default {
   font-weight: 600;
 }
 .btn-action.btn-cart {
-  background: #ffaa00;
-  color: #fff;
+  background: #d9d9d9;
+  color: #333;
 }
 .btn-action.btn-buy {
-  background: #ff5500;
+  background: #000;
   color: #fff;
 }
 </style>
