@@ -600,7 +600,7 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 36rpx;
+  gap: 15rpx;
 }
 
 .uc-link-item {

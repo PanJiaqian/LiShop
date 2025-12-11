@@ -8,7 +8,7 @@
         <text class="sales">已售 {{ product.sales }}</text>
       </view>
       <view class="actions">
-        <button class="btn-cart" size="mini" @click.stop="add">加入购物车</button>
+        <!-- <button class="btn-cart" size="mini" @click.stop="add">加入购物车</button> -->
       </view>
     </view>
   </view>
