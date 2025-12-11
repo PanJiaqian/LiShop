@@ -116,6 +116,10 @@ export default {
   gap: 40rpx;
 }
 
+/* #ifdef H5 */
+.login-card { left: 30%; }
+/* #endif */
+
 .input-group {
   width: 100%;
 }

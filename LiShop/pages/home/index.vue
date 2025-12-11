@@ -7,8 +7,8 @@
       <!-- 顶部 Header -->
       <view class="h5-header">
         <view class="h5-logo-area">
-          <image src="/static/logo.png" style="width:60rpx;height:60rpx;margin-right:20rpx;" mode="aspectFit" />
-          <text class="logo-text">SHOP</text>
+          <image src="/static/logo.png?v=20251211" style="width:200rpx;height:60rpx;margin-right:20rpx;" mode="aspectFit" />
+          <!-- <text class="logo-text">SHOP</text> -->
         </view>
         <view class="h5-search-wrapper">
            <view class="search-bar-box">
@@ -388,7 +388,7 @@ export default {
   align-items: center;
   height: 140rpx; /* Increased height for better top spacing */
   padding: 30rpx 0;
-  margin-bottom: 20rpx;
+  /* margin-bottom: 20rpx; */
 }
 
 .h5-logo-area {

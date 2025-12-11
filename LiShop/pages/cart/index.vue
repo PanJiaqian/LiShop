@@ -250,6 +250,7 @@
     <RoomSelector 
       :visible="showAddressSelector" 
       :rooms="addressRooms" 
+      type="addr"
       :selectedName="selectedAddress ? (selectedAddress.receiver + ' ' + selectedAddress.phone + ' ' + selectedAddress.full).trim() : ''"
       @close="showAddressSelector = false" 
       @select="onAddressSelect" 
@@ -352,11 +353,14 @@ export default {
         const cached = uni.getStorageSync('selected_address_id') || ''
         let pick = this.addresses.find(x => x.id === cached) || this.addresses.find(x => x.is_default) || this.addresses[0]
         this.selectedAddress = pick || null
+        if (this.showAddressSelector && this.addresses.length === 0) {
+          try { uni.showToast({ title: '暂无收货地址，去创建吧', icon: 'none' }) } catch (e) {}
+        }
       }).catch(() => { this.addresses = []; this.selectedAddress = null })
     },
     openAddressPicker() {
-      if (!this.addresses.length) { uni.showToast({ title: '请先添加收货地址', icon: 'none' }); return }
       this.showAddressSelector = true
+      this.loadAddresses()
     },
     onAddressSelect(room) {
       if (room && room.raw) {

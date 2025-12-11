@@ -238,6 +238,7 @@
     <RoomSelector
       :visible="roomSelectorVisible"
       :rooms="selectorRooms"
+      :type="selectorType"
       :selectedName="selectorSelectedName"
       @close="closeRoomSheet"
       @select="onRoomSelect"
@@ -292,6 +293,9 @@ export default {
       })
   },
   computed: {
+    selectorType() {
+      return this.roomSelectorMode === 'addr' ? 'addr' : 'room'
+    },
     images() {
       const imgs = (this.product && this.product.main_media) || []
       return imgs.length ? imgs : [this.product?.image || '/static/logo.png']
@@ -499,6 +503,9 @@ export default {
         const cached = uni.getStorageSync('selected_address_id') || ''
         let pick = this.addresses.find(x => x.id === cached) || this.addresses.find(x => x.is_default) || this.addresses[0]
         this.selectedAddress = pick || null
+        if (this.roomSelectorMode === 'addr' && this.roomSelectorVisible && this.addresses.length === 0) {
+          try { uni.showToast({ title: '暂无收货地址，去创建吧', icon: 'none' }) } catch (e) {}
+        }
       }).catch(() => { this.addresses = []; this.selectedAddress = null })
     },
 
@@ -522,15 +529,23 @@ export default {
       createRoom({ name })
         .then((res) => {
           uni.showToast({ title: '房间已创建', icon: 'success' })
+          const rid = (res && res.data && (res.data.room_id || res.data.id)) || (res && (res.room_id || res.id)) || ''
           if (this.roomSelectorMode === 'mp') {
             this.mpRoom = name
+            if (rid) {
+              const exist = (this.roomsRaw || []).find(r => r.id === rid)
+              if (!exist) this.roomsRaw = [{ id: rid, name }, ...this.roomsRaw]
+            }
           } else {
             this.roomName = name
-            // Try to find ID if returned, otherwise leave empty or refetch
-            // For now, just set name as per old logic
+            this.roomId = rid || this.roomId
+            if (rid) {
+              const exist = (this.roomsRaw || []).find(r => r.id === rid)
+              if (!exist) this.roomsRaw = [{ id: rid, name }, ...this.roomsRaw]
+            }
           }
           this.roomSelectorVisible = false
-          this.fetchRooms()
+          if (!rid) this.fetchRooms()
         })
         .catch(() => {
           uni.showToast({ title: '创建房间失败', icon: 'none' })

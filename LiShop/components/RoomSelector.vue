@@ -7,7 +7,8 @@
         <view class="rs-close" @click="close">×</view>
       </view>
       
-  <scroll-view scroll-y class="rs-body">
+      <scroll-view scroll-y class="rs-body">
+        <view v-if="isAddressMode && rooms.length === 0" class="addr-empty-tip">暂无收货地址，去创建吧</view>
         <view class="rs-create" v-if="!isAddressMode">
           <text class="rs-subtitle">新建房间</text>
           <view class="rs-input-box">
@@ -42,7 +43,7 @@
             <textarea class="textarea" v-model="addrForm.detail_address" placeholder="街道、楼牌号等" />
           </view>
           <view class="form-item switch-item">
-            <text class="label">设为默认地址</text>
+            <text class="label" style="white-space: nowrap;">设为默认收货地址</text>
             <switch :checked="addrForm.is_default === 1" color="#e1251b" @change="onAddrSwitchChange" />
           </view>
         </view>
@@ -80,7 +81,8 @@ export default {
   props: {
     visible: { type: Boolean, default: false },
     rooms: { type: Array, default: () => [] },
-    selectedName: { type: String, default: '' }
+    selectedName: { type: String, default: '' },
+    type: { type: String, default: '' }
   },
   data() {
     return {
@@ -99,6 +101,8 @@ export default {
   },
   computed: {
     isAddressMode() {
+      if (this.type === 'addr') return true
+      if (this.type === 'room') return false
       const list = this.rooms || []
       if (Array.isArray(list) && list.length > 0) {
         const a = list[0]
@@ -335,6 +339,8 @@ export default {
   background: #000;
   color: #fff;
 }
+
+.addr-empty-tip { text-align: center; color: #999; padding: 20rpx; }
 
 .addr-form {
   display: flex;
