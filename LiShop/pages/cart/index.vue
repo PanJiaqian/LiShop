@@ -333,12 +333,9 @@ export default {
   },
   methods: {
     goBack() {
-      const pages = getCurrentPages()
-      if (pages.length > 1) {
-        uni.navigateBack()
-      } else {
-        uni.switchTab({ url: '/pages/home/index' })
-      }
+      if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
+      if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+      if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
     },
     loadAddresses() {
       getAddresses().then(res => {

@@ -115,6 +115,32 @@ export function getRecommendedProducts(options = {}) {
 }
 
 /**
+ * 获取首页轮播内容
+ * GET /api/carousel
+ */
+export function getCarousel(options = {}) {
+  const { token } = options
+  const url = `${BASE_URL}/api/carousel`
+
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+/**
  * 获取用户可见分类
  * GET /api/products/categories
  */
@@ -979,5 +1005,5 @@ export function exportOrderExcel(options = {}) {
   })
 }
 
-export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress, getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, createOrderByIds, cancelOrder, getCartItemsByIDs, exportOrderExcel }
+export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress, getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, createOrderByIds, cancelOrder, getCartItemsByIDs, exportOrderExcel, getCarousel }
 

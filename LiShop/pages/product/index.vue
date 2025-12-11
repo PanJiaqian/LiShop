@@ -2,63 +2,220 @@
   <view class="page product-page" :class="{ 'no-scroll': mpSheet || roomSelectorVisible }">
     <Skeleton :loading="!product" :showTitle="true" />
     <block v-if="product">
-    <!-- #ifdef H5 -->
-    <view class="h5-product-bg">
-      <view class="h5-product-card">
-        <view class="pd-grid">
-      <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
-      <view class="pd-left">
-        <view class="pd-gallery">
-          <video id="pd-video" v-if="isVideo(currentImage)" class="pd-main" :src="videoSrc" :poster="currentImage" :controls="true" :autoplay="false" playsinline webkit-playsinline crossorigin="anonymous" object-fit="contain" />
-          <image v-else class="pd-main" :src="currentImage" mode="aspectFill" />
-          <view class="pd-thumbs">
-            <view v-for="(src, i) in images" :key="i" class="pd-thumb" :class="{ active: i === current }" @click="current = i" style="position: relative; overflow: hidden;">
-              <image :src="isVideo(src) ? (product.image || '/static/logo.png') : src" mode="aspectFill" style="width: 100%; height: 100%; display: block;" />
-              <view v-if="isVideo(src)" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-                <text style="color: #fff; font-size: 12px;">▶</text>
+      <!-- #ifdef H5 -->
+      <view class="h5-product-bg">
+        <view class="h5-topbar">
+          <button class="back-btn" @click="goBack">←</button>
+        </view>
+        <view class="h5-product-card">
+          <view class="pd-grid">
+            <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
+            <view class="pd-left">
+              <view class="pd-gallery">
+                <video id="pd-video" v-if="isVideo(currentImage)" class="pd-main" :src="videoSrc" :poster="currentImage"
+                  :controls="true" :autoplay="false" playsinline webkit-playsinline crossorigin="anonymous"
+                  object-fit="contain" />
+                <image v-else class="pd-main" :src="currentImage" mode="aspectFit" />
+                <view class="pd-thumbs">
+                  <view v-for="(src, i) in images" :key="i" class="pd-thumb" :class="{ active: i === current }"
+                    @click="current = i" style="position: relative; overflow: hidden;">
+                    <image :src="isVideo(src) ? (product.image || '/static/logo.png') : src" mode="aspectFill"
+                      style="width: 100%; height: 100%; display: block;" />
+                    <view v-if="isVideo(src)"
+                      style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                      <text style="color: #fff; font-size: 12px;">▶</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="pd-card pd-params">
+                <text class="pd-section-title">参数信息</text>
+                <view class="pd-param-grid">
+                  <view class="pd-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款'
+                      }}</text></view>
+                  <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text>
+                  </view>
+                  <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
+                  <view class="pd-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin ?
+                    product.shipping_origin.replace(/省|市/g, '') : '—' }}</text></view>
+                  <view class="pd-param-item"><text class="key">单位</text><text class="val">件</text></view>
+                  <view class="pd-param-item"><text class="key">价格</text><text class="val">¥{{ product.price.toFixed(2)
+                      }}</text></view>
+                  <view class="pd-param-item"><text class="key">发货</text><text class="val">{{
+                    product.shipping_time_hours ? (product.shipping_time_hours + '小时') : '待定' }}</text></view>
+                  <view class="pd-param-item"><text class="key">售后</text><text class="val">{{
+                    product.support_no_reason_return_7d ? '七天无理由' : '无' }}</text></view>
+                </view>
+              </view>
+
+              <view class="pd-card pd-detail">
+                <text class="pd-section-title">图文详情</text>
+                <image v-for="(src, i) in product.details_images" :key="'d' + i" class="pd-detail-img" :src="src"
+                  mode="widthFix" />
+              </view>
+            </view>
+
+            <!-- 右侧：保持现有信息与按钮，不做其它改动 -->
+            <view class="pd-right">
+              <view class="pd-info">
+                <text class="pd-title">{{ product.title }}</text>
+                <view class="pd-price-row">
+                  <text class="pd-price">¥{{ product.price.toFixed(2) }}</text>
+                  <text class="pd-coupon">券后更低</text>
+                </view>
+                <view class="pd-meta">
+                  <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ?
+                    (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ?
+                    '七天无理由' : '不支持七天无理由' }}</text>
+                </view>
+
+                <view>
+                  <text class="pd-section-title">规格明细</text>
+                  <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
+                  <view v-else-if="specs && specs.length" class="specs-list">
+                    <view class="spec-item" v-for="(it, i) in specs" :key="'h5sp' + i"
+                      :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
+                      <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
+                      <view class="spec-info">
+                        <text class="spec-name">{{ it.name }}</text>
+                        <view class="spec-price-row">
+                          <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
+                          <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
+                            Number(it.original_price).toFixed(2) }}</text>
+                        </view>
+                        <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
+                      </view>
+                    </view>
+                  </view>
+                  <view v-else><text class="pd-meta">暂无规格数据</text></view>
+                </view>
+
+                <view class="pd-address">
+                  <text class="pd-section-title">收货地址</text>
+                  <view class="address-card">
+                    <view v-if="selectedAddress" class="addr-body">
+                      <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
+                      <text class="addr-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{
+                        selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
+                    </view>
+                    <view v-else class="addr-empty">未选择收货地址</view>
+                    <view class="addr-actions">
+                      <button class="addr-btn" @click="openH5AddressSheet">选择地址</button>
+                    </view>
+                  </view>
+                </view>
+
+                <view class="pd-form">
+                  <view class="pd-field inline">
+                    <text class="pd-section-title">房间</text>
+                    <view class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
+                  </view>
+                  <!-- <view class="pd-field inline">
+              <text class="label">色温</text>
+              <input class="pd-input" v-model="specTemp" placeholder="如 3000K / 4000K" />
+            </view> -->
+                  <view class="pd-field inline" v-if="selectedSpec && selectedSpec.has_length === 1">
+                    <text class="label">长度</text>
+                    <input class="pd-input" v-model="specLength" placeholder="填写数字" />
+                    <text v-if="selectedSpec.specification"
+                      style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx;">最长：{{ selectedSpec.specification
+                      }}</text>
+                  </view>
+                </view>
+
+                <view class="pd-actions-row">
+                  <view class="qty-box-large">
+                    <view class="qty-btn" @click="decQty">-</view>
+                    <text class="qty-num">{{ qty }}</text>
+                    <view class="qty-btn" @click="incQty">+</view>
+                  </view>
+                  <button class="btn-action btn-cart" @click="addToCartWithQty">加入购物车</button>
+                  <button class="btn-action btn-buy" @click="buyNow">立即购买</button>
+                </view>
               </view>
             </view>
           </view>
         </view>
+      </view>
+      <FloatingNav :hoverReveal="true" />
+      <!-- #endif -->
 
-        <view class="pd-card pd-params">
-          <text class="pd-section-title">参数信息</text>
-          <view class="pd-param-grid">
-            <view class="pd-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text></view>
-            <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
-            <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
-            <view class="pd-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin ? product.shipping_origin.replace(/省|市/g, '') : '—' }}</text></view>
-            <view class="pd-param-item"><text class="key">单位</text><text class="val">件</text></view>
-            <view class="pd-param-item"><text class="key">价格</text><text class="val">¥{{ product.price.toFixed(2) }}</text></view>
-            <view class="pd-param-item"><text class="key">发货</text><text class="val">{{ product.shipping_time_hours ? (product.shipping_time_hours + '小时') : '待定' }}</text></view>
-            <view class="pd-param-item"><text class="key">售后</text><text class="val">{{ product.support_no_reason_return_7d ? '七天无理由' : '无' }}</text></view>
-          </view>
-        </view>
-
-        <view class="pd-card pd-detail">
-          <text class="pd-section-title">图文详情</text>
-          <image v-for="(src, i) in product.details_images" :key="'d' + i" class="pd-detail-img" :src="src" mode="widthFix" />
+      <!-- #ifndef H5 -->
+      <swiper class="cover" indicator-dots autoplay circular interval="3000">
+        <swiper-item v-for="(item, index) in images" :key="index">
+          <video v-if="isVideo(item)" :src="item" controls style="width: 100%; height: 100%;"
+            object-fit="contain"></video>
+          <image v-else :src="item" mode="aspectFill" style="width: 100%; height: 100%;" />
+        </swiper-item>
+      </swiper>
+      <view class="info mp-info-spacing">
+        <text class="title">{{ product.title }}</text>
+        <view class="mp-price-row">
+          <text class="price">¥{{ product.price.toFixed(2) }}</text>
+          <text class="sales">销量 {{ product.sales }}</text>
         </view>
       </view>
-
-      <!-- 右侧：保持现有信息与按钮，不做其它改动 -->
-      <view class="pd-right">
-        <view class="pd-info">
-          <text class="pd-title">{{ product.title }}</text>
-          <view class="pd-price-row">
-            <text class="pd-price">¥{{ product.price.toFixed(2) }}</text>
-            <text class="pd-coupon">券后更低</text>
+      <!-- MP 端参数信息与图文详情 -->
+      <view class="mp-section mp-section-spacing">
+        <text class="mp-title">参数信息</text>
+        <view class="mp-param-grid">
+          <view class="mp-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text>
           </view>
-          <view class="pd-meta">
-            <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ? (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ? '七天无理由' : '不支持七天无理由' }}</text>
+          <view class="mp-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
+          <view class="mp-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
+          <view class="mp-param-row-inline">
+            <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin ?
+              product.shipping_origin.replace(/省|市/g, '') :
+                '—' }}</text></view>
+            <view class="mp-param-item inline"><text class="key">单位</text><text class="val">件</text></view>
+            <view class="mp-param-item inline"><text class="key">单位价格</text><text class="val">¥{{
+              product.price.toFixed(2)
+                }}</text></view>
           </view>
+        </view>
+      </view>
+      <view class="mp-section">
+        <text class="mp-title">图文详情</text>
+        <image v-for="(src, i) in product.details_images" :key="'md' + i" class="mp-detail-img" :src="src"
+          mode="widthFix" />
+      </view>
+      <view class="footer">
+        <!-- #ifdef MP-WEIXIN -->
+        <button class="btn-cart" @click="openSpecSheet">加入购物车</button>
+        <!-- #endif -->
+        <!-- #ifndef MP-WEIXIN -->
+        <button class="btn-cart" @click="addToCart">加入购物车</button>
+        <!-- #endif -->
+      </view>
 
-          <view>
-            <text class="pd-section-title">规格明细</text>
-            <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
+      <!-- #ifdef MP-WEIXIN -->
+      <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet" catchtouchmove="true"
+        @touchmove.stop.prevent="() => { }">
+        <view class="mp-sheet" @click.stop>
+          <view class="mp-title">填写规格</view>
+          <scroll-view scroll-y class="mp-scroll-view">
+            <view class="mp-address-bar" @click="openMpAddressSheet">
+              <view class="bar-left">
+                <text class="addr-icon">📍</text>
+                <view class="bar-info">
+                  <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone
+                    }}</text>
+                  <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.province }} {{ selectedAddress.city
+                    }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
+                  <text v-else class="bar-line">请选择收货地址</text>
+                </view>
+              </view>
+              <button size="mini" class="bar-btn">选择收货地址</button>
+            </view>
+            <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
+            <view class="mp-title">规格明细</view>
+            <view v-if="specsLoading" class="mp-param-grid">
+              <view class="mp-param-item"><text class="key">加载中...</text><text class="val"></text></view>
+            </view>
             <view v-else-if="specs && specs.length" class="specs-list">
-              <view class="spec-item" v-for="(it, i) in specs" :key="'h5sp' + i"
-                :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
+              <view class="spec-item" v-for="(it, i) in (isSpecsCollapsed ? specs.slice(0, 2) : specs)"
+                :key="'mpsp' + i" :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
                 <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
                 <view class="spec-info">
                   <text class="spec-name">{{ it.name }}</text>
@@ -70,184 +227,50 @@
                   <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
                 </view>
               </view>
-            </view>
-            <view v-else><text class="pd-meta">暂无规格数据</text></view>
-          </view>
-
-          <view class="pd-address">
-            <text class="pd-section-title">收货地址</text>
-            <view class="address-card">
-              <view v-if="selectedAddress" class="addr-body">
-                <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
-                <text class="addr-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
-              </view>
-              <view v-else class="addr-empty">未选择收货地址</view>
-              <view class="addr-actions">
-                <button class="addr-btn" @click="openH5AddressSheet">选择地址</button>
+              <!-- 展开/收起按钮 -->
+              <view v-if="specs.length > 3" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
+                <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
+                <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
               </view>
             </view>
-          </view>
+            <view v-else class="mp-param-grid">
+              <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
+            </view>
 
-          <view class="pd-form">
-            <view class="pd-field inline">
-              <text class="pd-section-title">房间</text>
-              <view class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
+            <view class="mp-field"><text class="label">房间</text>
+              <view class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
             </view>
-            <!-- <view class="pd-field inline">
-              <text class="label">色温</text>
-              <input class="pd-input" v-model="specTemp" placeholder="如 3000K / 4000K" />
-            </view> -->
-            <view class="pd-field inline" v-if="selectedSpec && selectedSpec.has_length === 1">
-              <text class="label">长度</text>
-              <input class="pd-input" v-model="specLength" placeholder="填写数字" />
-              <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx;">最长：{{ selectedSpec.specification }}</text>
-            </view>
-          </view>
-
-          <view class="pd-actions-row">
-            <view class="qty-box-large">
-              <view class="qty-btn" @click="decQty">-</view>
-              <text class="qty-num">{{ qty }}</text>
-              <view class="qty-btn" @click="incQty">+</view>
-            </view>
-            <button class="btn-action btn-cart" @click="addToCartWithQty">加入购物车</button>
-            <button class="btn-action btn-buy" @click="buyNow">立即购买</button>
-          </view>
-        </view>
-      </view>
-    </view>
-      </view>
-    </view>
-    <FloatingNav :hoverReveal="true" />
-    <!-- #endif -->
-
-    <!-- #ifndef H5 -->
-    <swiper class="cover" indicator-dots autoplay circular interval="3000">
-      <swiper-item v-for="(item, index) in images" :key="index">
-        <video v-if="isVideo(item)" :src="item" controls style="width: 100%; height: 100%;" object-fit="contain"></video>
-        <image v-else :src="item" mode="aspectFill" style="width: 100%; height: 100%;" />
-      </swiper-item>
-    </swiper>
-    <view class="info mp-info-spacing">
-      <text class="title">{{ product.title }}</text>
-      <view class="mp-price-row">
-        <text class="price">¥{{ product.price.toFixed(2) }}</text>
-        <text class="sales">销量 {{ product.sales }}</text>
-      </view>
-    </view>
-    <!-- MP 端参数信息与图文详情 -->
-    <view class="mp-section mp-section-spacing">
-      <text class="mp-title">参数信息</text>
-      <view class="mp-param-grid">
-        <view class="mp-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text></view>
-        <view class="mp-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
-        <view class="mp-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
-        <view class="mp-param-row-inline">
-          <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin ? product.shipping_origin.replace(/省|市/g, '') :
-              '—' }}</text></view>
-          <view class="mp-param-item inline"><text class="key">单位</text><text class="val">件</text></view>
-          <view class="mp-param-item inline"><text class="key">单位价格</text><text class="val">¥{{ product.price.toFixed(2)
-              }}</text></view>
-        </view>
-      </view>
-    </view>
-    <view class="mp-section">
-      <text class="mp-title">图文详情</text>
-      <image v-for="(src, i) in product.details_images" :key="'md' + i" class="mp-detail-img" :src="src" mode="widthFix" />
-    </view>
-    <view class="footer">
-      <!-- #ifdef MP-WEIXIN -->
-      <button class="btn-cart" @click="openSpecSheet">加入购物车</button>
-      <!-- #endif -->
-      <!-- #ifndef MP-WEIXIN -->
-      <button class="btn-cart" @click="addToCart">加入购物车</button>
-      <!-- #endif -->
-    </view>
-
-    <!-- #ifdef MP-WEIXIN -->
-    <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet" catchtouchmove="true" @touchmove.stop.prevent="() => { }">
-      <view class="mp-sheet" @click.stop>
-        <view class="mp-title">填写规格</view>
-        <scroll-view scroll-y class="mp-scroll-view">
-          <view class="mp-address-bar" @click="openMpAddressSheet">
-            <view class="bar-left">
-              <text class="addr-icon">📍</text>
-              <view class="bar-info">
-                <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
-                <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
-                <text v-else class="bar-line">请选择收货地址</text>
-              </view>
-            </view>
-            <button size="mini" class="bar-btn">选择收货地址</button>
-          </view>
-          <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
-          <view class="mp-title">规格明细</view>
-          <view v-if="specsLoading" class="mp-param-grid">
-            <view class="mp-param-item"><text class="key">加载中...</text><text class="val"></text></view>
-          </view>
-          <view v-else-if="specs && specs.length" class="specs-list">
-            <view class="spec-item" v-for="(it, i) in (isSpecsCollapsed ? specs.slice(0, 2) : specs)" :key="'mpsp' + i"
-              :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
-              <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
-              <view class="spec-info">
-                <text class="spec-name">{{ it.name }}</text>
-                <view class="spec-price-row">
-                  <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
-                  <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
-                    Number(it.original_price).toFixed(2) }}</text>
-                </view>
-                <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
-              </view>
-            </view>
-            <!-- 展开/收起按钮 -->
-            <view v-if="specs.length > 3" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
-              <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
-              <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
-            </view>
-          </view>
-          <view v-else class="mp-param-grid">
-            <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
-          </view>
-
-          <view class="mp-field"><text class="label">房间</text>
-            <view class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
-          </view>
-          <!-- <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
+            <!-- <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
               placeholder="如 3000K" /></view> -->
-          <view class="mp-field" v-if="selectedSpec && selectedSpec.has_length === 1">
-            <text class="label">长度</text>
-            <input class="mp-input" v-model="mpLength" placeholder="填写数字" />
-            <text v-if="selectedSpec.specification" style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx; white-space: nowrap;">最长：{{ selectedSpec.specification }}</text>
-          </view>
-          <view class="mp-field">
-            <text class="label">数量</text>
-            <view class="qty-stepper">
-              <button class="step" @click="mpQty = Math.max(1, mpQty - 1)">-</button>
-              <text class="count">{{ mpQty }}</text>
-              <button class="step" @click="mpQty = mpQty + 1">+</button>
+            <view class="mp-field" v-if="selectedSpec && selectedSpec.has_length === 1">
+              <text class="label">长度</text>
+              <input class="mp-input" v-model="mpLength" placeholder="填写数字" />
+              <text v-if="selectedSpec.specification"
+                style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx; white-space: nowrap;">最长：{{
+                  selectedSpec.specification }}</text>
             </view>
+            <view class="mp-field">
+              <text class="label">数量</text>
+              <view class="qty-stepper">
+                <button class="step" @click="mpQty = Math.max(1, mpQty - 1)">-</button>
+                <text class="count">{{ mpQty }}</text>
+                <button class="step" @click="mpQty = mpQty + 1">+</button>
+              </view>
+            </view>
+          </scroll-view>
+          <view class="mp-actions">
+            <button class="mp-btn ghost" @click="closeSpecSheet">取消</button>
+            <button class="mp-btn primary" @click="confirmSpecToCart">确定加入</button>
           </view>
-        </scroll-view>
-        <view class="mp-actions">
-          <button class="mp-btn ghost" @click="closeSpecSheet">取消</button>
-          <button class="mp-btn primary" @click="confirmSpecToCart">确定加入</button>
         </view>
       </view>
-    </view>
-    <!-- MP Room Selection Modal -->
-    <!-- #endif -->
-    <!-- #endif -->
+      <!-- MP Room Selection Modal -->
+      <!-- #endif -->
+      <!-- #endif -->
     </block>
-    <RoomSelector
-      :visible="roomSelectorVisible"
-      :rooms="selectorRooms"
-      :type="selectorType"
-      :selectedName="selectorSelectedName"
-      @close="closeRoomSheet"
-      @select="onRoomSelect"
-      @create="onRoomCreate"
-      @createAddress="onCreateAddress"
-    />
+    <RoomSelector :visible="roomSelectorVisible" :rooms="selectorRooms" :type="selectorType"
+      :selectedName="selectorSelectedName" @close="closeRoomSheet" @select="onRoomSelect" @create="onRoomCreate"
+      @createAddress="onCreateAddress" />
   </view>
 </template>
 
@@ -348,6 +371,11 @@ export default {
     this.loadAddresses()
   },
   methods: {
+    goBack() {
+      if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
+      if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+      if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+    },
     initHls(src) {
       // #ifdef H5
       if (this.hls) {
@@ -361,7 +389,7 @@ export default {
         let el = document.querySelector('#pd-video video') || document.querySelector('#pd-video')
         if (el && el.tagName !== 'VIDEO') el = el.querySelector('video')
         if (!el) return
-        try { el.setAttribute('crossorigin', 'anonymous') } catch (e) {}
+        try { el.setAttribute('crossorigin', 'anonymous') } catch (e) { }
 
         if (window.Hls && Hls.isSupported()) {
           this.hls = new Hls()
@@ -369,9 +397,9 @@ export default {
           this.hls.attachMedia(el)
           this.hls.on(Hls.Events.ERROR, (event, data) => {
             if (data && data.fatal) {
-              try { this.hls.destroy() } catch (e) {}
+              try { this.hls.destroy() } catch (e) { }
               this.hls = null
-              try { uni.showToast({ title: '视频资源未找到', icon: 'none' }) } catch (e) {}
+              try { uni.showToast({ title: '视频资源未找到', icon: 'none' }) } catch (e) { }
               const imgs = (this.images || []).filter(u => !this.isVideo(u))
               if (imgs.length) {
                 const idx = (this.images || []).findIndex(u => u === imgs[0])
@@ -475,7 +503,7 @@ export default {
       this.roomSelectorVisible = true
       this.loadAddresses()
     },
-    
+
     fetchRooms() {
       getRooms()
         .then((res) => {
@@ -507,7 +535,7 @@ export default {
         let pick = this.addresses.find(x => x.id === cached) || this.addresses.find(x => x.is_default) || this.addresses[0]
         this.selectedAddress = pick || null
         if (this.roomSelectorMode === 'addr' && this.roomSelectorVisible && this.addresses.length === 0) {
-          try { uni.showToast({ title: '暂无收货地址，去创建吧', icon: 'none' }) } catch (e) {}
+          try { uni.showToast({ title: '暂无收货地址，去创建吧', icon: 'none' }) } catch (e) { }
         }
       }).catch(() => { this.addresses = []; this.selectedAddress = null })
     },
@@ -516,7 +544,7 @@ export default {
       if (this.roomSelectorMode === 'addr') {
         if (room && room.raw) {
           this.selectedAddress = room.raw
-          try { uni.setStorageSync('selected_address_id', this.selectedAddress.id) } catch (e) {}
+          try { uni.setStorageSync('selected_address_id', this.selectedAddress.id) } catch (e) { }
         }
       } else if (this.roomSelectorMode === 'mp') {
         this.mpRoom = room.name
@@ -565,7 +593,7 @@ export default {
           const item = { id, receiver: data.receiver, phone: data.phone, province: data.province, city: data.city, district: data.district, detail_address: data.detail_address, is_default: data.is_default === 1 }
           this.addresses = [item, ...this.addresses]
           this.selectedAddress = item
-          try { uni.setStorageSync('selected_address_id', id) } catch (e) {}
+          try { uni.setStorageSync('selected_address_id', id) } catch (e) { }
           uni.showToast({ title: '已保存', icon: 'success' })
           this.roomSelectorVisible = false
         } else {
@@ -820,6 +848,41 @@ export default {
   padding: 40rpx;
 }
 
+.h5-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  height: 100rpx;
+  padding: 20rpx;
+}
+
+.back-btn {
+  height: 60rpx;
+  width: 60rpx;
+  line-height: 60rpx;
+  padding: 0;
+  border: none !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+  color: #000;
+  font-size: 44rpx;
+  transition: background .2s, transform .2s, color .2s;
+}
+
+.back-btn::after {
+  border: none !important;
+}
+
+.back-btn:hover {
+  transform: translateY(0.3rpx);
+  font-weight: 500;
+}
+
 .h5-product-card {
   max-width: 1400px;
   margin: 0 auto;
@@ -837,6 +900,7 @@ export default {
   grid-gap: 80rpx;
   padding: 60rpx;
   align-items: start;
+  margin-top: 100rpx;
 }
 
 /* New styles for inline params */
@@ -878,7 +942,7 @@ export default {
   color: #333;
 }
 
-.pd-left{
+.pd-left {
   height: 100%;
   background: transparent;
   /* border: 1rpx solid rgba(255,255,255,0.35); */
@@ -889,14 +953,15 @@ export default {
   -webkit-backdrop-filter: saturate(120%) blur(8px);
   backdrop-filter: saturate(120%) blur(8px);
 }
+
 .pd-right {
   height: 100%;
   background: transparent;
-  border: 1rpx solid rgba(255,255,255,0.35);
+  border: 1rpx solid rgba(255, 255, 255, 0.35);
   border-radius: 16rpx;
   padding: 24rpx;
   box-sizing: border-box;
-  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.08);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
   -webkit-backdrop-filter: saturate(120%) blur(8px);
   backdrop-filter: saturate(120%) blur(8px);
 }
@@ -905,7 +970,7 @@ export default {
 .pd-right {
   height: auto;
   position: sticky;
-  top: 20rpx;
+  margin-top: 80rpx;
   align-self: start;
 }
 
@@ -920,10 +985,10 @@ export default {
 .pd-gallery {
   /* background: #fff; */
   border-radius: 12rpx;
-  padding: 20rpx;
+  /* padding: 20rpx; */
   position: relative;
-  border: 1rpx solid rgba(255,255,255,0.35);
-  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.08);
+  border: 1rpx solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
 }
 
 .pd-main {
@@ -944,10 +1009,15 @@ export default {
   scrollbar-width: none;
   /* background: rgba(255,255,255,0.5); */
   border-radius: 12rpx;
-  /* padding: 12rpx; */
+  padding: 20rpx;
   /* box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.06); */
 }
-.pd-thumbs::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+.pd-thumbs::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
 
 .pd-thumb {
   width: 88rpx;
@@ -965,8 +1035,8 @@ export default {
   background: transparent;
   border-radius: 12rpx;
   padding: 20rpx;
-  border: 1rpx solid rgba(255,255,255,0.35);
-  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.08);
+  border: 1rpx solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
   -webkit-backdrop-filter: saturate(120%) blur(8px);
   backdrop-filter: saturate(120%) blur(8px);
 }
@@ -1100,17 +1170,43 @@ export default {
 }
 
 /* .pd-param-grid { display: flex; align-items: center; gap: 20rpx; white-space: nowrap; overflow: hidden; } */
-.pd-param-item { display: inline-flex; align-items: center; gap: 8rpx; white-space: nowrap; }
-.pd-param-item .key, .pd-param-item .val { white-space: nowrap; }
-.pd-param-item.inline-params { display: inline-flex; align-items: center; gap: 16rpx; }
-.pd-param-item.inline-params .sub-item { display: inline-flex; align-items: center; gap: 8rpx; white-space: nowrap; }
-.pd-param-item.inline-params .sub-item .val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
+.pd-param-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  white-space: nowrap;
+}
+
+.pd-param-item .key,
+.pd-param-item .val {
+  white-space: nowrap;
+}
+
+.pd-param-item.inline-params {
+  display: inline-flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.pd-param-item.inline-params .sub-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  white-space: nowrap;
+}
+
+.pd-param-item.inline-params .sub-item .val {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40vw;
+}
 
 .picker-display {
   flex: 1;
   min-height: 64rpx;
   line-height: 64rpx;
-  background: #f7f7f7;
+  background: white;
   border: 1rpx solid #e5e5e5;
   border-radius: 10rpx;
   padding: 0 14rpx;
@@ -1122,7 +1218,7 @@ export default {
   width: 100%;
   height: 64rpx;
   line-height: 64rpx;
-  background: #f7f7f7;
+  background: white;
   border: 1rpx solid #e5e5e5;
   border-radius: 10rpx;
   padding: 0 14rpx;
@@ -1141,6 +1237,7 @@ export default {
   color: #222;
   font-weight: 700;
   display: block;
+  padding: 10rpx;
 }
 
 .pd-price-row {
@@ -1287,6 +1384,7 @@ export default {
   height: 100vh;
   overflow: hidden;
 }
+
 .mp-mask {
   position: fixed;
   left: 0;
@@ -1326,7 +1424,12 @@ export default {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.mp-scroll-view::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+.mp-scroll-view::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
 
 .mp-title {
   font-size: 32rpx;
@@ -1535,6 +1638,7 @@ export default {
   text-align: center;
   white-space: nowrap;
 }
+
 /* #ifdef MP-WEIXIN */
 .mp-param-grid {
   width: 100%;
@@ -1549,6 +1653,7 @@ export default {
 .pd-section-title {
   margin-bottom: 16rpx;
 }
+
 /* #endif */
 
 /* Address Card Style from Cart Page (H5) */
@@ -1562,10 +1667,33 @@ export default {
   /* border: 1rpx solid #eee; */
   margin-bottom: 20rpx;
 }
-.address-card .addr-title { font-weight: 600; color: #333; font-size: 28rpx; }
-.address-card .addr-body { margin-top: 8rpx; color: #555; font-size: 24rpx; display: flex; flex-direction: column; gap: 6rpx; }
-.address-card .addr-line { font-size: 26rpx; color: #333; }
-.address-card .addr-empty { margin-top: 8rpx; color: #999; font-size: 24rpx; }
+
+.address-card .addr-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 28rpx;
+}
+
+.address-card .addr-body {
+  margin-top: 8rpx;
+  color: #555;
+  font-size: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.address-card .addr-line {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.address-card .addr-empty {
+  margin-top: 8rpx;
+  color: #999;
+  font-size: 24rpx;
+}
+
 .address-card .addr-actions {
   position: absolute;
   right: 20rpx;
@@ -1575,9 +1703,32 @@ export default {
   display: flex;
   gap: 12rpx;
 }
-.address-card .addr-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 24rpx; padding: 0 20rpx; height: 50rpx; line-height: 48rpx; }
-.address-card .addr-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 30rpx; padding: 0 40rpx; height: 72rpx; line-height: 70rpx; }
-.address-card { padding-right: 220rpx; }
+
+.address-card .addr-btn {
+  background: #fff;
+  border: 1rpx solid #ddd;
+  color: #333;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  padding: 0 20rpx;
+  height: 50rpx;
+  line-height: 48rpx;
+}
+
+.address-card .addr-btn {
+  background: #fff;
+  border: 1rpx solid #ddd;
+  color: #333;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  padding: 0 40rpx;
+  height: 72rpx;
+  line-height: 70rpx;
+}
+
+.address-card {
+  padding-right: 220rpx;
+}
 
 /* MP Address Bar Style from Cart Page */
 .mp-address-bar {
@@ -1590,11 +1741,47 @@ export default {
   border-radius: 12rpx;
   margin: 16rpx 0;
 }
-.bar-left { display: flex; align-items: center; gap: 12rpx; flex: 1; overflow: hidden; }
-.addr-icon { font-size: 28rpx; flex-shrink: 0; }
-.bar-info { display: flex; flex-direction: column; font-size: 24rpx; color: #555; flex: 1; overflow: hidden; }
-.bar-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bar-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; margin: 0; font-size: 24rpx; padding: 0 24rpx; height: 50rpx; line-height: 48rpx; flex-shrink: 0; }
+
+.bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  overflow: hidden;
+}
+
+.addr-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.bar-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 24rpx;
+  color: #555;
+  flex: 1;
+  overflow: hidden;
+}
+
+.bar-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-btn {
+  background: #fff;
+  border: 1rpx solid #ddd;
+  color: #333;
+  border-radius: 999rpx;
+  margin: 0;
+  font-size: 24rpx;
+  padding: 0 24rpx;
+  height: 50rpx;
+  line-height: 48rpx;
+  flex-shrink: 0;
+}
 
 /* H5 Actions Row (3 buttons layout) */
 .pd-actions-row {
@@ -1603,6 +1790,7 @@ export default {
   gap: 16rpx;
   margin-top: 24rpx;
 }
+
 .qty-box-large {
   width: 200rpx;
   display: flex;
@@ -1613,6 +1801,7 @@ export default {
   border-radius: 40rpx;
   padding: 0 4rpx;
 }
+
 .qty-box-large .qty-btn {
   width: 64rpx;
   height: 100%;
@@ -1622,11 +1811,13 @@ export default {
   font-size: 40rpx;
   color: #333;
 }
+
 .qty-box-large .qty-num {
   font-size: 30rpx;
   font-weight: 600;
   color: #333;
 }
+
 .btn-action {
   flex: 1;
   height: 80rpx;
@@ -1639,10 +1830,12 @@ export default {
   margin: 0;
   font-weight: 600;
 }
+
 .btn-action.btn-cart {
   background: #d9d9d9;
   color: #333;
 }
+
 .btn-action.btn-buy {
   background: #000;
   color: #fff;

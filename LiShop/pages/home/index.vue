@@ -76,14 +76,14 @@
                   <text class="uc-icon">📋</text>
                   <text>我的订单</text>
                </navigator>
-               <navigator class="uc-link-item" url="/pages/messages/index">
+               <!-- <navigator class="uc-link-item" url="/pages/messages/index">
                    <text class="uc-icon">💬</text>
                   <text>信息</text>
                </navigator>
                <navigator class="uc-link-item" url="/pages/settings/index">
                    <text class="uc-icon">⚙️</text>
                   <text>设置</text>
-               </navigator>
+               </navigator> -->
             </view>
             
             <button v-if="!user" class="uc-login-btn" @click="goLogin">立即登录</button>
@@ -154,7 +154,7 @@ import CategoryGrid from '@/components/CategoryGrid.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { getRecommendedProducts, getVisibleCategories, searchProducts } from '../../api/index.js'
+import { getRecommendedProducts, getVisibleCategories, searchProducts, getCarousel } from '../../api/index.js'
 
 export default {
   components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton },
@@ -202,45 +202,31 @@ export default {
         })
         .catch(() => { })
       
-      const p2 = getRecommendedProducts({ page: 1, page_size: 20 })
+      const p2 = getCarousel()
         .then((res) => {
-          const carousel = (res?.data?.carousel && Array.isArray(res.data.carousel)) ? res.data.carousel 
-              : ((res?.data?.carousel && Array.isArray(res.data.carousel.items)) ? res.data.carousel.items : [])
-          this.banners = carousel.map(it => {
-             const img = (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '')
-             return { image: img || '/static/logo.png', id: it?.available_product_id || '' }
-          })
-          if (this.banners.length === 0) {
-             this.banners = ['/static/logo.png', '/static/logo.png']
-          }
-
-          const pick = (d) => {
-            const candidates = [
-              d?.data?.fixed?.items,
-              d?.data?.recommended?.items,
-              d?.data?.items,
-              d?.items,
-              Array.isArray(d) ? d : []
-            ]
-            for (let i = 0; i < candidates.length; i++) {
-              const arr = candidates[i]
-              if (Array.isArray(arr) && arr.length) return arr
-            }
-            return []
-          }
-          const fixed = pick(res)
-          const mapped = fixed.map((it, i) => ({
-            id: it?.available_product_id || it?.id || ('p' + i),
-            title: it?.name || it?.title || ('推荐商品 ' + (i + 1)),
-            price: Number(it?.price ?? it?.sale_price ?? 0) || 0,
-            sales: Number(it?.sales ?? 0) || 0,
-            image: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.image === 'string' ? it.image.replace(/`/g, '').trim() : '') || '/static/logo.png'
+          const items = Array.isArray(res?.data?.items) ? res.data.items : []
+          this.banners = items.map((it, i) => ({
+            image: (typeof it?.image === 'string' ? it.image.replace(/`/g, '').trim() : '') || '/static/logo.png',
+            id: it?.available_product_id || ''
           }))
-          this.recommendList = mapped
+          if (this.banners.length === 0) this.banners = ['/static/logo.png', '/static/logo.png']
         })
         .catch(() => { })
 
-      Promise.allSettled([p1, p2]).then(() => {
+      const p3 = getRecommendedProducts({ page: 1, page_size: 30, sort_by: 'id' })
+        .then((res) => {
+          const list = Array.isArray(res?.data?.items) ? res.data.items : []
+          this.recommendList = list.map((it, i) => ({
+            id: it?.available_product_id || it?.id || ('p' + i),
+            title: it?.name || ('推荐商品 ' + (i + 1)),
+            price: Number(it?.price ?? 0) || 0,
+            sales: Number(it?.order_count ?? it?.sales ?? 0) || 0,
+            image: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || '/static/logo.png'
+          }))
+        })
+        .catch(() => { })
+
+      Promise.allSettled([p1, p2, p3]).then(() => {
         this.loading = false
       })
     } catch (e) { this.loading = false }
@@ -262,8 +248,9 @@ export default {
           const rect = main.getBoundingClientRect()
           const y = e.clientY - rect.top
           this.panelTop = Math.max(20, Math.min(y - 40, rect.height - 200))
-          this.panelLeft = rect.left
-          this.panelRight = Math.max(0, document.documentElement.clientWidth - rect.right)
+          const w = Math.min(560, rect.width * 0.6)
+          this.panelLeft = Math.max(0, rect.left - 20)
+          this.panelRight = Math.max(0, document.documentElement.clientWidth - (this.panelLeft + w))
         }
       } catch (err) {}
       // #endif
@@ -718,6 +705,8 @@ export default {
   box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
   border-radius: 12rpx;
   min-width: 600rpx;
+  margin-left: -90rpx;
+  margin-top: 80rpx;
 }
 
 .panel-title {
@@ -744,7 +733,8 @@ export default {
 }
 
 .panel-link:hover {
-  color: #e1251b;
+  color: #333;
+  font-weight: 600;
 }
 
 /* Responsive */
@@ -850,9 +840,9 @@ export default {
   background-color: #fff;
   border-radius: 12rpx;
   box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.08);
-  border: 1.5rpx solid #e1251b;
-  height: clamp(240rpx, 38vh, 560rpx);
-  max-height: 60vh;
+  border: 1.5rpx solid #000;
+  height: clamp(200rpx, 30vh, 480rpx);
+  max-height: 50vh;
   overflow-y: auto;
   padding: 30rpx 60rpx 60rpx;
 }
@@ -866,8 +856,8 @@ export default {
 
 .panel-columns {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30rpx 40rpx;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30rpx 25rpx;
 }
 
 .panel-link {
@@ -883,7 +873,8 @@ export default {
 }
 
 .panel-link:hover {
-  color: #e1251b;
+  color: #333;
+  font-weight: 600;
 }
 
 .sub-icon {
