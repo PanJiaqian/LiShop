@@ -265,13 +265,7 @@ export default {
       const q = (val || this.keyword || '').trim()
       if (!q) { uni.showToast({ title: '请输入关键字', icon: 'none' }); return }
       // #ifdef H5
-      try {
-        const base = window.location.origin + window.location.pathname
-        const url = base + '#/pages/search/index?q=' + encodeURIComponent(q)
-        window.open(url, '_blank')
-      } catch (e) {
-        uni.navigateTo({ url: '/pages/search/index?q=' + encodeURIComponent(q) })
-      }
+      uni.navigateTo({ url: '/pages/search/index?q=' + encodeURIComponent(q) })
       // #endif
       // #ifndef H5
       uni.navigateTo({ url: '/pages/search/index?q=' + encodeURIComponent(q) })
