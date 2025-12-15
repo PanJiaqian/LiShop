@@ -404,7 +404,7 @@ export default {
               const isOutOfStock = (x.inventory === 0 || x.available_product_status === 0)
               list.push({
                 id: (x && x.id) ? x.id : '',
-                title: (x && x.product_id) ? x.product_id : '',
+                title: (x && (x.available_product_name || x.product_name)) ? (x.available_product_name || x.product_name) : '',
                 productId: (x && x.product_id) ? x.product_id : '',
                 availableProductId: (x && x.available_product_id) ? x.available_product_id : ((x && x.product_id) ? x.product_id : ''),
                 price: Number((x && x.price) !== undefined ? x.price : 0) || 0,
