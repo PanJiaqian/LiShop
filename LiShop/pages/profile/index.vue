@@ -491,16 +491,20 @@ export default {
 .input-box {
   border: 1px solid #eee;
   background: #f9f9f9;
-  padding: 20rpx;
+  padding: 14rpx 20rpx;
   border-radius: 8rpx;
   font-size: 28rpx;
   color: #333;
   min-height: 40rpx;
 }
-
+.input-box.static {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 .link {
   color: #007aff;
-  margin-left: 10rpx;
+  margin-left: auto;
   font-size: 24rpx;
   cursor: pointer;
 }
@@ -551,7 +555,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx 0;
+  padding: 18rpx 0;
   border-bottom: 1px solid #f0f0f0;
   font-size: 28rpx;
   color: #333;
@@ -585,7 +589,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24rpx 0;
+  padding: 18rpx 0;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -612,7 +616,8 @@ export default {
 
 .arrow {
   color: #ccc;
-  font-size: 32rpx;
+  font-size: 28rpx;
+  margin-left: 20rpx;
 }
 
 .empty-addr {

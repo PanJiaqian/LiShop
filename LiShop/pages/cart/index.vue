@@ -11,9 +11,9 @@
               <view class="chk-ico" :class="{ on: isAllSelected }"></view>
               <text class="chk-txt">选择全部</text>
             </view>
-            <!-- <view class="chk btn-style" @click="removeSelected">
-              <text class="chk-txt">Remove Selected 🗑️</text>
-            </view> -->
+            <view class="chk btn-style" @click="removeSelected">
+              <text class="chk-txt">删除🗑️</text>
+            </view>
           </view>
         </view>
 
@@ -529,7 +529,22 @@ export default {
           uni.showToast({ title: '本地删除', icon: 'none' })
         })
     },
-    removeSelected() { this.cart = this.cart.filter(it => !it.selected); this.sync(); this.fetchSummary() },
+    removeSelected() {
+      const ids = this.cart.filter(it => it.selected).map(it => it.id)
+      if (ids.length === 0) { return }
+      const tasks = ids.map(id => deleteCartItem({ id }))
+      Promise.allSettled(tasks).then(() => {
+        this.cart = this.cart.filter(it => !ids.includes(it.id))
+        this.sync()
+        this.fetchSummary()
+        uni.showToast({ title: '已删除', icon: 'success' })
+      }).catch(() => {
+        this.cart = this.cart.filter(it => !ids.includes(it.id))
+        this.sync()
+        this.fetchSummary()
+        uni.showToast({ title: '本地删除', icon: 'none' })
+      })
+    },
     clearRemote() {
       clearCart()
         .then((res) => {

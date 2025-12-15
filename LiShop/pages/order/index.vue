@@ -452,10 +452,10 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fff9f5;
+  background: #ddd;
   padding: 12rpx;
   border-radius: 10rpx;
-  color: #ff7b2b;
+  color: #333;
 }
 
 .items {
@@ -511,7 +511,7 @@ export default {
 .total-text {
   font-size: 28rpx;
   font-weight: 600;
-  color: #e1251b;
+  color: #333;
 }
 
 .btns {
@@ -520,7 +520,7 @@ export default {
 }
 
 .btn {
-  background: #ff8c3a;
+  background: #333;
   color: #fff;
   border-radius: 100rpx;
   margin: 0;

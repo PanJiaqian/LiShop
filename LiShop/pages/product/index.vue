@@ -33,7 +33,7 @@
                 <text class="pd-section-title">参数信息</text>
                 <view class="pd-param-grid">
                   <view class="pd-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款'
-                      }}</text></view>
+                  }}</text></view>
                   <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text>
                   </view>
                   <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
@@ -41,7 +41,7 @@
                     product.shipping_origin.replace(/省|市/g, '') : '—' }}</text></view>
                   <view class="pd-param-item"><text class="key">单位</text><text class="val">件</text></view>
                   <view class="pd-param-item"><text class="key">价格</text><text class="val">¥{{ product.price.toFixed(2)
-                      }}</text></view>
+                  }}</text></view>
                   <view class="pd-param-item"><text class="key">发货</text><text class="val">{{
                     product.shipping_time_hours ? (product.shipping_time_hours + '小时') : '待定' }}</text></view>
                   <view class="pd-param-item"><text class="key">售后</text><text class="val">{{
@@ -60,15 +60,16 @@
             <view class="pd-right">
               <view class="pd-info">
                 <text class="pd-title">{{ product.title }}</text>
+                <view class="pd-meta">
+                  <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ?
+                    (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ?
+                      '七天无理由' : '不支持七天无理由' }}</text>
+                </view>
                 <view class="pd-price-row">
                   <text class="pd-price">¥{{ product.price.toFixed(2) }}</text>
                   <text class="pd-coupon">券后更低</text>
                 </view>
-                <view class="pd-meta">
-                  <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ?
-                    (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ?
-                    '七天无理由' : '不支持七天无理由' }}</text>
-                </view>
+
 
                 <view>
                   <text class="pd-section-title">规格明细</text>
@@ -80,7 +81,7 @@
                       <view class="spec-info">
                         <text class="spec-name">{{ it.name }}</text>
                         <view class="spec-price-row">
-                          <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
+                          <text class="spec-price">¥{{ Number(displaySpecPrice(it)).toFixed(2) }}</text>
                           <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
                             Number(it.original_price).toFixed(2) }}</text>
                         </view>
@@ -167,11 +168,11 @@
           <view class="mp-param-row-inline">
             <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin ?
               product.shipping_origin.replace(/省|市/g, '') :
-                '—' }}</text></view>
+              '—' }}</text></view>
             <view class="mp-param-item inline"><text class="key">单位</text><text class="val">件</text></view>
             <view class="mp-param-item inline"><text class="key">单位价格</text><text class="val">¥{{
               product.price.toFixed(2)
-                }}</text></view>
+            }}</text></view>
           </view>
         </view>
       </view>
@@ -200,9 +201,9 @@
                 <text class="addr-icon">📍</text>
                 <view class="bar-info">
                   <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone
-                    }}</text>
+                  }}</text>
                   <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.province }} {{ selectedAddress.city
-                    }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
+                  }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
                   <text v-else class="bar-line">请选择收货地址</text>
                 </view>
               </view>
@@ -220,7 +221,7 @@
                 <view class="spec-info">
                   <text class="spec-name">{{ it.name }}</text>
                   <view class="spec-price-row">
-                    <text class="spec-price">¥{{ Number(it.price).toFixed(2) }}</text>
+                    <text class="spec-price">¥{{ Number(displaySpecPrice(it)).toFixed(2) }}</text>
                     <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
                       Number(it.original_price).toFixed(2) }}</text>
                   </view>
@@ -650,6 +651,30 @@ export default {
       this.loadAddresses()
     },
     closeMpRoomSheet() { this.roomSelectorVisible = false; this.lockScroll = false },
+    displaySpecPrice(it) {
+      if (!it) return 0
+      const base = Number(it.price || 0) || 0
+      if (it.has_length !== 1) return base
+      const spec = String(it.specification || '').toLowerCase()
+      const unit = this.parseLengthUnit(it.unit, spec)
+      const mult = this.unitMultiplier(unit)
+      return base * mult
+    },
+    parseLengthUnit(unit, spec) {
+      const u = String(unit || '').toLowerCase()
+      const s = String(spec || '').toLowerCase()
+      if (u.includes('mm') || /(^|[^a-z])mm([^a-z]|$)/.test(s)) return 'mm'
+      if (u.includes('cm') || /(^|[^a-z])cm([^a-z]|$)/.test(s)) return 'cm'
+      if (u.includes('dm') || /(^|[^a-z])dm([^a-z]|$)/.test(s)) return 'dm'
+      if (u.includes('m') || /(^|[^a-z])m([^a-z]|$)/.test(s)) return 'm'
+      return 'm'
+    },
+    unitMultiplier(unit) {
+      if (unit === 'mm') return 1000
+      if (unit === 'cm') return 100
+      if (unit === 'dm') return 10
+      return 1
+    },
   }
 }
 </script>
@@ -762,7 +787,7 @@ export default {
 }
 
 .spec-price {
-  color: #e1251b;
+  color: #333;
   font-size: 32rpx;
   font-weight: 700;
 }
@@ -1033,7 +1058,7 @@ export default {
 }
 
 .pd-thumb.active {
-  outline: 3rpx solid #ff5500;
+  outline: 3rpx solid #333;
 }
 
 .pd-card {
@@ -1099,7 +1124,7 @@ export default {
   box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 18rpx;
 }
 
 .pd-address .addr-box {
@@ -1253,7 +1278,7 @@ export default {
 }
 
 .pd-price {
-  color: #e1251b;
+  color: #333;
   font-size: 50rpx;
   font-weight: 700;
 }
@@ -1269,7 +1294,7 @@ export default {
 .pd-meta {
   color: #777;
   font-size: 24rpx;
-  margin-top: 12rpx;
+  /* margin-top: 12rpx; */
 }
 
 .pd-qty-row {

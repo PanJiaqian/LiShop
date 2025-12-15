@@ -2,7 +2,7 @@
   <view class="banner">
     <swiper class="swiper" :indicator-dots="true" :autoplay="true" :interval="4000" :circular="true">
       <swiper-item v-for="(item, idx) in images" :key="idx" @click="onClick(item)">
-        <image class="img" :src="item.image || item" mode="aspectFit" />
+        <image class="img" :src="item.image || item" mode="aspectFill" />
       </swiper-item>
     </swiper>
   </view>

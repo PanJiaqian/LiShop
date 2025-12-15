@@ -7,7 +7,7 @@
       <!-- 顶部 Header -->
       <view class="h5-header">
         <view class="h5-logo-area">
-          <image src="/static/logo.png?v=20251211" style="width:200rpx;height:60rpx;margin-right:20rpx;" mode="aspectFit" />
+          <image src="/static/logo.png?v=20251211" style="width:260rpx;height:100rpx;margin-right:20rpx;" mode="aspectFit" />
           <!-- <text class="logo-text">SHOP</text> -->
         </view>
         <view class="h5-search-wrapper">
@@ -247,10 +247,13 @@ export default {
       // #ifdef H5
       try {
         const main = document.querySelector('.center-content')
+        const header = document.querySelector('.h5-header')
+        const headerBottom = header ? header.getBoundingClientRect().bottom : 100
         if (main && e && e.clientY != null) {
           const rect = main.getBoundingClientRect()
           const y = e.clientY
-          this.panelTop = Math.max(0, y)
+          const offset = 160
+          this.panelTop = Math.max(headerBottom + 10, y - offset)
           const w = Math.min(560, rect.width * 0.6)
           this.panelLeft = Math.max(0, rect.left - 20)
           this.panelRight = Math.max(0, document.documentElement.clientWidth - (this.panelLeft + w))
@@ -685,7 +688,7 @@ export default {
 
 /* Bottom Section */
 .h5-bottom-section {
-  margin-top: 120rpx;
+  margin-top: 70rpx;
   padding-left: 110rpx;
   padding-right: 110rpx;
 }
