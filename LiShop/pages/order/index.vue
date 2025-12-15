@@ -27,15 +27,24 @@
         <text>运单号：{{ order.waybillNo }}</text>
         <button size="mini" class="copy" @click="copyWaybill(order.waybillNo)">复制运单号</button>
       </view>
-      <view class="logistics" v-if="(order.tracking || []).length">
-        <view class="log-item" v-for="(ev, i) in order.tracking" :key="i">
-          <view class="dot">•</view>
-          <view class="log-meta">
-            <text class="log-status">{{ ev.status }}</text>
-            <text class="log-desc">{{ ev.desc }}</text>
-            <text class="log-time">{{ formatTime(ev.time) }}</text>
-            <text class="log-place" v-if="ev.place">{{ ev.place }}</text>
+      <view class="logistics">
+        <view class="log-header">
+          <text class="log-title">物流信息</text>
+        </view>
+        <view v-if="(order.tracking || []).length">
+          <view class="log-item" v-for="(ev, i) in (logisticsCollapsed ? (order.tracking || []).slice(0,1) : order.tracking)" :key="i">
+            <view class="dot">•</view>
+            <view class="log-meta">
+              <text class="log-status">{{ ev.status }}</text>
+              <text class="log-desc">{{ ev.desc }}</text>
+              <text class="log-time">{{ formatTime(ev.time) }}</text>
+              <text class="log-place" v-if="ev.place">{{ ev.place }}</text>
+            </view>
           </view>
+        </view>
+        <view v-else class="log-empty">{{ order.trackingMessage || '暂无物流信息' }}</view>
+        <view class="log-toggle-center">
+          <text class="toggle-icon" @click="toggleLogistics">{{ logisticsCollapsed ? '▼' : '▲' }}</text>
         </view>
       </view>
       <view class="rooms">
@@ -99,6 +108,7 @@
     </view>
     <!-- #ifdef H5 -->
     <FloatingNav />
+    <view class="floating-back" @click="goBack">←</view>
     <!-- #endif -->
   </view>
 </template>
@@ -110,7 +120,7 @@ import Skeleton from '@/components/Skeleton.vue'
 
 export default {
   components: { FloatingNav, Skeleton },
-  data() { return { order: null, orders: [], activeTab: 'all', loading: true } },
+  data() { return { order: null, orders: [], activeTab: 'all', loading: true, logisticsCollapsed: true } },
   onLoad(query) {
     const id = query?.id
     if (id) {
@@ -185,25 +195,43 @@ export default {
         if (!roomsMap[roomName]) {
           roomsMap[roomName] = { name: roomName, roomTotal: 0, items: [] };
         }
+        const price = Number(item.price || 0);
         const localItem = {
           title: item.product_name || item.available_product_name,
           id: item.product_id || item.available_product_id,
-          specTemp: item.color_temperature !== 'None' ? item.color_temperature : '',
+          specTemp: (item.color_temperature && item.color_temperature !== 'None' && item.color_temperature !== '无') ? item.color_temperature : '',
           specLength: item.length,
-          price: item.price,
+          price: price,
           quantity: item.quantity,
           image: item.main_picture
         };
         roomsMap[roomName].items.push(localItem);
-        roomsMap[roomName].roomTotal += (item.price * item.quantity);
+        roomsMap[roomName].roomTotal += (price * (item.quantity || 0));
       });
+      const tracking = [];
+      let rawList = [];
+      let trackingMessage = '';
+      try {
+        const last = apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult
+        rawList = last && Array.isArray(last.data) ? last.data : [];
+        trackingMessage = (last && (last.message || last.msg)) || (apiOrder && apiOrder.logistics_message) || ''
+      } catch (e) { rawList = [] }
+      rawList.forEach(ev => {
+        tracking.push({
+          status: ev.status || '',
+          desc: ev.context || '',
+          time: ev.ftime || ev.time || '',
+          place: ev.areaName || ev.location || ''
+        })
+      })
       return {
         id: apiOrder.order_id,
         orderNo: apiOrder.order_id,
-        createdAt: null, // API doesn't provide created time in list
-        total: apiOrder.total_price,
-        waybillNo: apiOrder['tracking number'],
-        tracking: apiOrder['logistics data'],
+        createdAt: null,
+        total: Number(apiOrder.total_price || 0),
+        waybillNo: (apiOrder && apiOrder.tracking_number) || (apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult && apiOrder.logistics_data.lastResult.nu) || '',
+        tracking: tracking,
+        trackingMessage: tracking.length ? '' : (trackingMessage || ''),
         status: apiOrder.status || 'unknown',
         rooms: Object.values(roomsMap)
       };
@@ -265,6 +293,20 @@ export default {
       } catch (e) { }
       this.loading = false
     },
+    goHome() {
+      if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+      if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+    },
+    goBack() {
+      try {
+        if (uni && uni.navigateBack) { uni.navigateBack({ delta: 1 }); return }
+      } catch (e) {}
+      try {
+        if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
+      } catch (e) {}
+      this.goHome()
+    },
+    toggleLogistics() { this.logisticsCollapsed = !this.logisticsCollapsed },
     async confirmReceipt(id) {
       try {
         const res = await confirmOrderReceipt({ order_id: id })
@@ -522,7 +564,7 @@ export default {
 }
 
 .card-hd .total {
-  color: #e1251b;
+  color: #333;
   font-weight: 700;
 }
 
@@ -591,12 +633,70 @@ export default {
   margin-bottom: 8rpx;
 }
 
+.log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.log-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.log-toggle {
+  margin: 0;
+  background: #eee;
+  color: #333;
+  border-radius: 100rpx;
+  padding: 0 20rpx;
+  height: 50rpx;
+  line-height: 50rpx;
+  font-size: 24rpx;
+}
+
 .log-item {
   display: flex;
   align-items: flex-start;
   gap: 10rpx;
   padding: 8rpx 0;
   border-bottom: 1rpx solid #f0f0f0;
+}
+
+.log-empty {
+  padding: 16rpx 8rpx;
+  color: #999;
+  font-size: 26rpx;
+}
+
+.log-toggle-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 8rpx;
+}
+
+.toggle-icon {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.floating-back {
+  position: fixed;
+  left: 40rpx;
+  top: 40rpx;
+  width: 80rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  color: #333;
+  font-size: 36rpx;
+  z-index: 999;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .log-item:last-child {

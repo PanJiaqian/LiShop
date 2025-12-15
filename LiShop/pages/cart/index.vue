@@ -29,8 +29,8 @@
               <view class="chk" @click="toggleById(it.id)">
                 <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
               </view>
-              <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
-              <text class="title">{{ it.title }}</text>
+              <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" @click="openDetail(it)" />
+              <text class="title" @click="openDetail(it)">{{ it.title }}</text>
               <text class="attr-txt">{{ it.attr }}</text>
               <text class="price">¥{{ it.price.toFixed(2) }}</text>
               <view class="qty-box">
@@ -127,10 +127,10 @@
           <view class="chk" @click="toggleById(it.id)">
             <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
           </view>
-          <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" />
+          <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" @click="openDetail(it)" />
           <view class="meta">
             <view class="row-title">
-              <text class="title">{{ it.title }}</text>
+              <text class="title" @click="openDetail(it)">{{ it.title }}</text>
             </view>
             <view class="row-attr">
               <text class="attr-txt">{{ it.attr }}</text>
@@ -325,17 +325,24 @@ export default {
     } catch (e) {}
     // #endif
   },
-  methods: {
-    goHome() {
-      if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
-      if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
-    },
-    goBack() { this.goHome() },
-    loadAddresses() {
-      getAddresses().then(res => {
-        const raw = Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.items) ? res.items : [])
-        this.addresses = raw.map(a => ({
-          id: a.addresses_id || a.id || '',
+    methods: {
+      goHome() {
+        if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+        if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+      },
+      goBack() { this.goHome() },
+      openDetail(item) {
+        try {
+          const id = (item && (item.availableProductId || item.available_product_id || item.productId || item.id)) || ''
+          if (!id) { uni.showToast({ title: '商品ID缺失', icon: 'none' }); return }
+          uni.navigateTo({ url: '/pages/product/index?id=' + encodeURIComponent(id) })
+        } catch (e) {}
+      },
+      loadAddresses() {
+        getAddresses().then(res => {
+          const raw = Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.items) ? res.items : [])
+          this.addresses = raw.map(a => ({
+            id: a.addresses_id || a.id || '',
           receiver: a.receiver || '',
           phone: a.phone || '',
           full: [a.province, a.city, a.district, a.detail_address].filter(Boolean).join(' '),
@@ -399,12 +406,13 @@ export default {
                 id: (x && x.id) ? x.id : '',
                 title: (x && x.product_id) ? x.product_id : '',
                 productId: (x && x.product_id) ? x.product_id : '',
+                availableProductId: (x && x.available_product_id) ? x.available_product_id : ((x && x.product_id) ? x.product_id : ''),
                 price: Number((x && x.price) !== undefined ? x.price : 0) || 0,
                 quantity: Number((x && x.quantity) !== undefined ? x.quantity : 1) || 1,
                 image: '/static/logo.png',
                 roomName: roomName || '默认房间',
                 roomId: g.room_id || '',
-                length: x.length || 1,
+                length: (Number(x.length) > 0 ? x.length : 0),
                 color: x.color || '暖白',
                 note: x.note || '',
                 attr: ((x && x.length) ? ('长度 ' + x.length) : '') + ((x && x.note) ? (' ｜ ' + x.note) : ''),
@@ -468,7 +476,7 @@ export default {
         id: item.id,
         room_id: item.roomId,
         product_id: item.productId,
-        length: item.length,
+        length: (Number(item.length) > 0 ? item.length : 0),
         quantity: quantity,
         color: item.color,
         note: item.note
@@ -709,7 +717,7 @@ export default {
           id: item.id,
           room_id: room.id,
           product_id: item.productId,
-          length: item.length,
+          length: (Number(item.length) > 0 ? item.length : 0),
           quantity: item.quantity,
           color: item.color,
           note: item.note

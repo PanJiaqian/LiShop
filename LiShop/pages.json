@@ -54,12 +54,15 @@
 					"navigationStyle": "custom"
 				}
 			}
-		}
-		,
+		},
 		{
 			"path": "pages/order/index",
 			"style": {
-				"navigationBarTitleText": "我的订单"
+				"navigationBarTitleText": "我的订单",
+				"enablePullDownRefresh": true,
+				"h5": {
+					"navigationStyle": "custom"
+				}
 			}
 		},
 		{
@@ -73,15 +76,13 @@
 			"style": {
 				"navigationBarTitleText": "消息"
 			}
-		}
-		,
+		},
 		{
 			"path": "pages/search/index",
 			"style": {
 				"navigationBarTitleText": "Lishop"
 			}
-		}
-		,
+		},
 		{
 			"path": "pages/category/list",
 			"style": {
@@ -111,10 +112,22 @@
 		"backgroundColor": "#ffffff",
 		"borderStyle": "black",
 		"list": [
-			{ "pagePath": "pages/home/index", "text": "首页" },
-			{ "pagePath": "pages/category/index", "text": "分类" },
-			{ "pagePath": "pages/cart/index", "text": "购物车" },
-			{ "pagePath": "pages/profile/index", "text": "我的" }
+			{
+				"pagePath": "pages/home/index",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/category/index",
+				"text": "分类"
+			},
+			{
+				"pagePath": "pages/cart/index",
+				"text": "购物车"
+			},
+			{
+				"pagePath": "pages/profile/index",
+				"text": "我的"
+			}
 		]
 	},
 	"globalStyle": {
