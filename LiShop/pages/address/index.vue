@@ -1,5 +1,6 @@
 <template>
   <view class="page address-list-page">
+    <Skeleton :loading="loading" :showTitle="true" />
     <view class="address-list" v-if="addressList.length > 0">
       <view class="address-item" v-for="(item, index) in addressList" :key="item.addresses_id"
         @click="editAddress(item.addresses_id)">
@@ -30,12 +31,15 @@
 </template>
 
 <script>
+import Skeleton from '@/components/Skeleton.vue'
 import { getAddresses, deleteAddress } from '../../api/index.js'
 
 export default {
+  components: { Skeleton },
   data() {
     return {
-      addressList: []
+      addressList: [],
+      loading: true
     }
   },
   onShow() {
@@ -43,11 +47,13 @@ export default {
   },
   methods: {
     loadAddresses() {
+      this.loading = true
       const u = uni.getStorageSync('user')
       const token = (u && (u.token || (u.data && u.data.token))) || ''
       if (!token) {
         uni.showToast({ title: '请先登录', icon: 'none' })
         setTimeout(() => uni.navigateTo({ url: '/pages/login/index' }), 1500)
+        this.loading = false
         return
       }
 
@@ -58,7 +64,7 @@ export default {
       }).catch(err => {
         console.error(err)
         uni.showToast({ title: '获取地址失败', icon: 'none' })
-      })
+      }).finally(() => { this.loading = false })
     },
     addAddress() {
       uni.navigateTo({ url: '/pages/address/edit' })

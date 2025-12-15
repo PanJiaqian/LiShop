@@ -62,12 +62,14 @@ const _sfc_main = {
     }
   },
   methods: {
-    goBack() {
-      const pages = getCurrentPages();
-      if (pages.length > 1) {
-        common_vendor.index.navigateBack();
-      } else {
+    goHome() {
+      if (common_vendor.index && common_vendor.index.switchTab) {
         common_vendor.index.switchTab({ url: "/pages/home/index" });
+        return;
+      }
+      if (common_vendor.index && common_vendor.index.navigateTo) {
+        common_vendor.index.navigateTo({ url: "/pages/home/index" });
+        return;
       }
     },
     loadUserProfile(token) {
@@ -264,7 +266,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       loading: $data.loading,
       showTitle: true
     }),
-    b: common_assets._imports_0$1,
+    b: common_assets._imports_0$2,
     c: common_vendor.t($data.loggedIn ? $data.displayName : "未登录"),
     d: common_vendor.t($data.loggedIn ? "退出登录" : "登录"),
     e: common_vendor.o((...args) => $options.onAuthButton && $options.onAuthButton(...args)),

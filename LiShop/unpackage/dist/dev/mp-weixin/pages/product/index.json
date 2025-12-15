@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "商品详情",
+  "enablePullDownRefresh": true,
   "usingComponents": {
     "room-selector": "../../components/RoomSelector",
     "skeleton": "../../components/Skeleton"

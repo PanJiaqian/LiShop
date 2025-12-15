@@ -45,6 +45,9 @@ const _sfc_main = {
     });
   },
   computed: {
+    selectorType() {
+      return this.roomSelectorMode === "addr" ? "addr" : "room";
+    },
     images() {
       var _a;
       const imgs = this.product && this.product.main_media || [];
@@ -100,6 +103,20 @@ const _sfc_main = {
     this.loadAddresses();
   },
   methods: {
+    goBack() {
+      if (typeof window !== "undefined" && window.history && window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      if (common_vendor.index && common_vendor.index.switchTab) {
+        common_vendor.index.switchTab({ url: "/pages/home/index" });
+        return;
+      }
+      if (common_vendor.index && common_vendor.index.navigateTo) {
+        common_vendor.index.navigateTo({ url: "/pages/home/index" });
+        return;
+      }
+    },
     initHls(src) {
     },
     isVideo(src) {
@@ -132,7 +149,7 @@ const _sfc_main = {
         this.specs = [];
       }).finally(() => {
         this.specsLoading = false;
-        this.selectedSpecIndex = -1;
+        this.selectedSpecIndex = Array.isArray(this.specs) && this.specs.length > 0 ? 0 : -1;
       });
     },
     selectSpec(index) {
@@ -242,6 +259,12 @@ const _sfc_main = {
         const cached = common_vendor.index.getStorageSync("selected_address_id") || "";
         let pick = this.addresses.find((x) => x.id === cached) || this.addresses.find((x) => x.is_default) || this.addresses[0];
         this.selectedAddress = pick || null;
+        if (this.roomSelectorMode === "addr" && this.roomSelectorVisible && this.addresses.length === 0) {
+          try {
+            common_vendor.index.showToast({ title: "暂无收货地址，去创建吧", icon: "none" });
+          } catch (e) {
+          }
+        }
       }).catch(() => {
         this.addresses = [];
         this.selectedAddress = null;
@@ -269,13 +292,26 @@ const _sfc_main = {
         return;
       api_index.createRoom({ name }).then((res) => {
         common_vendor.index.showToast({ title: "房间已创建", icon: "success" });
+        const rid = res && res.data && (res.data.room_id || res.data.id) || res && (res.room_id || res.id) || "";
         if (this.roomSelectorMode === "mp") {
           this.mpRoom = name;
+          if (rid) {
+            const exist = (this.roomsRaw || []).find((r) => r.id === rid);
+            if (!exist)
+              this.roomsRaw = [{ id: rid, name }, ...this.roomsRaw];
+          }
         } else {
           this.roomName = name;
+          this.roomId = rid || this.roomId;
+          if (rid) {
+            const exist = (this.roomsRaw || []).find((r) => r.id === rid);
+            if (!exist)
+              this.roomsRaw = [{ id: rid, name }, ...this.roomsRaw];
+          }
         }
         this.roomSelectorVisible = false;
-        this.fetchRooms();
+        if (!rid)
+          this.fetchRooms();
       }).catch(() => {
         common_vendor.index.showToast({ title: "创建房间失败", icon: "none" });
       });
@@ -457,6 +493,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     X: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
+      type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
     Y: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""

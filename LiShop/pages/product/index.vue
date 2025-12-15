@@ -441,7 +441,7 @@ export default {
           }))
         })
         .catch(() => { this.specs = [] })
-        .finally(() => { this.specsLoading = false; this.selectedSpecIndex = -1 })
+        .finally(() => { this.specsLoading = false; this.selectedSpecIndex = (Array.isArray(this.specs) && this.specs.length > 0) ? 0 : -1 })
     },
     selectSpec(index) {
       if (this.selectedSpecIndex === index) return
@@ -703,8 +703,13 @@ export default {
 
 .btn-cart {
   width: 100%;
-  background: #ff5500;
+  background: #ff8c3a;
   color: #fff;
+  border-radius: 999rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 30rpx;
+  font-weight: bold;
 }
 
 /* 通用：规格列表（H5 与 MP 共用） */
@@ -726,7 +731,7 @@ export default {
 }
 
 .spec-item.active {
-  border-color: #d5d1d1;
+  border-color: #8d8a8a;
   /* background: #fff5f0; */
 }
 

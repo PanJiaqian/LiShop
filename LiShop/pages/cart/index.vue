@@ -2,30 +2,27 @@
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" />
     <!-- #ifdef H5 -->
-    <view class="h5-nav-bar">
-      <view class="nav-back" @click="goHome">
-        <view class="back-arrow"></view>
-      </view>
-      <text class="nav-title">购物车</text>
-    </view>
     <view class="cart-grid">
       <view class="cart-main">
-        <view class="toolbar" v-if="cart.length">
-          <view class="tool-left">
+        <view class="toolbar">
+          <text class="review-title">购物车</text>
+          <view class="tool-right">
             <view class="chk all btn-style" @click="toggleAll">
               <view class="chk-ico" :class="{ on: isAllSelected }"></view>
-              <text class="chk-txt">全选</text>
+              <text class="chk-txt">选择全部</text>
             </view>
-          </view>
-          <view class="tool-right">
-            <button size="mini" class="btn-clear" @click="clearRemote">清空</button>
+            <!-- <view class="chk btn-style" @click="removeSelected">
+              <text class="chk-txt">Remove Selected 🗑️</text>
+            </view> -->
           </view>
         </view>
 
         <view v-if="cart.length" class="list h5">
           <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
             <view class="group-header">
+              <!-- <text class="store-icon">🏠</text> -->
               <text class="room">{{ grp.name }}</text>
+              <!-- <text class="arrow">></text> -->
             </view>
             <view class="item h5-row" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock }">
               <view class="out-stock-mask" v-if="it.isOutOfStock"></view>
@@ -41,7 +38,7 @@
                   <text class="qty-num">{{ it.quantity }}</text>
                   <view class="qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
-              <text class="del-btn" @click.stop="removeById(it.id)">删除</text>
+              <!-- <text class="del-btn" @click.stop="removeById(it.id)">删除</text> -->
               <view class="stock-tip" v-if="it.isOutOfStock">无货</view>
             </view>
           </view>
@@ -50,21 +47,24 @@
       </view>
 
       <view class="cart-aside">
-        <view class="address-card">
-          <view class="addr-title">收货地址</view>
-          <view v-if="selectedAddress" class="addr-body">
-            <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
-            <text class="addr-line">{{ selectedAddress.full }}</text>
-          </view>
-          <view v-else class="addr-empty">未选择收货地址</view>
-          <view class="addr-actions">
-            <button size="mini" class="addr-btn" @click="openAddressPicker">选择地址</button>
-            <!-- <button size="mini" class="addr-btn" @click="toAddressPage">管理地址</button> -->
-          </view>
-        </view>
         <view class="summary-card">
-          <view class="sum-title">结算明细</view>
-          <view class="sum-hint">实际优惠金额以下单页为准</view>
+          <view class="sum-title">订单详情</view>
+          
+          <view class="addr-section">
+            <view class="addr-label">收货地址</view>
+            <view v-if="selectedAddress" class="addr-content">
+              <view class="addr-top-row">
+                <text class="addr-name">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
+                <button size="mini" class="btn-select-addr" @click="openAddressPicker">选择地址</button>
+              </view>
+              <text class="addr-detail">{{ selectedAddress.full }}</text>
+            </view>
+            <view v-else class="addr-empty">
+               <text>请选择收货地址</text>
+               <button size="mini" class="btn-select-addr" @click="openAddressPicker">选择地址</button>
+            </view>
+          </view>
+
           <view v-if="selectedCount > 0" class="sum-body">
             <view class="thumbs">
               <image v-for="(src, i) in selectedThumbs" :key="i" :src="src" class="thumb" mode="aspectFill" />
@@ -78,38 +78,24 @@
                 <text class="label">共减</text>
                 <text class="value reduce">减 ¥{{ totalReduce.toFixed(2) }}</text>
               </view>
-              <!-- <view class="row small">
-                <text class="label">官方立减</text>
-                <text class="value reduce">减 ¥{{ officialReduce.toFixed(2) }}</text>
-              </view>
-              <view class="row small">
-                <text class="label">红包</text>
-                <text class="value reduce">减 ¥{{ redReduce.toFixed(2) }}</text>
-              </view> -->
             </view>
-            <!-- <view class="coupon-bar">
-              <text class="coupon-txt">消费券｜再实付{{ needForCoupon }}享满800减80</text>
-              <text class="coupon-action">凑单›</text>
-            </view> -->
             <view class="row total">
-              <text class="label">合计：</text>
+              <text class="label">合计</text>
               <view class="total-box">
                 <text class="pay">¥{{ payable.toFixed(2) }}</text>
-                <text class="total-reduce">共减 ¥ {{ totalReduce.toFixed(2) }}</text>
               </view>
             </view>
             <view class="action-buttons">
-              <button class="checkout" @click="checkout">结算({{ selectedCount }})</button>
-              <!-- <button class="export-btn" @click="handleExportExcel">导出Excel</button> -->
+              <button class="checkout" @click="checkout">结算</button>
             </view>
           </view>
           <view v-else class="sum-empty">
             <view class="empty-ico">🛒</view>
             <view class="empty-tip">选择商品查看实际支付价格</view>
             <view class="row total">
-              <text class="label">合计：</text>
+              <text class="label">合计</text>
               <view class="total-box">
-                <text class="pay">¥0</text>
+                <text class="pay">¥ 0</text>
               </view>
             </view>
             <button class="checkout disabled">结算</button>
@@ -159,7 +145,7 @@
                 <view class="qty-btn mp-qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
               <view class="actions-col">
-                <text class="act-txt del" @click.stop="removeById(it.id)">删除</text>
+                <!-- <text class="act-txt del" @click.stop="removeById(it.id)">删除</text> -->
               </view>
             </view>
             <view class="stock-tip" v-if="it.isOutOfStock">无货</view>
@@ -202,6 +188,7 @@
 
     <!-- #ifdef H5 -->
     <FloatingNav />
+    <view class="floating-back" @click="goBack">←</view>
     <!-- #endif -->
 
     <!-- 规格选择弹窗 -->
@@ -295,7 +282,7 @@ export default {
         const validItems = this.cart.filter(it => !it.isOutOfStock)
         return validItems.length > 0 && validItems.every(it => it.selected)
     },
-    selectedThumbs() { return this.cart.filter(it => it.selected).slice(0, 2).map(it => it.image || '/static/logo.png') },
+    selectedThumbs() { return this.cart.filter(it => it.selected).slice(0, 4).map(it => it.image || '/static/logo.png') },
     // officialReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.officialReduce || 0) : 0), 0) },
     // redReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.redReduce || 0) : 0), 0) },
     // extraReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.reduce || 0) : 0), 0) },
@@ -343,6 +330,7 @@ export default {
       if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
       if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
     },
+    goBack() { this.goHome() },
     loadAddresses() {
       getAddresses().then(res => {
         const raw = Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.items) ? res.items : [])
@@ -746,9 +734,22 @@ export default {
 
 <style scoped>
 .page {
-  background: #f7f7f7;
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
   min-height: 100vh;
   padding-bottom: 120rpx;
+}
+
+.review-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.addr-sub-title {
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 10rpx;
 }
 
 .list {
@@ -1007,7 +1008,7 @@ export default {
 
 .cart-grid {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 3fr 1.2fr;
   grid-gap: 80rpx;
   padding-right: 130rpx;
   padding-left: 130rpx;
@@ -1018,6 +1019,9 @@ export default {
 .cart-main {
   background: #fff;
   border-radius: 12rpx;
+  height: calc(100vh - 220rpx);
+  overflow: auto;
+  margin-bottom: 60rpx;
 }
 
 .toolbar {
@@ -1082,58 +1086,102 @@ export default {
 
 .cart-aside {}
 
-.address-card {
-  position: relative;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 20rpx;
-  padding-right: 180rpx; /* Make space for button */
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,.06);
-  border: 1rpx solid #eee;
-  margin-bottom: 20rpx;
-}
-.address-card .addr-body .addr-line {
-  font-size: 32rpx;
-}
-.address-card .addr-actions {
-  position: absolute;
-  right: 20rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-top: 0;
-}
-.addr-title { font-weight: 600; color: #333; font-size: 28rpx; }
-.addr-body { margin-top: 8rpx; color: #555; font-size: 24rpx; display: flex; flex-direction: column; gap: 6rpx; }
-.addr-empty { margin-top: 8rpx; color: #999; font-size: 24rpx; }
-.addr-actions { margin-top: 12rpx; display: flex; gap: 12rpx; }
-.addr-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; }
-
 .summary-card {
-  position: relative;
   background: #fff;
   border-radius: 16rpx;
-  padding: 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
-  border: 1rpx solid #eee;
-}
-
-.group-header {
+  padding: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.05);
+  height: calc(100vh - 300rpx);
   display: flex;
-  align-items: center;
-  padding: 12rpx 20rpx;
-  background: #fff9f5;
-  color: #ff7b2b;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.group-header .room {
-  font-weight: 600;
+  flex-direction: column;
+  margin-bottom: 60rpx;
 }
 
 .sum-title {
-  font-weight: 600;
+  font-size: 32rpx;
+  font-weight: bold;
   color: #333;
+  margin-bottom: 24rpx;
+}
+
+/* Address Section in Summary Card */
+.addr-section {
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  /* border-bottom: 1px solid #f0f0f0; */
+}
+.addr-label {
+  font-size: 24rpx;
+  color: #434343;
+  margin-bottom: 16rpx;
+  font-weight: 600;
+}
+.addr-content {
+  display: flex;
+  flex-direction: column;
+}
+.addr-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+.addr-name {
   font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+.btn-select-addr {
+  font-size: 22rpx;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 24rpx;
+  padding: 0 20rpx;
+  line-height: 44rpx;
+  height: 44rpx;
+  margin: 0;
+  color: #666;
+}
+.addr-detail {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.4;
+}
+.addr-empty {
+  font-size: 24rpx;
+  color: #999;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.group-header {
+  background: transparent;
+  border-bottom: none;
+  padding: 20rpx 20rpx 0 20rpx;
+  display: flex;
+  align-items: center;
+}
+
+.group-header .store-icon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+
+.group-header .room {
+  background: #ddd;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  display: inline-block;
+}
+
+.group-header .arrow {
+  color: #ccc;
+  margin-left: 10rpx;
+  font-size: 24rpx;
 }
 
 .sum-hint {
@@ -1148,18 +1196,21 @@ export default {
   display: flex;
   gap: 12rpx;
   margin-top: 16rpx;
+  flex-wrap: wrap;
 }
 
 .thumb {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 12rpx;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 8rpx;
   background: #f5f5f5;
   border: 1rpx solid #eee;
 }
 
 .rows {
-  margin-top: 16rpx;
+  margin-top: 30rpx;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 20rpx;
 }
 
 .row {
@@ -1174,15 +1225,17 @@ export default {
 }
 
 .label {
-  color: #333;
+  color: #666;
+  font-size: 28rpx;
 }
 
 .value {
   color: #333;
+  font-weight: 500;
 }
 
 .value.reduce {
-  color: #ff5500;
+  color: #333;
 }
 
 .coupon-bar {
@@ -1201,7 +1254,15 @@ export default {
 }
 
 .row.total {
-  margin-top: 12rpx;
+  margin-top: 20rpx;
+  align-items: flex-end;
+}
+
+.row.total .label {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 4rpx;
 }
 
 .total-box {
@@ -1209,9 +1270,9 @@ export default {
 }
 
 .pay {
-  color: #e1251b;
-  font-weight: 700;
-  font-size: 34rpx;
+  color: #000;
+  font-weight: 800;
+  font-size: 44rpx;
 }
 
 .total-reduce {
@@ -1230,19 +1291,28 @@ export default {
   font-weight: 600;
 }
 
+.sum-body, .sum-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 .summary-card .checkout {
-  margin-top: 16rpx;
+  margin-top: auto;
+  margin-bottom: 40rpx;
   width: 100%;
-  background: linear-gradient(90deg, #ff7b2b, #ff5500);
+  background: #000;
   color: #fff;
-  border-radius: 12rpx;
-  height: 80rpx;
-  font-size: 28rpx;
-  box-shadow: 0 8rpx 16rpx rgba(255, 85, 0, .24);
+  border-radius: 50rpx;
+  height: 90rpx;
+  line-height: 90rpx;
+  font-size: 30rpx;
+  font-weight: bold;
+  box-shadow: none;
 }
 
 .summary-card .checkout.disabled {
-  opacity: .6;
+  background: #ccc;
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -1263,6 +1333,25 @@ export default {
   top: 20rpx;
 }
 
+.floating-back {
+  position: fixed;
+  left: 40rpx;
+  top: 40rpx;
+  width: 80rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  /* border-radius: 50%; */
+  /* background: rgba(255,255,255,0.7); */
+  /* box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); */
+  color: #333;
+  font-size: 36rpx;
+  z-index: 999;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* 
 @media (max-width: 1024px) {
   .cart-grid {
     grid-template-columns: 1fr 400rpx;
@@ -1277,7 +1366,8 @@ export default {
   .cart-aside {
     order: -1;
   }
-}
+} 
+*/
 /* #endif */
 
 /* 新版商品卡片样式 */

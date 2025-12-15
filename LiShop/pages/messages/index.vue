@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" />
     <view class="header">
       <text class="title">消息</text>
     </view>
@@ -16,10 +17,13 @@
 </template>
 
 <script>
+import Skeleton from '@/components/Skeleton.vue'
 export default {
-  data() { return { messages: [] } },
+  components: { Skeleton },
+  data() { return { messages: [], loading: true } },
   onShow() {
     try { this.messages = uni.getStorageSync('messages') || [] } catch (e) { this.messages = [] }
+    this.loading = false
   }
 }
 </script>

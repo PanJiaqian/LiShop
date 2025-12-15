@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" />
     <view class="header">
       <text class="title">设置</text>
     </view>
@@ -10,7 +11,10 @@
 </template>
 
 <script>
+import Skeleton from '@/components/Skeleton.vue'
 export default {
+  components: { Skeleton },
+  data() { return { loading: false } },
   onShow() { }
 }
 </script>

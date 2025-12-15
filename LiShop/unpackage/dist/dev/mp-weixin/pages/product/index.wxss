@@ -40,8 +40,13 @@
 }
 .btn-cart.data-v-a911e391 {
   width: 100%;
-  background: #ff5500;
+  background: #ff8c3a;
   color: #fff;
+  border-radius: 999rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 30rpx;
+  font-weight: bold;
 }
 
 /* 通用：规格列表（H5 与 MP 共用） */
@@ -57,12 +62,12 @@
   padding: 12rpx;
   border: 1rpx solid #eee;
   border-radius: 12rpx;
-  background: #fafafa;
+  /* background: #fafafa; */
   transition: all .2s;
 }
 .spec-item.active.data-v-a911e391 {
-  border-color: #ff5500;
-  background: #fff5f0;
+  border-color: #8d8a8a;
+  /* background: #fff5f0; */
 }
 .spec-thumb.data-v-a911e391 {
   width: 120rpx;
@@ -180,7 +185,10 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.mp-scroll-view.data-v-a911e391::-webkit-scrollbar { width: 0; height: 0; display: none;
+.mp-scroll-view.data-v-a911e391::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 .mp-title.data-v-a911e391 {
   font-size: 32rpx;
@@ -380,24 +388,39 @@ to {
 }
 
 
+
 /* Address Card Style from Cart Page (H5) */
 .address-card.data-v-a911e391 {
   position: relative;
-  background: #fff;
+  /* background: #fff; */
   border-radius: 16rpx;
   padding: 20rpx;
   padding-right: 180rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,.06);
-  border: 1rpx solid #eee;
+  /* box-shadow: 0 4rpx 16rpx rgba(0,0,0,.06); */
+  /* border: 1rpx solid #eee; */
   margin-bottom: 20rpx;
 }
-.address-card .addr-title.data-v-a911e391 { font-weight: 600; color: #333; font-size: 28rpx;
+.address-card .addr-title.data-v-a911e391 {
+  font-weight: 600;
+  color: #333;
+  font-size: 28rpx;
 }
-.address-card .addr-body.data-v-a911e391 { margin-top: 8rpx; color: #555; font-size: 24rpx; display: flex; flex-direction: column; gap: 6rpx;
+.address-card .addr-body.data-v-a911e391 {
+  margin-top: 8rpx;
+  color: #555;
+  font-size: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
-.address-card .addr-line.data-v-a911e391 { font-size: 26rpx; color: #333;
+.address-card .addr-line.data-v-a911e391 {
+  font-size: 26rpx;
+  color: #333;
 }
-.address-card .addr-empty.data-v-a911e391 { margin-top: 8rpx; color: #999; font-size: 24rpx;
+.address-card .addr-empty.data-v-a911e391 {
+  margin-top: 8rpx;
+  color: #999;
+  font-size: 24rpx;
 }
 .address-card .addr-actions.data-v-a911e391 {
   position: absolute;
@@ -408,11 +431,28 @@ to {
   display: flex;
   gap: 12rpx;
 }
-.address-card .addr-btn.data-v-a911e391 { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 24rpx; padding: 0 20rpx; height: 50rpx; line-height: 48rpx;
+.address-card .addr-btn.data-v-a911e391 {
+  background: #fff;
+  border: 1rpx solid #ddd;
+  color: #333;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  padding: 0 20rpx;
+  height: 50rpx;
+  line-height: 48rpx;
 }
-.address-card .addr-btn.data-v-a911e391 { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; font-size: 30rpx; padding: 0 40rpx; height: 72rpx; line-height: 70rpx;
+.address-card .addr-btn.data-v-a911e391 {
+  background: #fff;
+  border: 1rpx solid #ddd;
+  color: #333;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  padding: 0 40rpx;
+  height: 72rpx;
+  line-height: 70rpx;
 }
-.address-card.data-v-a911e391 { padding-right: 220rpx;
+.address-card.data-v-a911e391 {
+  padding-right: 220rpx;
 }
 
 /* MP Address Bar Style from Cart Page */
@@ -426,15 +466,41 @@ to {
   border-radius: 12rpx;
   margin: 16rpx 0;
 }
-.bar-left.data-v-a911e391 { display: flex; align-items: center; gap: 12rpx; flex: 1; overflow: hidden;
+.bar-left.data-v-a911e391 {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  overflow: hidden;
 }
-.addr-icon.data-v-a911e391 { font-size: 28rpx; flex-shrink: 0;
+.addr-icon.data-v-a911e391 {
+  font-size: 28rpx;
+  flex-shrink: 0;
 }
-.bar-info.data-v-a911e391 { display: flex; flex-direction: column; font-size: 24rpx; color: #555; flex: 1; overflow: hidden;
+.bar-info.data-v-a911e391 {
+  display: flex;
+  flex-direction: column;
+  font-size: 24rpx;
+  color: #555;
+  flex: 1;
+  overflow: hidden;
 }
-.bar-line.data-v-a911e391 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.bar-line.data-v-a911e391 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.bar-btn.data-v-a911e391 { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; margin: 0; font-size: 24rpx; padding: 0 24rpx; height: 50rpx; line-height: 48rpx; flex-shrink: 0;
+.bar-btn.data-v-a911e391 {
+  background: #fff;
+  border: 1rpx solid #ddd;
+  color: #333;
+  border-radius: 999rpx;
+  margin: 0;
+  font-size: 24rpx;
+  padding: 0 24rpx;
+  height: 50rpx;
+  line-height: 48rpx;
+  flex-shrink: 0;
 }
 
 /* H5 Actions Row (3 buttons layout) */
@@ -481,10 +547,10 @@ to {
   font-weight: 600;
 }
 .btn-action.btn-cart.data-v-a911e391 {
-  background: #ffaa00;
-  color: #fff;
+  background: #d9d9d9;
+  color: #333;
 }
 .btn-action.btn-buy.data-v-a911e391 {
-  background: #ff5500;
+  background: #000;
   color: #fff;
 }

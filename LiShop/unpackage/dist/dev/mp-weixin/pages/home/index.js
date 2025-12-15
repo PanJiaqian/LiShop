@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const common_assets = require("../../common/assets.js");
 const SearchBar = () => "../../components/SearchBar.js";
 const BannerSwiper = () => "../../components/BannerSwiper.js";
 const CategoryGrid = () => "../../components/CategoryGrid.js";
@@ -29,7 +30,9 @@ const _sfc_main = {
       recommendList: [],
       panelTop: 20,
       panelLeft: 0,
-      panelRight: 0
+      panelRight: 0,
+      hoveringPanel: false,
+      leaveTimer: null
     };
   },
   onShow() {
@@ -46,28 +49,30 @@ const _sfc_main = {
         this.subCategoryList = mapped;
       }).catch(() => {
       });
-      const p2 = api_index.getRecommendedProducts({ page: 1, page_size: 20 }).then((res) => {
-        var _a, _b, _c;
-        const carousel = ((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.carousel) && Array.isArray(res.data.carousel) ? res.data.carousel : ((_b = res == null ? void 0 : res.data) == null ? void 0 : _b.carousel) && Array.isArray(res.data.carousel.items) ? res.data.carousel.items : [];
-        this.banners = carousel.map((it) => {
-          const img = typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "";
-          return { image: img || "/static/logo.png", id: (it == null ? void 0 : it.available_product_id) || "" };
-        });
-        if (this.banners.length === 0) {
-          this.banners = ["/static/logo.png", "/static/logo.png"];
-        }
-        const fixed = ((_c = res == null ? void 0 : res.data) == null ? void 0 : _c.fixed) && Array.isArray(res.data.fixed.items) ? res.data.fixed.items : [];
-        const mapped = fixed.map((it, i) => ({
-          id: (it == null ? void 0 : it.available_product_id) || "p" + i,
-          title: (it == null ? void 0 : it.name) || "推荐商品 " + (i + 1),
-          price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
-          sales: 0,
-          image: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || "/static/logo.png"
+      const p2 = api_index.getCarousel().then((res) => {
+        var _a;
+        const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+        this.banners = items.map((it, i) => ({
+          image: (typeof (it == null ? void 0 : it.image) === "string" ? it.image.replace(/`/g, "").trim() : "") || "/static/logo.png",
+          id: (it == null ? void 0 : it.available_product_id) || ""
         }));
-        this.recommendList = mapped;
+        if (this.banners.length === 0)
+          this.banners = ["/static/logo.png", "/static/logo.png"];
       }).catch(() => {
       });
-      Promise.allSettled([p1, p2]).then(() => {
+      const p3 = api_index.getRecommendedProducts({ page: 1, page_size: 30, sort_by: "id" }).then((res) => {
+        var _a;
+        const list = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+        this.recommendList = list.map((it, i) => ({
+          id: (it == null ? void 0 : it.available_product_id) || (it == null ? void 0 : it.id) || "p" + i,
+          title: (it == null ? void 0 : it.name) || "推荐商品 " + (i + 1),
+          price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
+          sales: Number((it == null ? void 0 : it.order_count) ?? (it == null ? void 0 : it.sales) ?? 0) || 0,
+          image: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || "/static/logo.png"
+        }));
+      }).catch(() => {
+      });
+      Promise.allSettled([p1, p2, p3]).then(() => {
         this.loading = false;
       });
     } catch (e) {
@@ -101,6 +106,31 @@ const _sfc_main = {
       } catch (e2) {
         this.leftChildren = [];
       }
+    },
+    onCateListLeave() {
+      try {
+        if (this.leaveTimer) {
+          clearTimeout(this.leaveTimer);
+        }
+      } catch (e) {
+      }
+      this.leaveTimer = setTimeout(() => {
+        if (!this.hoveringPanel)
+          this.closeCategory();
+      }, 120);
+    },
+    onPanelEnter() {
+      this.hoveringPanel = true;
+      try {
+        if (this.leaveTimer) {
+          clearTimeout(this.leaveTimer);
+        }
+      } catch (e) {
+      }
+    },
+    onPanelLeave() {
+      this.hoveringPanel = false;
+      this.closeCategory();
     },
     closeCategory() {
       this.activeCateId = "";
@@ -205,15 +235,16 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       showTitle: true,
       showGrid: true
     }),
-    b: common_vendor.o($options.onSearch),
-    c: common_vendor.o(($event) => $data.keyword = $event),
-    d: common_vendor.p({
+    b: common_assets._imports_0$1,
+    c: common_vendor.o($options.onSearch),
+    d: common_vendor.o(($event) => $data.keyword = $event),
+    e: common_vendor.p({
       modelValue: $data.keyword
     }),
-    e: common_vendor.p({
+    f: common_vendor.p({
       images: $data.banners
     }),
-    f: common_vendor.f($data.subCategoryList, (c, i, i0) => {
+    g: common_vendor.f($data.subCategoryList, (c, i, i0) => {
       return {
         a: c.icon || "/static/logo.png",
         b: common_vendor.t(c.name),
@@ -221,7 +252,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.openCategory(c), "mc" + i)
       };
     }),
-    g: common_vendor.f($data.recommendList, (p, idx, i0) => {
+    h: common_vendor.f($data.recommendList, (p, idx, i0) => {
       return {
         a: "4978fed5-3-" + i0,
         b: common_vendor.p({

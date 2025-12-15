@@ -1,9 +1,12 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" :showGrid="true" />
+    <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
     <!-- #ifdef H5 -->
     <view class="h5-topbar">
       <button class="back-btn" @click="goBack">←</button>
       <view class="h5-search">
+         <image src="/static/logo.png?v=20251211" style="width:200rpx;height:60rpx;margin-right:20rpx;" mode="aspectFit" />
         <view class="search-bar-box">
           <view class="search-type">宝贝<text class="arrow-down">∨</text></view>
           <view class="divider-v"></view>
@@ -47,10 +50,11 @@
 <script>
 import ProductCard from '@/components/ProductCard.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { getVisibleCategories, getVisibleProducts } from '../../api/index.js'
 
 export default {
-  components: { ProductCard, FloatingNav },
+  components: { ProductCard, FloatingNav, Skeleton },
   data() {
     return {
       keyword: '',
@@ -169,10 +173,20 @@ export default {
 
 <style scoped>
 .page {
-  background: #f7f7f7;
   min-height: 100vh;
   width: 100vw;
   box-sizing: border-box;
+}
+
+.page-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
 }
 
 .h5-topbar {
@@ -287,6 +301,7 @@ export default {
   color: #000;
   font-size: 44rpx;
   transition: background .2s, transform .2s, color .2s;
+  margin-left: 20rpx;
 }
 
 .back-btn::after {
@@ -301,7 +316,10 @@ export default {
 .h5-search {
   flex: 1;
   display: flex;
-  justify-content: center;
+  /* justify-content: center; */
+  align-items: center;
+  margin-left: 200rpx;
+  gap: 80rpx;
 }
 
 .search-bar-box {
@@ -309,7 +327,7 @@ export default {
   align-items: center;
   width: 70%;
   /* max-width: 900rpx; */
-  margin: 0 auto;
+  /* margin: 0 auto; */
   height: 80rpx;
   border: 3rpx solid #000;
   border-radius: 40rpx;

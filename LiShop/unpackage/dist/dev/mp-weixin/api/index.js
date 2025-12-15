@@ -116,6 +116,33 @@ function getRecommendedProducts(options = {}) {
     });
   });
 }
+function getCarousel(options = {}) {
+  const { token } = options;
+  const url = `${BASE_URL}/api/carousel`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
 function getVisibleCategories(options = {}) {
   const { page = 1, page_size = 20, sort_by = "id", sort_order, categories_id, token } = options;
   const query = toQuery({ page, page_size, sort_by, sort_order, categories_id });
@@ -1040,6 +1067,7 @@ exports.deleteAddress = deleteAddress;
 exports.deleteCartItem = deleteCartItem;
 exports.exportOrderExcel = exportOrderExcel;
 exports.getAddresses = getAddresses;
+exports.getCarousel = getCarousel;
 exports.getCartItems = getCartItems;
 exports.getCartItemsByIDs = getCartItemsByIDs;
 exports.getHistoryOrders = getHistoryOrders;

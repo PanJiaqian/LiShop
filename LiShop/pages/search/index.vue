@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <Skeleton :loading="loading" :showTitle="true" :showGrid="true" />
     <view class="header">
       <text class="title">搜索结果</text>
       <text class="kw">{{ keyword }}</text>
@@ -22,10 +23,11 @@
 
 <script>
 import ProductCard from '@/components/ProductCard.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { searchProducts } from '../../api/index.js'
 
 export default {
-  components: { ProductCard },
+  components: { ProductCard, Skeleton },
   data() {
     return {
       keyword: '',

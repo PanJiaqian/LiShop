@@ -1,12 +1,15 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const common_assets = require("../../common/assets.js");
 const ProductCard = () => "../../components/ProductCard.js";
 const FloatingNav = () => "../../components/FloatingNav.js";
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
-  components: { ProductCard, FloatingNav },
+  components: { ProductCard, FloatingNav, Skeleton },
   data() {
     return {
+      keyword: "",
       parentId: "",
       activeChildId: "",
       activeName: "",
@@ -56,6 +59,28 @@ const _sfc_main = {
     }
   },
   methods: {
+    onSearch(val) {
+      const q = (val || this.keyword || "").trim();
+      if (!q) {
+        common_vendor.index.showToast({ title: "请输入关键字", icon: "none" });
+        return;
+      }
+      common_vendor.index.navigateTo({ url: "/pages/search/index?q=" + encodeURIComponent(q) });
+    },
+    goBack() {
+      if (typeof window !== "undefined" && window.history && window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      if (common_vendor.index && common_vendor.index.switchTab) {
+        common_vendor.index.switchTab({ url: "/pages/category/index" });
+        return;
+      }
+      if (common_vendor.index && common_vendor.index.navigateTo) {
+        common_vendor.index.navigateTo({ url: "/pages/category/index" });
+        return;
+      }
+    },
     cleanImage(url) {
       if (typeof url !== "string")
         return "/static/logo.png";
@@ -121,12 +146,19 @@ const _sfc_main = {
   }
 };
 if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
   const _component_ProductCard = common_vendor.resolveComponent("ProductCard");
-  _component_ProductCard();
+  (_component_Skeleton + _component_ProductCard)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.f($data.subChildren, (s, i, i0) => {
+    a: common_vendor.p({
+      loading: $data.loading,
+      showTitle: true,
+      showGrid: true
+    }),
+    b: common_assets._imports_0$1,
+    c: common_vendor.f($data.subChildren, (s, i, i0) => {
       return {
         a: common_vendor.t(s.name),
         b: i,
@@ -134,20 +166,20 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.selectChild(s), i)
       };
     }),
-    b: common_vendor.f($data.items, (p, idx, i0) => {
+    d: common_vendor.f($data.items, (p, idx, i0) => {
       return {
-        a: "17e22e15-0-" + i0,
+        a: "17e22e15-1-" + i0,
         b: common_vendor.p({
           product: p
         }),
         c: idx
       };
     }),
-    c: !$data.loading && $data.items.length === 0
+    e: !$data.loading && $data.items.length === 0
   }, !$data.loading && $data.items.length === 0 ? {} : {}, {
-    d: $data.loading
+    f: $data.loading
   }, $data.loading ? {} : {}, {
-    e: !$data.loading && $data.page >= $options.totalPages && $data.items.length > 0
+    g: !$data.loading && $data.page >= $options.totalPages && $data.items.length > 0
   }, !$data.loading && $data.page >= $options.totalPages && $data.items.length > 0 ? {} : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-17e22e15"]]);

@@ -1,7 +1,9 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
+  components: { Skeleton },
   data() {
     return {
       id: "",
@@ -13,7 +15,8 @@ const _sfc_main = {
         district: "",
         detail_address: "",
         is_default: 0
-      }
+      },
+      loading: true
     };
   },
   onLoad(options) {
@@ -23,10 +26,12 @@ const _sfc_main = {
       common_vendor.index.setNavigationBarTitle({ title: "编辑收货地址" });
     } else {
       common_vendor.index.setNavigationBarTitle({ title: "新建收货地址" });
+      this.loading = false;
     }
   },
   methods: {
     loadAddress(id) {
+      this.loading = true;
       const u = common_vendor.index.getStorageSync("user");
       const token = u && (u.token || u.data && u.data.token) || "";
       api_index.getAddresses({ addresses_id: id, token }).then((res) => {
@@ -45,6 +50,8 @@ const _sfc_main = {
       }).catch((err) => {
         console.error(err);
         common_vendor.index.showToast({ title: "获取地址详情失败", icon: "none" });
+      }).finally(() => {
+        this.loading = false;
       });
     },
     onSwitchChange(e) {
@@ -85,23 +92,31 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
+  _component_Skeleton();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: $data.form.receiver,
-    b: common_vendor.o(($event) => $data.form.receiver = $event.detail.value),
-    c: $data.form.phone,
-    d: common_vendor.o(($event) => $data.form.phone = $event.detail.value),
-    e: $data.form.province,
-    f: common_vendor.o(($event) => $data.form.province = $event.detail.value),
-    g: $data.form.city,
-    h: common_vendor.o(($event) => $data.form.city = $event.detail.value),
-    i: $data.form.district,
-    j: common_vendor.o(($event) => $data.form.district = $event.detail.value),
-    k: $data.form.detail_address,
-    l: common_vendor.o(($event) => $data.form.detail_address = $event.detail.value),
-    m: $data.form.is_default === 1,
-    n: common_vendor.o((...args) => $options.onSwitchChange && $options.onSwitchChange(...args)),
-    o: common_vendor.o((...args) => $options.saveAddress && $options.saveAddress(...args))
+    a: common_vendor.p({
+      loading: $data.loading,
+      showTitle: true
+    }),
+    b: $data.form.receiver,
+    c: common_vendor.o(($event) => $data.form.receiver = $event.detail.value),
+    d: $data.form.phone,
+    e: common_vendor.o(($event) => $data.form.phone = $event.detail.value),
+    f: $data.form.province,
+    g: common_vendor.o(($event) => $data.form.province = $event.detail.value),
+    h: $data.form.city,
+    i: common_vendor.o(($event) => $data.form.city = $event.detail.value),
+    j: $data.form.district,
+    k: common_vendor.o(($event) => $data.form.district = $event.detail.value),
+    l: $data.form.detail_address,
+    m: common_vendor.o(($event) => $data.form.detail_address = $event.detail.value),
+    n: $data.form.is_default === 1,
+    o: common_vendor.o((...args) => $options.onSwitchChange && $options.onSwitchChange(...args)),
+    p: common_vendor.o((...args) => $options.saveAddress && $options.saveAddress(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

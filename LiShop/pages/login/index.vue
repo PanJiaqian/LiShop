@@ -1,5 +1,6 @@
 <template>
   <view class="login-container">
+    <Skeleton :loading="loading" />
     <image class="bg-image" src="/static/login_background.jpg" mode="aspectFill" />
     
     
@@ -18,10 +19,23 @@
 </template>
 
 <script>
+import Skeleton from '@/components/Skeleton.vue'
 import { loginAdmin } from '../../api/index.js'
 export default {
+  components: { Skeleton },
   data() {
-    return { username: '', password: '' }
+    return { username: '', password: '', loading: false }
+  },
+  onShow() {
+    try {
+      const u = uni.getStorageSync('user') || null
+      const exp = uni.getStorageSync('token_expiration') || 0
+      const valid = !!u && (!exp || Date.now() < exp)
+      if (valid) {
+        if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+        if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+      }
+    } catch (e) {}
   },
   methods: {
     login() {

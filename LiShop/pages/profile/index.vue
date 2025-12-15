@@ -1,95 +1,118 @@
 <template>
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" />
-    <!-- #ifdef H5 -->
-    <view class="h5-nav-bar">
-      <view class="nav-back" @click="goHome">
-        <view class="back-arrow"></view>
-      </view>
-      <text class="nav-title">个人中心</text>
-    </view>
-    <!-- #endif -->
-    <view class="header">
-      <image class="avatar" src="/static/logo.png" />
-      <view class="user">
-        <text class="name">{{ loggedIn ? displayName : '未登录' }}</text>
-        <button size="mini" class="login" @click="onAuthButton">{{ loggedIn ? '退出登录' : '登录' }}</button>
-      </view>
-    </view>
+    <view class="profile-grid">
+      <view class="profile-main">
+        <view class="info-card">
+          <view class="card-header-row">
+            <text class="card-title">个人信息</text>
+          </view>
+          
+          <view class="user-brief">
+             <image class="avatar" src="/static/logo.png" />
+             <!-- <text class="name">{{ loggedIn ? displayName : '未登录' }}</text> -->
+          </view>
 
-    <!-- 信息卡片：公司信息与账号信息（H5/小程序通用） -->
-    <view class="info-card">
-      <view class="card-header">
-        <text class="card-title">个人信息</text>
-        <view class="card-actions" v-if="loggedIn">
-          <text v-if="!isEditing" class="btn-edit" @click="handleEdit">编辑</text>
-          <template v-else>
-            <text class="btn-cancel" @click="handleCancel">取消</text>
-            <text class="btn-save" @click="handleSave">保存</text>
-          </template>
+          <view class="form-grid">
+            <view class="form-item">
+              <text class="label">姓名</text>
+              <input v-if="isEditing" class="input-box" v-model="editForm.username" />
+              <view v-else class="input-box static">{{ profile.username }}</view>
+            </view>
+            <view class="form-item">
+              <text class="label">手机号</text>
+              <view class="input-box static">{{ profile.phone }} <text v-if="loggedIn" class="link" @click="openSecurityModal('phone')">修改</text></view>
+            </view>
+            <view class="form-item">
+              <text class="label">邮箱</text>
+              <view class="input-box static">{{ profile.email }} <text v-if="loggedIn" class="link" @click="openSecurityModal('email')">修改</text></view>
+            </view>
+            <view class="form-item">
+              <text class="label">登录密码</text>
+              <view class="input-box static">******** <text v-if="loggedIn" class="link" @click="openSecurityModal('password')">修改</text></view>
+            </view>
+            <view class="form-item">
+              <text class="label">公司名称</text>
+              <input v-if="isEditing" class="input-box" v-model="editForm.company_name" />
+              <view v-else class="input-box static">{{ profile.companyName }}</view>
+            </view>
+            <view class="form-item">
+              <text class="label">联系人</text>
+              <input v-if="isEditing" class="input-box" v-model="editForm.contact_name" />
+              <view v-else class="input-box static">{{ profile.contactName }}</view>
+            </view>
+            <!-- <view class="form-item">
+              <text class="label">Phone Number 待定</text>
+              <view class="input-box static">{{ profile.phone }}</view>
+            </view> -->
+            <view class="form-item">
+              <text class="label">地区</text>
+              <input v-if="isEditing" class="input-box" v-model="editForm.region" />
+              <view v-else class="input-box static">{{ profile.region }}</view>
+            </view>
+          </view>
+
+          <view class="form-actions" v-if="loggedIn">
+             <text class="hint">修改资料/保存设置</text>
+             <view class="btns">
+               <button class="btn-save" @click="isEditing ? handleSave() : handleEdit()">{{ isEditing ? '保存修改' : '编辑资料' }}</button>
+               <button class="btn-cancel" @click="isEditing ? handleCancel() : logout()">{{ isEditing ? '取消' : '退出登录' }}</button>
+             </view>
+          </view>
+          <view class="form-actions" v-else>
+             <button class="btn-save" @click="login">登录</button>
+          </view>
         </view>
       </view>
-      <view class="info-row">
-        <text class="label">用户名</text>
-        <input v-if="isEditing" class="input" v-model="editForm.username" placeholder="请输入用户名" />
-        <text v-else class="value">{{ profile.username }}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">手机号</text>
-        <text class="value">{{ profile.phone }}</text>
-        <text v-if="loggedIn" class="btn-link" @click="openSecurityModal('phone')">修改</text>
-      </view>
-      <view class="info-row">
-        <text class="label">邮箱</text>
-        <text class="value">{{ profile.email }}</text>
-        <text v-if="loggedIn" class="btn-link" @click="openSecurityModal('email')">修改</text>
-      </view>
-      <view class="info-row">
-        <text class="label">登录密码</text>
-        <text class="value">********</text>
-        <text v-if="loggedIn" class="btn-link" @click="openSecurityModal('password')">修改</text>
-      </view>
-      <view class="info-row">
-        <text class="label">公司名称</text>
-        <input v-if="isEditing" class="input" v-model="editForm.company_name" placeholder="请输入公司名称" />
-        <text v-else class="value">{{ profile.companyName }}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">联系人</text>
-        <input v-if="isEditing" class="input" v-model="editForm.contact_name" placeholder="请输入联系人" />
-        <text v-else class="value">{{ profile.contactName }}</text>
-      </view>
-      <view class="info-row">
-        <text class="label">地区</text>
-        <input v-if="isEditing" class="input" v-model="editForm.region" placeholder="请输入地区" />
-        <text v-else class="value">{{ profile.region }}</text>
-      </view>
-    </view>
 
-    <view class="menu">
-      <navigator url="/pages/order/index" class="menu-item">
-        <text>我的订单</text>
-        <text class="arrow">›</text>
-      </navigator>
-      <navigator url="/pages/cart/index" open-type="switchTab" class="menu-item">
-        <text>我的购物车</text>
-        <text class="arrow">›</text>
-      </navigator>
-      <navigator url="/pages/settings/index" class="menu-item">
-        <text>设置</text>
-        <text class="arrow">›</text>
-      </navigator>
-      <navigator url="/pages/messages/index" class="menu-item">
-        <text>消息</text>
-        <text class="arrow">›</text>
-      </navigator>
-      <navigator url="/pages/address/index" class="menu-item" hover-class="none">
-        <text>收货地址</text>
-        <text class="arrow">›</text>
-      </navigator>
+      <view class="profile-aside">
+        <view class="right-card">
+          <view class="preferences-section">
+            <view class="card-header">
+              <text class="card-title">功能</text>
+            </view>
+            <view class="menu-list">
+              <navigator url="/pages/order/index" class="menu-row">
+                <text>我的订单</text>
+                <text class="arrow">›</text>
+              </navigator>
+              <navigator url="/pages/cart/index" open-type="switchTab" class="menu-row">
+                <text>我的购物车</text>
+                <text class="arrow">›</text>
+              </navigator>
+              <navigator url="/pages/settings/index" class="menu-row">
+                <text>设置</text>
+                <text class="arrow">›</text>
+              </navigator>
+              <navigator url="/pages/messages/index" class="menu-row">
+                <text>消息</text>
+                <text class="arrow">›</text>
+              </navigator>
+            </view>
+          </view>
+
+          <view class="addresses-section">
+            <view class="card-header">
+              <text class="card-title">收货地址</text>
+              <button size="mini" class="btn-add-addr" @click="goCreateAddress">添加地址</button>
+            </view>
+            <view class="addr-list">
+               <view class="addr-item" v-for="addr in addresses" :key="addr.id" @click="editAddress(addr)">
+                 <view class="addr-info">
+                   <text class="addr-txt">{{ addr.full }}</text>
+                   <text class="addr-sub">{{ addr.receiver }} {{ addr.phone }}</text>
+                 </view>
+                 <text class="arrow">›</text>
+               </view>
+               <view v-if="addresses.length === 0" class="empty-addr">暂无地址</view>
+            </view>
+          </view>
+        </view>
+      </view>
     </view>
     <!-- #ifdef H5 -->
     <FloatingNav />
+    <view class="floating-back" @click="goBack">←</view>
     <!-- #endif -->
 
     <!-- 安全验证弹窗 -->
@@ -119,13 +142,14 @@
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail } from '../../api/index.js'
+import { getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses } from '../../api/index.js'
 export default {
   components: { FloatingNav, Skeleton },
   data() { return { 
     loading: true,
     loggedIn: false, displayName: '', fetchedProfile: {}, isEditing: false, editForm: {},
-    showSecurityModal: false, securityType: '', securityForm: { value: '', code: '' }, countdown: 0, timer: null
+    showSecurityModal: false, securityType: '', securityForm: { value: '', code: '' }, countdown: 0, timer: null,
+    addresses: []
   } },
   computed: {
     profile() {
@@ -151,6 +175,7 @@ export default {
     }
   },
   onShow() {
+    this.loadAddresses()
     // #ifdef H5
     try { uni.hideTabBar({ animation: false }) } catch (e) { }
     try {
@@ -177,6 +202,29 @@ export default {
     goHome() {
       if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
       if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+    },
+    goBack() { this.goHome() },
+    loadAddresses() {
+      const u = uni.getStorageSync('user')
+      const token = (u && (u.token || (u.data && u.data.token))) || ''
+      if (!token) return
+      getAddresses({ token }).then(res => {
+        const raw = Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.items) ? res.items : [])
+        this.addresses = raw.map(a => ({
+          id: a.addresses_id || a.id || '',
+          receiver: a.receiver || '',
+          phone: a.phone || '',
+          full: [a.province, a.city, a.district, a.detail_address].filter(Boolean).join(' '),
+          is_default: a.is_default === 1
+        }))
+      }).catch(() => { this.addresses = [] })
+    },
+    goCreateAddress() {
+      uni.navigateTo({ url: '/pages/address/edit?mode=create' })
+    },
+    editAddress(addr) {
+      const id = (addr && (addr.id || addr.addresses_id)) || ''
+      uni.navigateTo({ url: '/pages/address/edit' + (id ? ('?id=' + id) : '') })
     },
     loadUserProfile(token) {
       if (!token) return Promise.resolve()
@@ -351,152 +399,245 @@ export default {
 
 <style scoped>
 .page {
-  background: linear-gradient(180deg, #fff4f2 0%, #f7f7f7 45%, #f7f7f7 100%);
   min-height: 100vh;
-  padding-bottom: 40rpx;
-  /* #ifndef H5 */
-  padding-left: 30rpx;
-  padding-right: 30rpx;
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+  padding: 40rpx;
   box-sizing: border-box;
-  /* #endif */
 }
 
-.header {
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1.3fr;
+  grid-gap: 30rpx;
+  max-width: 1800rpx;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.info-card, .right-card {
+  background: rgba(255,255,255,0.6);
+  border: 1rpx solid rgba(255,255,255,0.7);
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: saturate(180%) blur(12px);
+  margin-bottom: 30rpx;
+  height: calc(100vh - 220rpx);
   display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.profile-main, .profile-aside { align-self: stretch; }
+
+.preferences-section {
+  margin-bottom: 60rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 0;
+}
+
+.card-header-row {
+  margin-bottom: 40rpx;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 20rpx;
+}
+
+.user-brief {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 40rpx 24rpx;
-  background: #fff;
-  border-radius: 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
-  margin: 20rpx 0 0 0;
-  box-sizing: border-box;
-  width: 100%;
-  /* #ifdef MP-WEIXIN */
-  margin-top: 20rpx;
-  /* #endif */
+  margin-bottom: 60rpx;
 }
 
 .avatar {
-  width: 120rpx;
-  height: 120rpx;
+  width: 160rpx;
+  height: 160rpx;
   border-radius: 50%;
   background: #f0f0f0;
 }
 
-.user {
-  margin-left: 20rpx;
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 40rpx;
+  margin-bottom: 40rpx;
 }
 
-.name {
-  font-size: 34rpx;
-  display: block;
-  font-weight: 600;
-}
-
-.login {
-  margin-top: 10rpx;
-  height: 60rpx;
-  line-height: 60rpx;
-  background: linear-gradient(90deg, #ff6b4b, #e1251b);
-  color: #fff;
-  border-radius: 12rpx;
-  padding: 0 24rpx;
-  box-shadow: 0 6rpx 16rpx rgba(225, 37, 27, .25);
-}
-
-.menu {
-  margin: 24rpx 0;
-  background: #fff;
-  border-radius: 16rpx;
-  overflow: hidden;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
-}
-
-.info-card {
-  margin: 24rpx 0;
-  background: #fff;
-  border-radius: 16rpx;
-  overflow: hidden;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
-}
-
-.card-header {
-  padding: 24rpx;
-  border-bottom: 1px solid #f0f0f0;
+.form-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-title {
-  font-weight: 600;
-  font-size: 30rpx;
-  color: #333;
-}
-
-.card-actions {
-  display: flex;
-  gap: 20rpx;
-}
-
-.btn-edit, .btn-cancel {
-  color: #666;
-  font-size: 26rpx;
-}
-
-.btn-save {
-  color: #e1251b;
-  font-size: 26rpx;
-  font-weight: 600;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24rpx;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.info-row:last-child {
-  border-bottom: none;
+  flex-direction: column;
 }
 
 .label {
+  font-size: 24rpx;
   color: #666;
-  min-width: 140rpx;
+  margin-bottom: 16rpx;
+  font-weight: 500;
 }
 
-.value {
-  color: #333;
-  font-weight: 600;
-  text-align: right;
-  flex: 1;
-}
-
-.input {
-  flex: 1;
-  text-align: right;
+.input-box {
+  border: 1px solid #eee;
+  background: #f9f9f9;
+  padding: 20rpx;
+  border-radius: 8rpx;
   font-size: 28rpx;
   color: #333;
+  min-height: 40rpx;
 }
 
-.menu-item {
+.link {
+  color: #007aff;
+  margin-left: 10rpx;
+  font-size: 24rpx;
+  cursor: pointer;
+}
+
+.form-actions {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 30rpx;
+  text-align: right;
+}
+
+.hint {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+}
+
+.btn-save {
+  background: #000;
+  color: #fff;
+  padding: 0 60rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  margin: 0;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  color: #333;
+  padding: 0 60rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  margin: 0;
+}
+
+/* Right Side */
+.menu-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx 24rpx;
+  padding: 30rpx 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 28rpx;
+  color: #333;
+  cursor: pointer;
+}
+
+.menu-row:last-child {
+  border-bottom: none;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 20rpx;
+}
+
+.btn-add-addr {
+  font-size: 24rpx;
+  background: #f0f0f0;
+  color: #333;
+  margin: 0;
+  padding: 0 20rpx;
+  height: 50rpx;
+  line-height: 50rpx;
+}
+
+.addr-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.arrow {
-  color: #a0a0a0;
+.addr-item:last-child {
+  border-bottom: none;
 }
 
-.btn-link {
-  color: #007aff;
-  font-size: 26rpx;
-  margin-left: 16rpx;
+.addr-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.addr-txt {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.addr-sub {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.arrow {
+  color: #ccc;
+  font-size: 32rpx;
+}
+
+.empty-addr {
+  text-align: center;
+  color: #999;
+  font-size: 24rpx;
+  padding: 40rpx 0;
+}
+
+.floating-back {
+  position: fixed;
+  left: 40rpx;
+  top: 40rpx;
+  width: 80rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  /* border-radius: 50%; */
+  /* background: rgba(255,255,255,0.7); */
+  /* box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); */
+  color: #333;
+  font-size: 36rpx;
+  z-index: 999;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 /* Modal Styles */
@@ -616,11 +757,11 @@ export default {
   transform: rotate(45deg);
 }
 
-.page {
-  padding-left: 600rpx;
-  padding-right: 600rpx;
+/* .page {
+  padding-left: 300rpx;
+  padding-right: 300rpx;
   box-sizing: border-box;
-  padding-top: 88rpx; /* Make space for fixed header */
-}
+  padding-top: 88rpx;
+} */
 /* #endif */
 </style>

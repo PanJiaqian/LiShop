@@ -1,12 +1,23 @@
 
 .page.data-v-4978fed5 {
-  background: white;
+  /* background: white; */
+  
 
 
 
 
   min-height: 100vh;
   padding-bottom: 20rpx;
+}
+.page-bg.data-v-4978fed5 {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
 }
 
 /* H5 New Layout Styles */
@@ -21,7 +32,7 @@
   padding: 20rpx;
   font-weight: 500;
   font-size: 35rpx;
-  margin-left: 70rpx;
+  margin-left: 10rpx;
 }
 .more.data-v-4978fed5 {
   color: #999;
@@ -90,9 +101,9 @@
   background-color: #fff;
   border-radius: 12rpx;
   box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.08);
-  border: 1.5rpx solid #e1251b;
-  height: clamp(240rpx, 38vh, 560rpx);
-  max-height: 60vh;
+  border: 1.5rpx solid #000;
+  height: clamp(200rpx, 30vh, 480rpx);
+  max-height: 50vh;
   overflow-y: auto;
   padding: 30rpx 60rpx 60rpx;
 }
@@ -104,16 +115,27 @@
 }
 .panel-columns.data-v-4978fed5 {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 20rpx 24rpx;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30rpx 25rpx;
 }
 .panel-link.data-v-4978fed5 {
   font-size: 32rpx;
   color: #333;
   line-height: 48rpx;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .panel-link.data-v-4978fed5:hover {
-  color: #e1251b;
+  color: #333;
+  font-weight: 600;
+}
+.sub-icon.data-v-4978fed5 {
+  margin-right: 12rpx;
+  font-size: 28rpx;
 }
 .sub-empty.data-v-4978fed5 {
   font-size: 24rpx;

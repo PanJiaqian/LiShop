@@ -86,12 +86,14 @@ const _sfc_main = {
     this.loadAddresses();
   },
   methods: {
-    goBack() {
-      const pages = getCurrentPages();
-      if (pages.length > 1) {
-        common_vendor.index.navigateBack();
-      } else {
+    goHome() {
+      if (common_vendor.index && common_vendor.index.switchTab) {
         common_vendor.index.switchTab({ url: "/pages/home/index" });
+        return;
+      }
+      if (common_vendor.index && common_vendor.index.navigateTo) {
+        common_vendor.index.navigateTo({ url: "/pages/home/index" });
+        return;
       }
     },
     loadAddresses() {
@@ -108,17 +110,20 @@ const _sfc_main = {
         const cached = common_vendor.index.getStorageSync("selected_address_id") || "";
         let pick = this.addresses.find((x) => x.id === cached) || this.addresses.find((x) => x.is_default) || this.addresses[0];
         this.selectedAddress = pick || null;
+        if (this.showAddressSelector && this.addresses.length === 0) {
+          try {
+            common_vendor.index.showToast({ title: "暂无收货地址，去创建吧", icon: "none" });
+          } catch (e) {
+          }
+        }
       }).catch(() => {
         this.addresses = [];
         this.selectedAddress = null;
       });
     },
     openAddressPicker() {
-      if (!this.addresses.length) {
-        common_vendor.index.showToast({ title: "请先添加收货地址", icon: "none" });
-        return;
-      }
       this.showAddressSelector = true;
+      this.loadAddresses();
     },
     onAddressSelect(room) {
       if (room && room.raw) {
@@ -574,6 +579,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     I: common_vendor.p({
       visible: $data.showAddressSelector,
       rooms: $options.addressRooms,
+      type: "addr",
       selectedName: $data.selectedAddress ? ($data.selectedAddress.receiver + " " + $data.selectedAddress.phone + " " + $data.selectedAddress.full).trim() : ""
     })
   });

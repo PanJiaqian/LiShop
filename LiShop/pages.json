@@ -29,6 +29,7 @@
 			"path": "pages/cart/index",
 			"style": {
 				"navigationBarTitleText": "购物车",
+				"enablePullDownRefresh": true,
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -38,6 +39,7 @@
 			"path": "pages/profile/index",
 			"style": {
 				"navigationBarTitleText": "我的",
+				"enablePullDownRefresh": true,
 				"h5": {
 					"navigationStyle": "custom"
 				}

@@ -1,5 +1,6 @@
 <template>
   <view class="page address-edit-page">
+    <Skeleton :loading="loading" :showTitle="true" />
     <view class="form">
       <view class="form-item">
         <text class="label">收货人</text>
@@ -35,9 +36,11 @@
 </template>
 
 <script>
+import Skeleton from '@/components/Skeleton.vue'
 import { addAddress, updateAddress, getAddresses } from '../../api/index.js'
 
 export default {
+  components: { Skeleton },
   data() {
     return {
       id: '',
@@ -49,7 +52,8 @@ export default {
         district: '',
         detail_address: '',
         is_default: 0
-      }
+      },
+      loading: true
     }
   },
   onLoad(options) {
@@ -59,10 +63,12 @@ export default {
       uni.setNavigationBarTitle({ title: '编辑收货地址' })
     } else {
       uni.setNavigationBarTitle({ title: '新建收货地址' })
+      this.loading = false
     }
   },
   methods: {
     loadAddress(id) {
+      this.loading = true
       const u = uni.getStorageSync('user')
       const token = (u && (u.token || (u.data && u.data.token))) || ''
       getAddresses({ addresses_id: id, token }).then(res => {
@@ -81,7 +87,7 @@ export default {
       }).catch(err => {
         console.error(err)
         uni.showToast({ title: '获取地址详情失败', icon: 'none' })
-      })
+      }).finally(() => { this.loading = false })
     },
     onSwitchChange(e) {
       this.form.is_default = e.detail.value ? 1 : 0

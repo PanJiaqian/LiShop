@@ -109,6 +109,7 @@
 
     <!-- 其他平台保持原布局 -->
     <!-- #ifndef H5 -->
+    <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
     <SearchBar v-model="keyword" @search="onSearch" />
     <BannerSwiper :images="banners" />
     <scroll-view class="mp-cate-nav" scroll-x>
@@ -382,7 +383,8 @@ export default {
 
 <style scoped>
 .page {
-  background: white;
+  /* background: white; */
+  
   /* #ifdef H5 */
   min-height: 100vh;
   /* #endif */
@@ -390,6 +392,17 @@ export default {
   min-height: 100vh;
   padding-bottom: 20rpx;
   /* #endif */
+}
+
+.page-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
 }
 
 /* H5 New Layout Styles */
@@ -775,7 +788,7 @@ export default {
   padding: 20rpx;
   font-weight: 500;
   font-size: 35rpx;
-  margin-left: 70rpx;
+  margin-left: 10rpx;
 }
 
 .more {

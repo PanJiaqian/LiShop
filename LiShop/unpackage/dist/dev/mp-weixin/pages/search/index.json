@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "Lishop",
   "usingComponents": {
-    "product-card": "../../components/ProductCard"
+    "product-card": "../../components/ProductCard",
+    "skeleton": "../../components/Skeleton"
   }
 }

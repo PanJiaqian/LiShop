@@ -2,8 +2,9 @@
 const api_index = require("../../api/index.js");
 const common_vendor = require("../../common/vendor.js");
 const ProductCard = () => "../../components/ProductCard.js";
+const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
-  components: { ProductCard },
+  components: { ProductCard, Skeleton },
   data() {
     return {
       keyword: "",
@@ -93,26 +94,32 @@ const _sfc_main = {
   }
 };
 if (!Array) {
+  const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
   const _component_ProductCard = common_vendor.resolveComponent("ProductCard");
-  _component_ProductCard();
+  (_component_Skeleton + _component_ProductCard)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.t($data.keyword),
-    b: common_vendor.f($data.items, (p, idx, i0) => {
+    a: common_vendor.p({
+      loading: $data.loading,
+      showTitle: true,
+      showGrid: true
+    }),
+    b: common_vendor.t($data.keyword),
+    c: common_vendor.f($data.items, (p, idx, i0) => {
       return {
-        a: "2dab939d-0-" + i0,
+        a: "2dab939d-1-" + i0,
         b: common_vendor.p({
           product: p
         }),
         c: idx
       };
     }),
-    c: !$data.loading && $data.items.length === 0
+    d: !$data.loading && $data.items.length === 0
   }, !$data.loading && $data.items.length === 0 ? {} : {}, {
-    d: $data.loading
+    e: $data.loading
   }, $data.loading ? {} : {}, {
-    e: $data.finished && $data.items.length > 0
+    f: $data.finished && $data.items.length > 0
   }, $data.finished && $data.items.length > 0 ? {} : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-2dab939d"]]);
