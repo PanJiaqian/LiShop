@@ -1,6 +1,9 @@
 <template>
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" :showGrid="true" />
+    <!-- #ifdef MP-WEIXIN -->
+    <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
+    <!-- #endif -->
     <view class="container">
       <scroll-view class="left" scroll-y>
         <view v-for="(c, idx) in categories" :key="idx" :class="['left-item', activeIndex === idx ? 'active' : '']"
@@ -129,10 +132,17 @@ export default {
   min-height: 100vh;
 }
 
-/* #ifndef H5 */
-.page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+/* #ifdef MP-WEIXIN */
+.page { position: relative; z-index: 1; }
+.page-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
 }
 /* #endif */
 
@@ -152,8 +162,9 @@ export default {
 }
 
 .left-item.active {
-  background: #fff;
-  border-left-color: #e1251b;
+  background: #ddd;
+  /* border-left-color: #333; */
+  border-radius: 10px;
   font-weight: 600;
 }
 

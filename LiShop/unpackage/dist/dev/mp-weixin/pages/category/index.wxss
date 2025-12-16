@@ -3,9 +3,17 @@
   background: #f7f7f7;
   min-height: 100vh;
 }
-.page.data-v-3cdc7548 {
-  background: url('../../static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+.page.data-v-3cdc7548 { position: relative; z-index: 1;
+}
+.page-bg.data-v-3cdc7548 {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
 }
 .container.data-v-3cdc7548 {
   display: flex;
@@ -20,8 +28,9 @@
   border-left: 6rpx solid transparent;
 }
 .left-item.active.data-v-3cdc7548 {
-  background: #fff;
-  border-left-color: #e1251b;
+  background: #ddd;
+  /* border-left-color: #333; */
+  border-radius: 10px;
   font-weight: 600;
 }
 .right.data-v-3cdc7548 {

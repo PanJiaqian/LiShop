@@ -1,7 +1,5 @@
 
 .page.data-v-8039fbf1 {
-  background: url('../../static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
   min-height: 100vh;
   padding-bottom: 120rpx;
 }
@@ -774,7 +772,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 24rpx 20rpx;
-  background: #fff;
+  /* background: #fff; */
   border-bottom: 1rpx solid #f0f0f0;
 }
 .bar-left.data-v-8039fbf1 { display: flex; align-items: center; gap: 12rpx;
@@ -829,5 +827,18 @@
 .spec-price.data-v-8039fbf1 { color: #000;
 }
 .price-box .price.data-v-8039fbf1 { color: #000;
+}
+.page.data-v-8039fbf1 { position: relative;
+}
+.page-bg.data-v-8039fbf1 {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
 }
 

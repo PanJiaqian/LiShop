@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const common_assets = require("../../common/assets.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
 const RoomSelector = () => "../../components/RoomSelector.js";
 const Skeleton = () => "../../components/Skeleton.js";
@@ -19,6 +20,8 @@ const _sfc_main = {
       addresses: [],
       selectedAddress: null,
       showAddressSelector: false,
+      orderNote: "",
+      mpOrderNote: "",
       summaryData: {
         total_price: 0,
         total_original: 0,
@@ -32,7 +35,7 @@ const _sfc_main = {
     },
     // selectedTotal() { return this.cart.reduce((s, it) => s + (it.selected ? it.price * (it.quantity || 1) : 0), 0) },
     selectedTotal() {
-      return this.summaryData.total_price || 0;
+      return this.summaryData.total_original || 0;
     },
     // 使用API返回的总价
     selectedCount() {
@@ -410,7 +413,7 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "地址选择异常", icon: "none" });
         return;
       }
-      api_index.createOrderByIds({ ids: selectedIds, address_id: addressId }).then((res) => {
+      api_index.createOrderByIds({ ids: selectedIds, address_id: addressId, note: this.orderNote || this.mpOrderNote || "" }).then((res) => {
         var _a2, _b;
         if (res && res.success) {
           common_vendor.index.showToast({ title: "下单成功", icon: "success" });
@@ -526,19 +529,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       loading: $data.loading,
       showTitle: true
     }),
-    b: $data.selectedAddress
+    b: common_assets._imports_0,
+    c: $data.selectedAddress
   }, $data.selectedAddress ? {
-    c: common_vendor.t($data.selectedAddress.receiver),
-    d: common_vendor.t($data.selectedAddress.phone)
+    d: common_vendor.t($data.selectedAddress.receiver),
+    e: common_vendor.t($data.selectedAddress.phone)
   } : {}, {
-    e: $data.selectedAddress
+    f: $data.selectedAddress
   }, $data.selectedAddress ? {
-    f: common_vendor.t($data.selectedAddress.full)
+    g: common_vendor.t($data.selectedAddress.full)
   } : {}, {
-    g: common_vendor.o((...args) => $options.openAddressPicker && $options.openAddressPicker(...args)),
-    h: $data.cart.length
+    h: common_vendor.o((...args) => $options.openAddressPicker && $options.openAddressPicker(...args)),
+    i: $data.mpOrderNote,
+    j: common_vendor.o(($event) => $data.mpOrderNote = $event.detail.value),
+    k: $data.cart.length
   }, $data.cart.length ? {
-    i: common_vendor.f($options.groups, (grp, gi, i0) => {
+    l: common_vendor.f($options.groups, (grp, gi, i0) => {
       return {
         a: common_vendor.t(grp.name),
         b: common_vendor.o(($event) => $options.openRoomPopup(grp), grp.name),
@@ -568,17 +574,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    j: $options.isAllSelected ? 1 : "",
-    k: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
-    l: common_vendor.t($options.selectedTotal.toFixed(2)),
-    m: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
-    n: common_vendor.t($options.selectedCount),
-    o: $options.selectedCount === 0 ? 1 : "",
-    p: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
-    q: $data.showRoomModal
+    m: $options.isAllSelected ? 1 : "",
+    n: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
+    o: common_vendor.t($options.selectedTotal.toFixed(2)),
+    p: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
+    q: common_vendor.t($options.selectedCount),
+    r: $options.selectedCount === 0 ? 1 : "",
+    s: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
+    t: $data.showRoomModal
   }, $data.showRoomModal ? {
-    r: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
-    s: common_vendor.f($data.rooms, (r, k0, i0) => {
+    v: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args)),
+    w: common_vendor.f($data.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: r.id,
@@ -586,26 +592,26 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.selectRoom(r), r.id)
       };
     }),
-    t: common_vendor.o(() => {
+    x: common_vendor.o(() => {
     }),
-    v: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
+    y: common_vendor.o((...args) => $options.closeRoomPopup && $options.closeRoomPopup(...args))
   } : {}, {
-    w: $data.showSpecModal
+    z: $data.showSpecModal
   }, $data.showSpecModal ? {
-    x: $data.editingItem.image || "/static/logo.png",
-    y: common_vendor.t($data.editingItem.price),
-    z: common_vendor.t($data.editingItem.attr),
-    A: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    B: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    C: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    D: common_vendor.o(() => {
+    A: $data.editingItem.image || "/static/logo.png",
+    B: common_vendor.t($data.editingItem.price),
+    C: common_vendor.t($data.editingItem.attr),
+    D: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    E: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    F: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    G: common_vendor.o(() => {
     }),
-    E: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
+    H: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
   } : {}, {
-    F: common_vendor.o(($event) => $data.showAddressSelector = false),
-    G: common_vendor.o($options.onAddressSelect),
-    H: common_vendor.o($options.onCreateAddress),
-    I: common_vendor.p({
+    I: common_vendor.o(($event) => $data.showAddressSelector = false),
+    J: common_vendor.o($options.onAddressSelect),
+    K: common_vendor.o($options.onCreateAddress),
+    L: common_vendor.p({
       visible: $data.showAddressSelector,
       rooms: $options.addressRooms,
       type: "addr",

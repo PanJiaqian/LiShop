@@ -1,6 +1,9 @@
 <template>
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" />
+    <!-- #ifdef MP-WEIXIN -->
+    <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
+    <!-- #endif -->
     <!-- 顶部导航 -->
     <view class="nav" v-if="!order">
       <view class="nav-item" :class="{ active: activeTab === 'all' }" @click="switchTab('all')">全部订单</view>
@@ -388,10 +391,14 @@ export default {
 
 <style scoped>
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
   min-height: 100vh;
 }
+/* #ifdef H5 */
+.page {
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+/* #endif */
 
 .nav {
   display: flex;
@@ -852,5 +859,19 @@ export default {
   color: #000;
 }
 
+/* #endif */
+/* #ifdef MP-WEIXIN */
+.page { position: relative; }
+.page-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
 /* #endif */
 </style>

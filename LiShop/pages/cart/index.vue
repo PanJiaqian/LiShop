@@ -1,6 +1,9 @@
 <template>
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" />
+    <!-- #ifdef MP-WEIXIN -->
+    <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
+    <!-- #endif -->
     <!-- #ifdef H5 -->
     <view class="cart-grid">
       <view class="cart-main">
@@ -64,6 +67,10 @@
                <button size="mini" class="btn-select-addr" @click="openAddressPicker">选择地址</button>
             </view>
           </view>
+          <view class="note-section" style="margin-top: 20rpx;">
+            <view class="note-label" style="font-size: 24rpx; color: #434343; font-weight: 600;">订单备注</view>
+            <input v-model="orderNote" placeholder="填写订单备注信息" style="width: 95%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx;" />
+          </view>
 
           <view v-if="selectedCount > 0" class="sum-body">
             <view class="thumbs">
@@ -116,6 +123,10 @@
         </view>
       </view>
       <button size="mini" class="bar-btn" @click="openAddressPicker">选择收货地址</button>
+    </view>
+    <view class="mp-note-bar" style="margin: 16rpx 20rpx;">
+      <text style="font-size: 26rpx; color: #333;">备注</text>
+      <input v-model="mpOrderNote" placeholder="填写订单备注" style="width: 100%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx;" />
     </view>
     <view v-if="cart.length" class="list">
       <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
@@ -266,6 +277,8 @@ export default {
       addresses: [],
       selectedAddress: null,
       showAddressSelector: false,
+      orderNote: '',
+      mpOrderNote: '',
       summaryData: {
         total_price: 0,
         total_original: 0,
@@ -276,7 +289,7 @@ export default {
   computed: {
     total() { return this.cart.reduce((s, it) => s + (it.price * (it.quantity || 1)), 0) },
     // selectedTotal() { return this.cart.reduce((s, it) => s + (it.selected ? it.price * (it.quantity || 1) : 0), 0) },
-    selectedTotal() { return this.summaryData.total_price || 0 }, // 使用API返回的总价
+    selectedTotal() { return this.summaryData.total_original || 0 }, // 使用API返回的总价
     selectedCount() { return this.cart.filter(it => it.selected).length },
     isAllSelected() { 
         const validItems = this.cart.filter(it => !it.isOutOfStock)
@@ -591,7 +604,7 @@ export default {
       if (!addressId) { uni.showToast({ title: '请先选择收货地址', icon: 'none' }); return }
       if (!addressId) { uni.showToast({ title: '地址选择异常', icon: 'none' }); return }
 
-      createOrderByIds({ ids: selectedIds, address_id: addressId }).then(res => {
+      createOrderByIds({ ids: selectedIds, address_id: addressId, note: (this.orderNote || this.mpOrderNote || '') }).then(res => {
           if (res && res.success) {
              uni.showToast({ title: '下单成功', icon: 'success' })
              // 移除已选商品
@@ -757,11 +770,15 @@ export default {
 
 <style scoped>
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
   min-height: 100vh;
   padding-bottom: 120rpx;
 }
+/* #ifdef H5 */
+.page {
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+/* #endif */
 
 .review-title {
   font-size: 36rpx;
@@ -1617,7 +1634,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 24rpx 20rpx;
-  background: #fff;
+  /* background: #fff; */
   border-bottom: 1rpx solid #f0f0f0;
 }
 .bar-left { display: flex; align-items: center; gap: 12rpx; }
@@ -1669,5 +1686,19 @@ export default {
 .sum { color: #000; }
 .spec-price { color: #000; }
 .price-box .price { color: #000; }
+/* #endif */
+/* #ifdef MP-WEIXIN */
+.page { position: relative; }
+.page-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
 /* #endif */
 </style>

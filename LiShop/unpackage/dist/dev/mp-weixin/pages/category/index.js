@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const common_assets = require("../../common/assets.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
 const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
@@ -115,7 +116,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       showTitle: true,
       showGrid: true
     }),
-    b: common_vendor.f($data.categories, (c, idx, i0) => {
+    b: common_assets._imports_0,
+    c: common_vendor.f($data.categories, (c, idx, i0) => {
       return {
         a: common_vendor.t(c.name),
         b: idx,
@@ -123,8 +125,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.selectCategory(idx), idx)
       };
     }),
-    c: common_vendor.t($options.activeCategory.name),
-    d: common_vendor.f($data.rightChildren, (s, i, i0) => {
+    d: common_vendor.t($options.activeCategory.name),
+    e: common_vendor.f($data.rightChildren, (s, i, i0) => {
       return {
         a: s.icon || "/static/logo.png",
         b: common_vendor.t(s.name),

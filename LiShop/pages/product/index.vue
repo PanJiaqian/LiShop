@@ -40,12 +40,12 @@
                   <view class="pd-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin ?
                     product.shipping_origin.replace(/省|市/g, '') : '—' }}</text></view>
                   <view class="pd-param-item"><text class="key">单位</text><text class="val">件</text></view>
-                  <view class="pd-param-item"><text class="key">价格</text><text class="val">¥{{ product.price.toFixed(2)
-                  }}</text></view>
+                  <!-- <view class="pd-param-item"><text class="key">价格</text><text class="val">¥{{ product.price.toFixed(2)
+                  }}</text></view> -->
                   <view class="pd-param-item"><text class="key">发货</text><text class="val">{{
                     product.shipping_time_hours ? (product.shipping_time_hours + '小时') : '待定' }}</text></view>
-                  <view class="pd-param-item"><text class="key">售后</text><text class="val">{{
-                    product.support_no_reason_return_7d ? '七天无理由' : '无' }}</text></view>
+                  <!-- <view class="pd-param-item"><text class="key">售后</text><text class="val">{{
+                    product.support_no_reason_return_7d ? '七天无理由' : '无' }}</text></view> -->
                 </view>
               </view>
 
@@ -66,7 +66,7 @@
                       '七天无理由' : '不支持七天无理由' }}</text>
                 </view>
                 <view class="pd-price-row">
-                  <text class="pd-price">¥{{ product.price.toFixed(2) }}</text>
+                  <text class="pd-price">¥{{ displayTopPrice }}</text>
                   <text class="pd-coupon">券后更低</text>
                 </view>
 
@@ -132,7 +132,7 @@
                     <view class="qty-btn" @click="incQty">+</view>
                   </view>
                   <button class="btn-action btn-cart" @click="addToCartWithQty">加入购物车</button>
-                  <button class="btn-action btn-buy" @click="buyNow">立即购买</button>
+                  <!-- <button class="btn-action btn-buy" @click="buyNow">立即购买</button> -->
                 </view>
               </view>
             </view>
@@ -143,7 +143,7 @@
       <!-- #endif -->
 
       <!-- #ifdef MP-WEIXIN -->
-      <image class="mp-page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
+      <!-- 背景图移除 -->
       <!-- #endif -->
 
       <!-- #ifndef H5 -->
@@ -280,14 +280,14 @@
 </template>
 
 <script>
-import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getAddresses, addAddress } from '../../api/index.js'
+import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
 
 export default {
   components: { RoomSelector, FloatingNav, Skeleton },
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null } },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '' } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -358,6 +358,16 @@ export default {
     mpAddressDisplay() {
       const a = this.selectedAddress
       return a ? `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(' ')}`.trim() : ''
+    },
+    displayTopPrice() {
+      const sel = this.selectedSpec
+      if (sel && sel.has_length === 1) {
+        const perM = Number(this.displaySpecPrice(sel) || 0)
+        const len = Number(this.specLength || 0)
+        if (len > 0) return (perM * len).toFixed(2)
+        return `${perM.toFixed(2)}/m`
+      }
+      return Number(this.product?.price || 0).toFixed(2)
     }
   },
   watch: {
@@ -692,16 +702,7 @@ export default {
 
 /* #ifdef MP-WEIXIN */
 .product-page { position: relative; z-index: 1; }
-.mp-page-bg {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
-}
+/* 背景图样式已移除 */
 /* #endif */
 
 .cover {
@@ -1793,7 +1794,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 20rpx;
-  background: #fff;
+  /* background: #fff; */
   border: 1rpx solid #e6e6e6;
   border-radius: 12rpx;
   margin: 16rpx 0;
