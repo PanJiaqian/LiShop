@@ -1,6 +1,9 @@
 <template>
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" />
+    <!-- #ifdef MP-WEIXIN -->
+    <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
+    <!-- #endif -->
     <view class="profile-grid">
       <view class="profile-main">
         <view class="info-card">
@@ -21,15 +24,33 @@
             </view>
             <view class="form-item">
               <text class="label">手机号</text>
+              <!-- #ifndef MP-WEIXIN -->
               <view class="input-box static">{{ profile.phone }} <text v-if="loggedIn" class="link" @click="openSecurityModal('phone')">修改</text></view>
+              <!-- #endif -->
+              <!-- #ifdef MP-WEIXIN -->
+              <view class="input-box static">{{ profile.phone }}</view>
+              <view v-if="loggedIn" class="edit-under"><text class="link-under" @click="openSecurityModal('phone')">修改</text></view>
+              <!-- #endif -->
             </view>
             <view class="form-item">
               <text class="label">邮箱</text>
+              <!-- #ifndef MP-WEIXIN -->
               <view class="input-box static">{{ profile.email }} <text v-if="loggedIn" class="link" @click="openSecurityModal('email')">修改</text></view>
+              <!-- #endif -->
+              <!-- #ifdef MP-WEIXIN -->
+              <view class="input-box static">{{ profile.email }}</view>
+              <view v-if="loggedIn" class="edit-under"><text class="link-under" @click="openSecurityModal('email')">修改</text></view>
+              <!-- #endif -->
             </view>
             <view class="form-item">
               <text class="label">登录密码</text>
+              <!-- #ifndef MP-WEIXIN -->
               <view class="input-box static">******** <text v-if="loggedIn" class="link" @click="openSecurityModal('password')">修改</text></view>
+              <!-- #endif -->
+              <!-- #ifdef MP-WEIXIN -->
+              <view class="input-box static">********</view>
+              <view v-if="loggedIn" class="edit-under"><text class="link-under" @click="openSecurityModal('password')">修改</text></view>
+              <!-- #endif -->
             </view>
             <view class="form-item">
               <text class="label">公司名称</text>
@@ -400,11 +421,15 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
   padding: 40rpx;
   box-sizing: border-box;
 }
+/* #ifdef H5 */
+.page {
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+/* #endif */
 
 .profile-grid {
   display: grid;
@@ -430,7 +455,7 @@ export default {
   -webkit-backdrop-filter: saturate(180%) blur(12px);
   backdrop-filter: saturate(180%) blur(12px);
   margin-bottom: 30rpx;
-  height: calc(100vh - 220rpx);
+  height: calc(100vh - 320rpx);
   display: flex;
   flex-direction: column;
   overflow: auto;
@@ -616,8 +641,8 @@ export default {
 
 .arrow {
   color: #ccc;
-  font-size: 28rpx;
-  margin-left: 20rpx;
+  font-size: 40rpx;
+  margin-left: auto;
 }
 
 .empty-addr {
@@ -762,11 +787,31 @@ export default {
   transform: rotate(45deg);
 }
 
+.profile-grid { align-items: center; }
+.info-card, .right-card { justify-content: center; }
+
 /* .page {
   padding-left: 300rpx;
   padding-right: 300rpx;
   box-sizing: border-box;
   padding-top: 88rpx;
 } */
+/* #endif */
+
+/* #ifdef MP-WEIXIN */
+.profile-grid { grid-template-columns: 1fr; }
+.info-card, .right-card {
+  background: #fff;
+  border: 1rpx solid #eee;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.06);
+  height: auto;
+  overflow: visible;
+}
+.menu-row { padding: 24rpx 0; }
+.btn-add-addr { background: #000; color: #fff; border-radius: 30rpx; }
+.arrow { color: #999; }
+.page-bg { position: fixed; left: 0; right: 0; top: 0; bottom: 0; width: 100vw; height: 100vh; z-index: -1; }
+.edit-under { margin-top: 12rpx; }
+.link-under { color: #007aff; font-size: 24rpx; }
 /* #endif */
 </style>

@@ -5,6 +5,10 @@
   width: 100vw;
   box-sizing: border-box;
 }
+.page.data-v-2dab939d {
+  background: url('../../static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
 .header.data-v-2dab939d {
   display: flex;
   align-items: baseline;

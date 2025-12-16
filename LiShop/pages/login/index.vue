@@ -1,7 +1,12 @@
 <template>
   <view class="login-container">
     <Skeleton :loading="loading" />
+    <!-- #ifdef MP-WEIXIN -->
+    <image class="bg-image" src="/static/product_detail_background.jpg" mode="aspectFill" />
+    <!-- #endif -->
+    <!-- #ifndef MP-WEIXIN -->
     <image class="bg-image" src="/static/login_background.jpg" mode="aspectFill" />
+    <!-- #endif -->
     
     
 

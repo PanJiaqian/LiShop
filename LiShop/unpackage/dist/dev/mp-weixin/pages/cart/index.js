@@ -43,7 +43,7 @@ const _sfc_main = {
       return validItems.length > 0 && validItems.every((it) => it.selected);
     },
     selectedThumbs() {
-      return this.cart.filter((it) => it.selected).slice(0, 2).map((it) => it.image || "/static/logo.png");
+      return this.cart.filter((it) => it.selected).slice(0, 4).map((it) => it.image || "/static/logo.png");
     },
     // officialReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.officialReduce || 0) : 0), 0) },
     // redReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.redReduce || 0) : 0), 0) },
@@ -94,6 +94,20 @@ const _sfc_main = {
       if (common_vendor.index && common_vendor.index.navigateTo) {
         common_vendor.index.navigateTo({ url: "/pages/home/index" });
         return;
+      }
+    },
+    goBack() {
+      this.goHome();
+    },
+    openDetail(item) {
+      try {
+        const id = item && (item.availableProductId || item.available_product_id || item.productId || item.id) || "";
+        if (!id) {
+          common_vendor.index.showToast({ title: "商品ID缺失", icon: "none" });
+          return;
+        }
+        common_vendor.index.navigateTo({ url: "/pages/product/index?id=" + encodeURIComponent(id) });
+      } catch (e) {
       }
     },
     loadAddresses() {
@@ -175,14 +189,15 @@ const _sfc_main = {
             const isOutOfStock = x.inventory === 0 || x.available_product_status === 0;
             list.push({
               id: x && x.id ? x.id : "",
-              title: x && x.product_id ? x.product_id : "",
+              title: x && (x.available_product_name || x.product_name) ? x.available_product_name || x.product_name : "",
               productId: x && x.product_id ? x.product_id : "",
+              availableProductId: x && x.available_product_id ? x.available_product_id : x && x.product_id ? x.product_id : "",
               price: Number((x && x.price) !== void 0 ? x.price : 0) || 0,
               quantity: Number((x && x.quantity) !== void 0 ? x.quantity : 1) || 1,
               image: "/static/logo.png",
               roomName: roomName || "默认房间",
               roomId: g.room_id || "",
-              length: x.length || 1,
+              length: Number(x.length) > 0 ? x.length : 0,
               color: x.color || "暖白",
               note: x.note || "",
               attr: (x && x.length ? "长度 " + x.length : "") + (x && x.note ? " ｜ " + x.note : ""),
@@ -254,7 +269,7 @@ const _sfc_main = {
         id: item.id,
         room_id: item.roomId,
         product_id: item.productId,
-        length: item.length,
+        length: Number(item.length) > 0 ? item.length : 0,
         quantity,
         color: item.color,
         note: item.note
@@ -319,9 +334,22 @@ const _sfc_main = {
       });
     },
     removeSelected() {
-      this.cart = this.cart.filter((it) => !it.selected);
-      this.sync();
-      this.fetchSummary();
+      const ids = this.cart.filter((it) => it.selected).map((it) => it.id);
+      if (ids.length === 0) {
+        return;
+      }
+      const tasks = ids.map((id) => api_index.deleteCartItem({ id }));
+      Promise.allSettled(tasks).then(() => {
+        this.cart = this.cart.filter((it) => !ids.includes(it.id));
+        this.sync();
+        this.fetchSummary();
+        common_vendor.index.showToast({ title: "已删除", icon: "success" });
+      }).catch(() => {
+        this.cart = this.cart.filter((it) => !ids.includes(it.id));
+        this.sync();
+        this.fetchSummary();
+        common_vendor.index.showToast({ title: "本地删除", icon: "none" });
+      });
     },
     clearRemote() {
       api_index.clearCart().then((res) => {
@@ -467,7 +495,7 @@ const _sfc_main = {
           id: item.id,
           room_id: room.id,
           product_id: item.productId,
-          length: item.length,
+          length: Number(item.length) > 0 ? item.length : 0,
           quantity: item.quantity,
           color: item.color,
           note: item.note
@@ -522,17 +550,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
             c: it.isOutOfStock ? 1 : "",
             d: common_vendor.o(($event) => $options.toggleById(it.id), it.id),
             e: it.image || "/static/logo.png",
-            f: common_vendor.t(it.title),
-            g: common_vendor.t(it.attr),
-            h: common_vendor.t(it.price.toFixed(2)),
-            i: common_vendor.o(($event) => $options.decById(it.id), it.id),
-            j: common_vendor.t(it.quantity),
-            k: common_vendor.o(($event) => $options.incById(it.id), it.id),
-            l: common_vendor.o(($event) => $options.removeById(it.id), it.id),
-            m: it.isOutOfStock
+            f: common_vendor.o(($event) => $options.openDetail(it), it.id),
+            g: common_vendor.t(it.title),
+            h: common_vendor.o(($event) => $options.openDetail(it), it.id),
+            i: common_vendor.t(it.attr),
+            j: common_vendor.t(it.price.toFixed(2)),
+            k: common_vendor.o(($event) => $options.decById(it.id), it.id),
+            l: common_vendor.t(it.quantity),
+            m: common_vendor.o(($event) => $options.incById(it.id), it.id),
+            n: it.isOutOfStock
           }, it.isOutOfStock ? {} : {}, {
-            n: it.id,
-            o: it.isOutOfStock ? 1 : ""
+            o: it.id,
+            p: it.isOutOfStock ? 1 : ""
           });
         }),
         d: grp.name

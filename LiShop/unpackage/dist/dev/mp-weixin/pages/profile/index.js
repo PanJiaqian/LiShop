@@ -18,7 +18,8 @@ const _sfc_main = {
       securityType: "",
       securityForm: { value: "", code: "" },
       countdown: 0,
-      timer: null
+      timer: null,
+      addresses: []
     };
   },
   computed: {
@@ -47,6 +48,7 @@ const _sfc_main = {
     }
   },
   onShow() {
+    this.loadAddresses();
     try {
       const u = common_vendor.index.getStorageSync("user") || null;
       this.loggedIn = !!u;
@@ -71,6 +73,35 @@ const _sfc_main = {
         common_vendor.index.navigateTo({ url: "/pages/home/index" });
         return;
       }
+    },
+    goBack() {
+      this.goHome();
+    },
+    loadAddresses() {
+      const u = common_vendor.index.getStorageSync("user");
+      const token = u && (u.token || u.data && u.data.token) || "";
+      if (!token)
+        return;
+      api_index.getAddresses({ token }).then((res) => {
+        var _a;
+        const raw = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : Array.isArray(res == null ? void 0 : res.items) ? res.items : [];
+        this.addresses = raw.map((a) => ({
+          id: a.addresses_id || a.id || "",
+          receiver: a.receiver || "",
+          phone: a.phone || "",
+          full: [a.province, a.city, a.district, a.detail_address].filter(Boolean).join(" "),
+          is_default: a.is_default === 1
+        }));
+      }).catch(() => {
+        this.addresses = [];
+      });
+    },
+    goCreateAddress() {
+      common_vendor.index.navigateTo({ url: "/pages/address/edit?mode=create" });
+    },
+    editAddress(addr) {
+      const id = addr && (addr.id || addr.addresses_id) || "";
+      common_vendor.index.navigateTo({ url: "/pages/address/edit" + (id ? "?id=" + id : "") });
     },
     loadUserProfile(token) {
       if (!token)
@@ -266,77 +297,87 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       loading: $data.loading,
       showTitle: true
     }),
-    b: common_assets._imports_0$2,
-    c: common_vendor.t($data.loggedIn ? $data.displayName : "未登录"),
-    d: common_vendor.t($data.loggedIn ? "退出登录" : "登录"),
-    e: common_vendor.o((...args) => $options.onAuthButton && $options.onAuthButton(...args)),
-    f: $data.loggedIn
-  }, $data.loggedIn ? common_vendor.e({
-    g: !$data.isEditing
-  }, !$data.isEditing ? {
-    h: common_vendor.o((...args) => $options.handleEdit && $options.handleEdit(...args))
-  } : {
-    i: common_vendor.o((...args) => $options.handleCancel && $options.handleCancel(...args)),
-    j: common_vendor.o((...args) => $options.handleSave && $options.handleSave(...args))
-  }) : {}, {
-    k: $data.isEditing
+    b: common_assets._imports_0,
+    c: common_assets._imports_1$1,
+    d: $data.isEditing
   }, $data.isEditing ? {
-    l: $data.editForm.username,
-    m: common_vendor.o(($event) => $data.editForm.username = $event.detail.value)
+    e: $data.editForm.username,
+    f: common_vendor.o(($event) => $data.editForm.username = $event.detail.value)
   } : {
-    n: common_vendor.t($options.profile.username)
+    g: common_vendor.t($options.profile.username)
   }, {
-    o: common_vendor.t($options.profile.phone),
-    p: $data.loggedIn
+    h: common_vendor.t($options.profile.phone),
+    i: $data.loggedIn
   }, $data.loggedIn ? {
-    q: common_vendor.o(($event) => $options.openSecurityModal("phone"))
+    j: common_vendor.o(($event) => $options.openSecurityModal("phone"))
   } : {}, {
-    r: common_vendor.t($options.profile.email),
-    s: $data.loggedIn
+    k: common_vendor.t($options.profile.email),
+    l: $data.loggedIn
   }, $data.loggedIn ? {
-    t: common_vendor.o(($event) => $options.openSecurityModal("email"))
+    m: common_vendor.o(($event) => $options.openSecurityModal("email"))
   } : {}, {
-    v: $data.loggedIn
+    n: $data.loggedIn
   }, $data.loggedIn ? {
-    w: common_vendor.o(($event) => $options.openSecurityModal("password"))
+    o: common_vendor.o(($event) => $options.openSecurityModal("password"))
   } : {}, {
-    x: $data.isEditing
+    p: $data.isEditing
   }, $data.isEditing ? {
-    y: $data.editForm.company_name,
-    z: common_vendor.o(($event) => $data.editForm.company_name = $event.detail.value)
+    q: $data.editForm.company_name,
+    r: common_vendor.o(($event) => $data.editForm.company_name = $event.detail.value)
   } : {
-    A: common_vendor.t($options.profile.companyName)
+    s: common_vendor.t($options.profile.companyName)
   }, {
-    B: $data.isEditing
+    t: $data.isEditing
   }, $data.isEditing ? {
-    C: $data.editForm.contact_name,
-    D: common_vendor.o(($event) => $data.editForm.contact_name = $event.detail.value)
+    v: $data.editForm.contact_name,
+    w: common_vendor.o(($event) => $data.editForm.contact_name = $event.detail.value)
   } : {
-    E: common_vendor.t($options.profile.contactName)
+    x: common_vendor.t($options.profile.contactName)
   }, {
-    F: $data.isEditing
+    y: $data.isEditing
   }, $data.isEditing ? {
-    G: $data.editForm.region,
-    H: common_vendor.o(($event) => $data.editForm.region = $event.detail.value)
+    z: $data.editForm.region,
+    A: common_vendor.o(($event) => $data.editForm.region = $event.detail.value)
   } : {
-    I: common_vendor.t($options.profile.region)
+    B: common_vendor.t($options.profile.region)
   }, {
-    J: $data.showSecurityModal
-  }, $data.showSecurityModal ? {
-    K: common_vendor.t($options.securityTitle),
-    L: $options.securityPlaceholder,
-    M: $data.securityForm.value,
-    N: common_vendor.o(($event) => $data.securityForm.value = $event.detail.value),
-    O: $data.securityForm.code,
-    P: common_vendor.o(($event) => $data.securityForm.code = $event.detail.value),
-    Q: common_vendor.t($data.countdown > 0 ? `${$data.countdown}s` : "获取验证码"),
-    R: $data.countdown > 0,
-    S: common_vendor.o((...args) => $options.sendCode && $options.sendCode(...args)),
-    T: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args)),
-    U: common_vendor.o((...args) => $options.confirmSecurityEdit && $options.confirmSecurityEdit(...args)),
-    V: common_vendor.o(() => {
+    C: $data.loggedIn
+  }, $data.loggedIn ? {
+    D: common_vendor.t($data.isEditing ? "保存修改" : "编辑资料"),
+    E: common_vendor.o(($event) => $data.isEditing ? $options.handleSave() : $options.handleEdit()),
+    F: common_vendor.t($data.isEditing ? "取消" : "退出登录"),
+    G: common_vendor.o(($event) => $data.isEditing ? $options.handleCancel() : $options.logout())
+  } : {
+    H: common_vendor.o((...args) => $options.login && $options.login(...args))
+  }, {
+    I: common_vendor.o((...args) => $options.goCreateAddress && $options.goCreateAddress(...args)),
+    J: common_vendor.f($data.addresses, (addr, k0, i0) => {
+      return {
+        a: common_vendor.t(addr.full),
+        b: common_vendor.t(addr.receiver),
+        c: common_vendor.t(addr.phone),
+        d: addr.id,
+        e: common_vendor.o(($event) => $options.editAddress(addr), addr.id)
+      };
     }),
-    W: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args))
+    K: $data.addresses.length === 0
+  }, $data.addresses.length === 0 ? {} : {}, {
+    L: $data.showSecurityModal
+  }, $data.showSecurityModal ? {
+    M: common_vendor.t($options.securityTitle),
+    N: $options.securityPlaceholder,
+    O: $data.securityForm.value,
+    P: common_vendor.o(($event) => $data.securityForm.value = $event.detail.value),
+    Q: $data.securityForm.code,
+    R: common_vendor.o(($event) => $data.securityForm.code = $event.detail.value),
+    S: common_vendor.t($data.countdown > 0 ? `${$data.countdown}s` : "获取验证码"),
+    T: $data.countdown > 0,
+    U: common_vendor.o((...args) => $options.sendCode && $options.sendCode(...args)),
+    V: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args)),
+    W: common_vendor.o((...args) => $options.confirmSecurityEdit && $options.confirmSecurityEdit(...args)),
+    X: common_vendor.o(() => {
+    }),
+    Y: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-201c0da5"]]);

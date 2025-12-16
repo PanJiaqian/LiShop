@@ -32,6 +32,9 @@
   font-size: 30rpx;
   font-weight: 600;
 }
+.price.data-v-fe52aa40 {
+  color: #000;
+}
 .sales.data-v-fe52aa40 {
   font-size: 24rpx;
   color: #999;

@@ -73,6 +73,12 @@ export default {
   font-weight: 600;
 }
 
+/* #ifdef MP-WEIXIN */
+.price {
+  color: #000;
+}
+/* #endif */
+
 .sales {
   font-size: 24rpx;
   color: #999;

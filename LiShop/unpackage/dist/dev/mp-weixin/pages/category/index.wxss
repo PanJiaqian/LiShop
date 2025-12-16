@@ -3,6 +3,10 @@
   background: #f7f7f7;
   min-height: 100vh;
 }
+.page.data-v-3cdc7548 {
+  background: url('../../static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
 .container.data-v-3cdc7548 {
   display: flex;
   height: calc(100vh - 88rpx);

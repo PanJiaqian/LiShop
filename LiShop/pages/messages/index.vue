@@ -34,6 +34,13 @@ export default {
   background: #f7f7f7;
 }
 
+/* #ifdef MP-WEIXIN */
+.page {
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+/* #endif */
+
 .header {
   padding: 32rpx;
   background: #fff;

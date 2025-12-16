@@ -129,6 +129,13 @@ export default {
   min-height: 100vh;
 }
 
+/* #ifndef H5 */
+.page {
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+/* #endif */
+
 .container {
   display: flex;
   height: calc(100vh - 88rpx);

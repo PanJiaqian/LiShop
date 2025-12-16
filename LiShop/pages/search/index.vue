@@ -116,6 +116,13 @@ export default {
   width: 100vw;
   box-sizing: border-box;
 }
+
+/* #ifdef MP-WEIXIN */
+.page {
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+/* #endif */
 .header {
   display: flex;
   align-items: baseline;

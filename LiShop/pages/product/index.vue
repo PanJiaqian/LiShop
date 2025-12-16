@@ -142,6 +142,10 @@
       <FloatingNav :hoverReveal="true" />
       <!-- #endif -->
 
+      <!-- #ifdef MP-WEIXIN -->
+      <image class="mp-page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
+      <!-- #endif -->
+
       <!-- #ifndef H5 -->
       <swiper class="cover" indicator-dots autoplay circular interval="3000">
         <swiper-item v-for="(item, index) in images" :key="index">
@@ -686,6 +690,20 @@ export default {
   padding-bottom: 120rpx;
 }
 
+/* #ifdef MP-WEIXIN */
+.product-page { position: relative; z-index: 1; }
+.mp-page-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+}
+/* #endif */
+
 .cover {
   width: 100%;
   height: 500rpx;
@@ -703,7 +721,12 @@ export default {
 }
 
 .price {
+  /* #ifndef H5 */
+  color: #333;
+  /* #endif */
+  /* #ifdef H5 */
   color: #e1251b;
+  /* #endif */
   font-size: 34rpx;
   margin-top: 8rpx;
   display: block;
@@ -728,7 +751,12 @@ export default {
 
 .btn-cart {
   width: 100%;
+  /* #ifndef H5 */
+  background: #000;
+  /* #endif */
+  /* #ifdef H5 */
   background: #ff8c3a;
+  /* #endif */
   color: #fff;
   border-radius: 999rpx;
   height: 80rpx;
@@ -1511,9 +1539,8 @@ export default {
 }
 
 .mp-btn.primary {
-  background: linear-gradient(135deg, #ff6a00, #ff2d55);
+  background: #000;
   color: #fff;
-  box-shadow: 0 6rpx 16rpx rgba(255, 106, 0, 0.35);
 }
 
 /* 使数量步进器横向排列 */

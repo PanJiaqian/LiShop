@@ -9,7 +9,7 @@
           <view class="tool-right">
             <view class="chk all btn-style" @click="toggleAll">
               <view class="chk-ico" :class="{ on: isAllSelected }"></view>
-              <text class="chk-txt">选择全部</text>
+              <text class="chk-txt">{{ isAllSelected ? '取消全选' : '选择全部' }}</text>
             </view>
             <view class="chk btn-style" @click="removeSelected">
               <text class="chk-txt">删除🗑️</text>
@@ -932,8 +932,8 @@ export default {
 }
 
 .chk-ico.on {
-  background: #ff5500;
-  border-color: #ff5500;
+  background: #333;
+  /* border-color: #ff5500; */
 }
 
 .chk-txt {
@@ -944,7 +944,7 @@ export default {
 .chk.btn-style {
   width: auto;
   padding: 10rpx 20rpx;
-  background: #fff;
+  background: #ddd;
   border: 1rpx solid #ddd;
   border-radius: 30rpx;
   display: flex;
@@ -966,15 +966,22 @@ export default {
 
 .footer-btn {
   width: auto;
-  padding: 10rpx 20rpx;
-  background: #fff;
-  border: 1rpx solid #ddd;
-  border-radius: 30rpx;
+  padding: 0 40rpx;
+  /* #ifndef H5 */
+  background: #000;
+  /* #endif */
+  /* #ifdef H5 */
+  background: linear-gradient(135deg, #ff6a00, #ff2d55);
+  /* #endif */
+  border: none;
+  border-radius: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26rpx;
-  color: #333;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 28rpx;
+  color: #fff;
   margin-left: 10rpx;
 }
 
@@ -1249,7 +1256,8 @@ export default {
 
 .label {
   color: #666;
-  font-size: 28rpx;
+  font-weight: 800;
+  font-size: 44rpx;
 }
 
 .value {
@@ -1295,7 +1303,7 @@ export default {
 .pay {
   color: #000;
   font-weight: 800;
-  font-size: 44rpx;
+  font-size: 40rpx;
 }
 
 .total-reduce {
@@ -1573,7 +1581,7 @@ export default {
   width: 140rpx;
   font-size: 36rpx;
   font-weight: 700;
-  color: #e1251b;
+  color: #333;
   text-align: center;
   flex-shrink: 0;
   align-self: center;
@@ -1619,8 +1627,8 @@ export default {
 .bar-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; }
 .mp-room {
   margin: 0 30rpx;
-  background: #fff9f5;
-  color: #ff7b2b;
+  background: #ddd;
+  color: #333;
   padding: 16rpx;
   border-radius: 8rpx;
   display: block;
@@ -1656,5 +1664,10 @@ export default {
   font-size: 32rpx;
   margin-top: 10rpx;
 }
+
+.price { color: #000; }
+.sum { color: #000; }
+.spec-price { color: #000; }
+.price-box .price { color: #000; }
 /* #endif */
 </style>

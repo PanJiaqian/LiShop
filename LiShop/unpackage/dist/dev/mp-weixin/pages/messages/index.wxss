@@ -3,6 +3,10 @@
   min-height: 100vh;
   background: #f7f7f7;
 }
+.page.data-v-aedce2fc {
+  background: url('../../static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
 .header.data-v-aedce2fc {
   padding: 32rpx;
   background: #fff;

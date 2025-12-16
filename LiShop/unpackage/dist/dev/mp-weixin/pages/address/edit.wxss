@@ -4,6 +4,10 @@
   min-height: 100vh;
   padding-top: 20rpx;
 }
+.page {
+  background: url('../../static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
 .form {
   background-color: #fff;
   padding: 0 30rpx;

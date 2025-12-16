@@ -235,7 +235,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       showTitle: true,
       showGrid: true
     }),
-    b: common_assets._imports_0$1,
+    b: common_assets._imports_0,
     c: common_vendor.o($options.onSearch),
     d: common_vendor.o(($event) => $data.keyword = $event),
     e: common_vendor.p({

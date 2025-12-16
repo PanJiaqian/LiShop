@@ -105,6 +105,13 @@ export default {
   min-height: 100vh;
 }
 
+/* #ifdef MP-WEIXIN */
+.page {
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+/* #endif */
+
 .address-list {
   padding: 20rpx;
 }

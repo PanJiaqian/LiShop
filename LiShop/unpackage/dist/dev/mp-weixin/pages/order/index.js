@@ -6,17 +6,44 @@ const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
   components: { FloatingNav, Skeleton },
   data() {
-    return { order: null, orders: [], activeTab: "all", loading: true };
+    return { order: null, orders: [], activeTab: "all", loading: true, logisticsCollapsed: true, isH5: false, mapError: false };
   },
   onLoad(query) {
     const id = query == null ? void 0 : query.id;
+    try {
+      this.isH5 = typeof window !== "undefined";
+    } catch (e) {
+      this.isH5 = false;
+    }
     if (id) {
       this.fetchDetail(id);
     } else {
       this.fetchOrders();
     }
   },
+  onShow() {
+    try {
+      if (this.isH5) {
+        const cur = typeof location !== "undefined" && location.href ? location.href : "";
+        const ref = typeof document !== "undefined" && document.referrer ? document.referrer : "";
+        if (ref && (!cur || ref !== cur)) {
+          try {
+            common_vendor.index.setStorageSync("last_order_back", ref);
+          } catch (e) {
+          }
+        }
+      }
+    } catch (e) {
+    }
+  },
   methods: {
+    onMapError() {
+      this.mapError = true;
+      try {
+        common_vendor.index.showToast({ title: "物流地图加载失败", icon: "none" });
+      } catch (e) {
+      }
+    },
     formatTime(t) {
       try {
         return new Date(t).toLocaleString();
@@ -75,26 +102,49 @@ const _sfc_main = {
         if (!roomsMap[roomName]) {
           roomsMap[roomName] = { name: roomName, roomTotal: 0, items: [] };
         }
+        const price = Number(item.price || 0);
         const localItem = {
           title: item.product_name || item.available_product_name,
+          available_product_name: item.available_product_name || "",
           id: item.product_id || item.available_product_id,
-          specTemp: item.color_temperature !== "None" ? item.color_temperature : "",
+          specTemp: item.color_temperature && item.color_temperature !== "None" && item.color_temperature !== "无" ? item.color_temperature : "",
           specLength: item.length,
-          price: item.price,
+          price,
           quantity: item.quantity,
           image: item.main_picture
         };
         roomsMap[roomName].items.push(localItem);
-        roomsMap[roomName].roomTotal += item.price * item.quantity;
+        roomsMap[roomName].roomTotal += price * (item.quantity || 0);
+      });
+      const tracking = [];
+      let rawList = [];
+      let trackingMessage = "";
+      let mapUrl = "";
+      try {
+        const last = apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult;
+        rawList = last && Array.isArray(last.data) ? last.data : [];
+        trackingMessage = last && (last.message || last.msg) || apiOrder && apiOrder.logistics_message || "";
+        mapUrl = last && last.trailUrl ? String(last.trailUrl).replace(/`/g, "").trim() : "";
+      } catch (e) {
+        rawList = [];
+      }
+      rawList.forEach((ev) => {
+        tracking.push({
+          status: ev.status || "",
+          desc: ev.context || "",
+          time: ev.ftime || ev.time || "",
+          place: ev.areaName || ev.location || ""
+        });
       });
       return {
         id: apiOrder.order_id,
         orderNo: apiOrder.order_id,
         createdAt: null,
-        // API doesn't provide created time in list
-        total: apiOrder.total_price,
-        waybillNo: apiOrder["tracking number"],
-        tracking: apiOrder["logistics data"],
+        total: Number(apiOrder.total_price || 0),
+        waybillNo: apiOrder && apiOrder.tracking_number || apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult && apiOrder.logistics_data.lastResult.nu || "",
+        tracking,
+        trackingMessage: tracking.length ? "" : trackingMessage || "",
+        mapUrl,
         status: apiOrder.status || "unknown",
         rooms: Object.values(roomsMap)
       };
@@ -156,6 +206,47 @@ const _sfc_main = {
       } catch (e) {
       }
       this.loading = false;
+    },
+    goHome() {
+      if (common_vendor.index && common_vendor.index.switchTab) {
+        common_vendor.index.switchTab({ url: "/pages/home/index" });
+        return;
+      }
+      if (common_vendor.index && common_vendor.index.navigateTo) {
+        common_vendor.index.navigateTo({ url: "/pages/home/index" });
+        return;
+      }
+    },
+    goBack() {
+      if (this.order) {
+        try {
+          common_vendor.index.navigateTo({ url: "/pages/order/index" });
+          return;
+        } catch (e) {
+        }
+        this.goHome();
+      } else {
+        this.goHome();
+      }
+    },
+    toggleLogistics() {
+      this.logisticsCollapsed = !this.logisticsCollapsed;
+    },
+    openMap(url) {
+      if (!url)
+        return;
+      try {
+        if (this.isH5 && typeof window !== "undefined") {
+          window.open(url, "_blank");
+          return;
+        }
+      } catch (e) {
+      }
+      try {
+        common_vendor.index.setClipboardData({ data: String(url) });
+        common_vendor.index.showToast({ title: "链接已复制", icon: "none" });
+      } catch (e) {
+      }
     },
     async confirmReceipt(id) {
       try {
@@ -231,7 +322,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     r: ($data.order.tracking || []).length
   }, ($data.order.tracking || []).length ? {
-    s: common_vendor.f($data.order.tracking, (ev, i, i0) => {
+    s: common_vendor.f($data.logisticsCollapsed ? ($data.order.tracking || []).slice(0, 1) : $data.order.tracking, (ev, i, i0) => {
       return common_vendor.e({
         a: common_vendor.t(ev.status),
         b: common_vendor.t(ev.desc),
@@ -243,15 +334,29 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         f: i
       });
     })
-  } : {}, {
-    t: common_vendor.f($data.order.rooms, (r, k0, i0) => {
+  } : {
+    t: common_vendor.t($data.order.trackingMessage || "暂无物流信息")
+  }, {
+    v: common_vendor.t($data.logisticsCollapsed ? "▼" : "▲"),
+    w: common_vendor.o((...args) => $options.toggleLogistics && $options.toggleLogistics(...args)),
+    x: $data.order.mapUrl
+  }, $data.order.mapUrl ? common_vendor.e({
+    y: $data.isH5
+  }, $data.isH5 ? {
+    z: $data.order.mapUrl
+  } : {
+    A: $data.mapError ? "/static/logo.png" : $data.order.mapUrl,
+    B: common_vendor.o(($event) => $options.openMap($data.order.mapUrl)),
+    C: common_vendor.o((...args) => $options.onMapError && $options.onMapError(...args))
+  }) : {}, {
+    D: common_vendor.f($data.order.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: common_vendor.t(r.roomTotal.toFixed(2)),
         c: common_vendor.f(r.items, (x, k1, i1) => {
           return {
-            a: common_vendor.t(x.title),
-            b: common_vendor.t(x.id),
+            a: common_vendor.t(x.available_product_name),
+            b: common_vendor.t(x.title),
             c: common_vendor.t(x.specTemp || "-"),
             d: common_vendor.t(x.specLength || "-"),
             e: common_vendor.t(x.price.toFixed(2)),
@@ -262,20 +367,20 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: r.name
       };
     }),
-    v: common_vendor.t($data.order.total.toFixed(2)),
-    w: $data.order.status === "pending_receipt"
+    E: common_vendor.t($data.order.total.toFixed(2)),
+    F: $data.order.status === "pending_receipt"
   }, $data.order.status === "pending_receipt" ? {
-    x: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+    G: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
   } : {}, {
-    y: ["pending_payment", "pending_shipment"].includes($data.order.status)
+    H: ["pending_payment", "pending_shipment"].includes($data.order.status)
   }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
-    z: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+    I: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
   } : {}, {
-    A: common_vendor.o(($event) => $options.exportExcel($data.order))
+    J: common_vendor.o(($event) => $options.exportExcel($data.order))
   }) : common_vendor.e({
-    B: $data.orders.length
+    K: $data.orders.length
   }, $data.orders.length ? {
-    C: common_vendor.f($data.orders, (o, k0, i0) => {
+    L: common_vendor.f($data.orders, (o, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(o.orderNo || o.id),
         b: o.createdAt

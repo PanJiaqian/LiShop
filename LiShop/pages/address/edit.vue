@@ -136,6 +136,13 @@ export default {
   padding-top: 20rpx;
 }
 
+/* #ifdef MP-WEIXIN */
+.page {
+  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+/* #endif */
+
 .form {
   background-color: #fff;
   padding: 0 30rpx;

@@ -157,7 +157,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       showTitle: true,
       showGrid: true
     }),
-    b: common_assets._imports_0$1,
+    b: common_assets._imports_0,
     c: common_vendor.f($data.subChildren, (s, i, i0) => {
       return {
         a: common_vendor.t(s.name),

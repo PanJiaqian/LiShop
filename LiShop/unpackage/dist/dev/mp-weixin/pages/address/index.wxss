@@ -4,6 +4,10 @@
   background-color: #f7f7f7;
   min-height: 100vh;
 }
+.page {
+  background: url('../../static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
 .address-list {
   padding: 20rpx;
 }

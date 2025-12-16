@@ -46,6 +46,19 @@
         <view class="log-toggle-center">
           <text class="toggle-icon" @click="toggleLogistics">{{ logisticsCollapsed ? '▼' : '▲' }}</text>
         </view>
+        <view v-if="order.mapUrl" class="logistics-map">
+          <view v-if="isH5" class="map-frame">
+            <iframe class="map-iframe" :src="order.mapUrl" frameborder="0"></iframe>
+          </view>
+          <!-- #ifdef MP-WEIXIN -->
+          <image v-else class="map-image" :src="mapError ? '/static/logo.png' : order.mapUrl" mode="widthFix" @click="openMap(order.mapUrl)" @error="onMapError" />
+          <!-- #endif -->
+          <!-- #ifndef MP-WEIXIN -->
+          <view v-else class="map-link-row">
+            <text class="map-link" @click="openMap(order.mapUrl)">查看物流地图</text>
+          </view>
+          <!-- #endif -->
+        </view>
       </view>
       <view class="rooms">
         <view class="room" v-for="r in order.rooms" :key="r.name">
@@ -56,8 +69,8 @@
           <view class="items">
             <view class="item" v-for="x in r.items" :key="x.id + '_' + x.specLength + '_' + x.specTemp">
               <view class="meta">
-                <text class="title">{{ x.title }}</text>
-                <text class="spec">型号：{{ x.id }}｜色温：{{ x.specTemp || '-' }}｜长度：{{ x.specLength || '-' }}</text>
+                <text class="title">{{ x.available_product_name }}</text>
+                <text class="spec">型号：{{ x.title }}｜色温：{{ x.specTemp || '-' }}｜长度：{{ x.specLength || '-' }}</text>
               </view>
               <view class="price-row">
                 <text class="price">¥{{ x.price.toFixed(2) }}</text>
@@ -120,16 +133,29 @@ import Skeleton from '@/components/Skeleton.vue'
 
 export default {
   components: { FloatingNav, Skeleton },
-  data() { return { order: null, orders: [], activeTab: 'all', loading: true, logisticsCollapsed: true } },
+  data() { return { order: null, orders: [], activeTab: 'all', loading: true, logisticsCollapsed: true, isH5: false, mapError: false } },
   onLoad(query) {
     const id = query?.id
+    try { this.isH5 = typeof window !== 'undefined' } catch (e) { this.isH5 = false }
     if (id) {
       this.fetchDetail(id)
     } else {
       this.fetchOrders()
     }
   },
+  onShow() {
+    try {
+      if (this.isH5) {
+        const cur = (typeof location !== 'undefined' && location.href) ? location.href : ''
+        const ref = (typeof document !== 'undefined' && document.referrer) ? document.referrer : ''
+        if (ref && (!cur || ref !== cur)) {
+          try { uni.setStorageSync('last_order_back', ref) } catch (e) { }
+        }
+      }
+    } catch (e) {}
+  },
   methods: {
+    onMapError() { this.mapError = true; try { uni.showToast({ title: '物流地图加载失败', icon: 'none' }) } catch (e) { } },
     formatTime(t) { try { return new Date(t).toLocaleString() } catch { return t } },
     copyWaybill(no) { try { uni.setClipboardData({ data: String(no) }); uni.showToast({ title: '已复制运单号', icon: 'success' }) } catch (e) { } },
     openDetail(id) { uni.navigateTo({ url: '/pages/order/index?id=' + id }) },
@@ -198,6 +224,7 @@ export default {
         const price = Number(item.price || 0);
         const localItem = {
           title: item.product_name || item.available_product_name,
+          available_product_name: item.available_product_name || '',
           id: item.product_id || item.available_product_id,
           specTemp: (item.color_temperature && item.color_temperature !== 'None' && item.color_temperature !== '无') ? item.color_temperature : '',
           specLength: item.length,
@@ -211,10 +238,12 @@ export default {
       const tracking = [];
       let rawList = [];
       let trackingMessage = '';
+      let mapUrl = ''
       try {
         const last = apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult
         rawList = last && Array.isArray(last.data) ? last.data : [];
         trackingMessage = (last && (last.message || last.msg)) || (apiOrder && apiOrder.logistics_message) || ''
+        mapUrl = (last && last.trailUrl) ? String(last.trailUrl).replace(/`/g, '').trim() : ''
       } catch (e) { rawList = [] }
       rawList.forEach(ev => {
         tracking.push({
@@ -232,6 +261,7 @@ export default {
         waybillNo: (apiOrder && apiOrder.tracking_number) || (apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult && apiOrder.logistics_data.lastResult.nu) || '',
         tracking: tracking,
         trackingMessage: tracking.length ? '' : (trackingMessage || ''),
+        mapUrl: mapUrl,
         status: apiOrder.status || 'unknown',
         rooms: Object.values(roomsMap)
       };
@@ -298,15 +328,24 @@ export default {
       if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
     },
     goBack() {
-      try {
-        if (uni && uni.navigateBack) { uni.navigateBack({ delta: 1 }); return }
-      } catch (e) {}
-      try {
-        if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
-      } catch (e) {}
-      this.goHome()
+      if (this.order) {
+        try { uni.navigateTo({ url: '/pages/order/index' }); return } catch (e) {}
+        this.goHome()
+      } else {
+        this.goHome()
+      }
     },
     toggleLogistics() { this.logisticsCollapsed = !this.logisticsCollapsed },
+    openMap(url) {
+      if (!url) return
+      try {
+        if (this.isH5 && typeof window !== 'undefined') {
+          window.open(url, '_blank')
+          return
+        }
+      } catch (e) {}
+      try { uni.setClipboardData({ data: String(url) }); uni.showToast({ title: '链接已复制', icon: 'none' }) } catch (e) {}
+    },
     async confirmReceipt(id) {
       try {
         const res = await confirmOrderReceipt({ order_id: id })
@@ -672,6 +711,13 @@ export default {
   font-size: 26rpx;
 }
 
+.logistics-map { margin-top: 12rpx; }
+.map-frame { width: 100%; height: 420rpx; border-radius: 10rpx; overflow: hidden; background: #f5f5f5; }
+.map-iframe { width: 100%; height: 100%; border: 0; }
+.map-image { width: 100%; border-radius: 10rpx; background: #f5f5f5; }
+.map-link-row { display: flex; justify-content: center; padding: 12rpx 0; }
+.map-link { color: #007aff; font-size: 26rpx; }
+
 .log-toggle-center {
   display: flex;
   justify-content: center;
@@ -800,6 +846,10 @@ export default {
 
 .total {
   font-size: 36rpx;
+}
+
+.price-row .price {
+  color: #000;
 }
 
 /* #endif */
