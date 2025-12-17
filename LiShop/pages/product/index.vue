@@ -1313,8 +1313,8 @@ export default {
 }
 
 .pd-coupon {
-  background: #fff2e8;
-  color: #ff7b2b;
+  background: #18FAE0;
+  color: #000;
   padding: 8rpx 12rpx;
   border-radius: 6rpx;
   font-size: 24rpx;
@@ -1810,6 +1810,7 @@ export default {
 
 .addr-icon {
   font-size: 28rpx;
+  color: #000;
   flex-shrink: 0;
 }
 

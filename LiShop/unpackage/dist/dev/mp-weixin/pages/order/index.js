@@ -38,6 +38,13 @@ const _sfc_main = {
     }
   },
   methods: {
+    isImageLink(url) {
+      try {
+        return /\.(png|jpg|jpeg|gif|bmp|webp)(\?.*)?$/i.test(String(url || ""));
+      } catch (e) {
+        return false;
+      }
+    },
     onMapError() {
       this.mapError = true;
       try {
@@ -325,33 +332,33 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     s: ($data.order.tracking || []).length
   }, ($data.order.tracking || []).length ? {
     t: common_vendor.f($data.logisticsCollapsed ? ($data.order.tracking || []).slice(0, 1) : $data.order.tracking, (ev, i, i0) => {
-      return common_vendor.e({
+      return {
         a: common_vendor.t(ev.status),
-        b: common_vendor.t(ev.desc),
-        c: common_vendor.t($options.formatTime(ev.time)),
-        d: ev.place
-      }, ev.place ? {
-        e: common_vendor.t(ev.place)
-      } : {}, {
-        f: i
-      });
+        b: common_vendor.t($options.formatTime(ev.time)),
+        c: common_vendor.t(ev.desc),
+        d: i
+      };
     })
   } : {
     v: common_vendor.t($data.order.trackingMessage || "暂无物流信息")
   }, {
-    w: common_vendor.t($data.logisticsCollapsed ? "▼" : "▲"),
+    w: common_vendor.t($data.logisticsCollapsed ? "展开更多物流明细 ▼" : "收起物流明细 ▲"),
     x: common_vendor.o((...args) => $options.toggleLogistics && $options.toggleLogistics(...args)),
     y: $data.order.mapUrl
   }, $data.order.mapUrl ? common_vendor.e({
     z: $data.isH5
   }, $data.isH5 ? {
     A: $data.order.mapUrl
+  } : common_vendor.e({
+    B: !$options.isImageLink($data.order.mapUrl)
+  }, !$options.isImageLink($data.order.mapUrl) ? {
+    C: $data.order.mapUrl
   } : {
-    B: $data.mapError ? "/static/logo.png" : $data.order.mapUrl,
-    C: common_vendor.o(($event) => $options.openMap($data.order.mapUrl)),
-    D: common_vendor.o((...args) => $options.onMapError && $options.onMapError(...args))
-  }) : {}, {
-    E: common_vendor.f($data.order.rooms, (r, k0, i0) => {
+    D: $data.mapError ? "/static/logo.png" : $data.order.mapUrl,
+    E: common_vendor.o(($event) => $options.openMap($data.order.mapUrl)),
+    F: common_vendor.o((...args) => $options.onMapError && $options.onMapError(...args))
+  })) : {}, {
+    G: common_vendor.f($data.order.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: common_vendor.t(r.roomTotal.toFixed(2)),
@@ -369,20 +376,20 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: r.name
       };
     }),
-    F: common_vendor.t($data.order.total.toFixed(2)),
-    G: $data.order.status === "pending_receipt"
+    H: common_vendor.t($data.order.total.toFixed(2)),
+    I: $data.order.status === "pending_receipt"
   }, $data.order.status === "pending_receipt" ? {
-    H: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+    J: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
   } : {}, {
-    I: ["pending_payment", "pending_shipment"].includes($data.order.status)
+    K: ["pending_payment", "pending_shipment"].includes($data.order.status)
   }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
-    J: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+    L: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
   } : {}, {
-    K: common_vendor.o(($event) => $options.exportExcel($data.order))
+    M: common_vendor.o(($event) => $options.exportExcel($data.order))
   }) : common_vendor.e({
-    L: $data.orders.length
+    N: $data.orders.length
   }, $data.orders.length ? {
-    M: common_vendor.f($data.orders, (o, k0, i0) => {
+    O: common_vendor.f($data.orders, (o, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(o.orderNo || o.id),
         b: o.createdAt

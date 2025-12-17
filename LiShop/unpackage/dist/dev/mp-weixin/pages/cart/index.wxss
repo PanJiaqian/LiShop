@@ -729,7 +729,7 @@
 .spec-close.data-v-8039fbf1 {
   position: absolute;
   top: 20rpx; right: 24rpx;
-  font-size: 36rpx; color: #999; padding: 10rpx;
+  font-size: 36rpx; color: #000; padding: 10rpx;
 }
 .spec-body.data-v-8039fbf1 {
   padding: 24rpx;
@@ -777,7 +777,7 @@
 }
 .bar-left.data-v-8039fbf1 { display: flex; align-items: center; gap: 12rpx;
 }
-.addr-icon.data-v-8039fbf1 { font-size: 28rpx;
+.addr-icon.data-v-8039fbf1 { font-size: 28rpx; color: #000;
 }
 .bar-info.data-v-8039fbf1 { display: flex; flex-direction: column; font-size: 24rpx; color: #555;
 }

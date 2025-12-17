@@ -74,7 +74,7 @@
           </view>
 
           <view class="form-actions" v-if="loggedIn">
-             <text class="hint">修改资料/保存设置</text>
+             <!-- <text class="hint">修改资料/保存设置</text> -->
              <view class="btns">
                <button class="btn-save" @click="isEditing ? handleSave() : handleEdit()">{{ isEditing ? '保存修改' : '编辑资料' }}</button>
                <button class="btn-cancel" @click="isEditing ? handleCancel() : logout()">{{ isEditing ? '取消' : '退出登录' }}</button>
@@ -437,7 +437,10 @@ export default {
   grid-gap: 30rpx;
   max-width: 1800rpx;
   margin: 0 auto;
-  align-items: start;
+  align-items: center;
+  justify-content: center;
+  margin-top: 80rpx;
+  /* min-height: calc(100vh - 100rpx); */
 }
 
 @media (max-width: 768px) {
@@ -578,13 +581,13 @@ export default {
 /* Right Side */
 .menu-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 18rpx 0;
   border-bottom: 1px solid #f0f0f0;
   font-size: 28rpx;
   color: #333;
   cursor: pointer;
+  position: relative;
 }
 
 .menu-row:last-child {
@@ -616,6 +619,7 @@ export default {
   align-items: center;
   padding: 18rpx 0;
   border-bottom: 1px solid #f0f0f0;
+  position: relative;
 }
 
 .addr-item:last-child {
@@ -642,7 +646,8 @@ export default {
 .arrow {
   color: #ccc;
   font-size: 40rpx;
-  margin-left: auto;
+  position: absolute;
+  right: 0;
 }
 
 .empty-addr {

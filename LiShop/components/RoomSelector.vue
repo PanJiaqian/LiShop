@@ -57,7 +57,9 @@
             @click="select(room)"
           >
             <view class="rs-item-left">
-              <image src="/static/room.png" class="rs-icon" mode="aspectFit" />
+              <view class="rs-icon-wrap">
+                <image src="/static/room.png" class="rs-icon-inner" mode="aspectFit" />
+              </view>
               <text class="rs-name">{{ room.name }}</text>
             </view>
             <text class="rs-arrow">›</text>
@@ -199,7 +201,7 @@ export default {
 
 .rs-close {
   font-size: 40rpx;
-  color: #999;
+  color: #000;
   padding: 10rpx;
   line-height: 1;
 }
@@ -241,9 +243,22 @@ export default {
   gap: 20rpx;
 }
 
-.rs-icon {
+.rs-icon-wrap {
   width: 44rpx;
   height: 44rpx;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.rs-icon-inner {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  filter: drop-shadow(44rpx 0 0 #333);
+  transform: translateX(-44rpx);
 }
 
 .rs-name {
@@ -253,7 +268,7 @@ export default {
 
 .rs-arrow {
   font-size: 30rpx;
-  color: #999;
+  color: #000;
 }
 
 .rs-check-wrapper {

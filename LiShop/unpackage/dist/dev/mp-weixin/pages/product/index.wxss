@@ -487,6 +487,7 @@ to {
 }
 .addr-icon.data-v-a911e391 {
   font-size: 28rpx;
+  color: #000;
   flex-shrink: 0;
 }
 .bar-info.data-v-a911e391 {

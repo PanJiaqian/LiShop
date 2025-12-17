@@ -1522,7 +1522,7 @@ export default {
 .spec-close {
   position: absolute;
   top: 20rpx; right: 24rpx;
-  font-size: 36rpx; color: #999; padding: 10rpx;
+  font-size: 36rpx; color: #000; padding: 10rpx;
 }
 .spec-body {
   padding: 24rpx;
@@ -1638,7 +1638,7 @@ export default {
   border-bottom: 1rpx solid #f0f0f0;
 }
 .bar-left { display: flex; align-items: center; gap: 12rpx; }
-.addr-icon { font-size: 28rpx; }
+.addr-icon { font-size: 28rpx; color: #000; }
 .bar-info { display: flex; flex-direction: column; font-size: 24rpx; color: #555; }
 .bar-line { white-space: nowrap; }
 .bar-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; }

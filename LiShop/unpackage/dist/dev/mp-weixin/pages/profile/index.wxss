@@ -10,7 +10,10 @@
   grid-gap: 30rpx;
   max-width: 1800rpx;
   margin: 0 auto;
-  align-items: start;
+  align-items: center;
+  justify-content: center;
+  margin-top: 80rpx;
+  /* min-height: calc(100vh - 100rpx); */
 }
 @media (max-width: 768px) {
 .profile-grid.data-v-201c0da5 {
@@ -135,13 +138,13 @@
 /* Right Side */
 .menu-row.data-v-201c0da5 {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 18rpx 0;
   border-bottom: 1px solid #f0f0f0;
   font-size: 28rpx;
   color: #333;
   cursor: pointer;
+  position: relative;
 }
 .menu-row.data-v-201c0da5:last-child {
   border-bottom: none;
@@ -169,6 +172,7 @@
   align-items: center;
   padding: 18rpx 0;
   border-bottom: 1px solid #f0f0f0;
+  position: relative;
 }
 .addr-item.data-v-201c0da5:last-child {
   border-bottom: none;
@@ -190,7 +194,8 @@
 .arrow.data-v-201c0da5 {
   color: #ccc;
   font-size: 40rpx;
-  margin-left: auto;
+  position: absolute;
+  right: 0;
 }
 .empty-addr.data-v-201c0da5 {
   text-align: center;

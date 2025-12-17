@@ -20,41 +20,46 @@
     <view class="order" v-if="order">
       <view class="header">
         <text class="title">订单号：{{ order.orderNo || order.id }}</text>
+                  <text class="log-title">物流信息</text>
         <text class="time" v-if="order.createdAt">下单时间：{{ formatTime(order.createdAt) }}</text>
         <!-- Total moved to footer for H5 and MP -->
         <!-- #ifndef H5 -->
         <!-- <text class="total">合计：¥{{ order.total.toFixed(2) }}</text> -->
         <!-- #endif -->
       </view>
-      <view class="waybill" v-if="order.waybillNo">
+      <view class="logistics">
+        <view class="log-header">
+                <view class="waybill" v-if="order.waybillNo">
         <text>运单号：{{ order.waybillNo }}</text>
         <button size="mini" class="copy" @click="copyWaybill(order.waybillNo)">复制运单号</button>
       </view>
-      <view class="logistics">
-        <view class="log-header">
-          <text class="log-title">物流信息</text>
+
         </view>
         <view v-if="(order.tracking || []).length">
           <view class="log-item" v-for="(ev, i) in (logisticsCollapsed ? (order.tracking || []).slice(0,1) : order.tracking)" :key="i">
             <view class="dot">•</view>
             <view class="log-meta">
-              <text class="log-status">{{ ev.status }}</text>
+              <view class="log-row">
+                <text class="log-status">{{ ev.status }}</text>
+                <text class="log-time">{{ formatTime(ev.time) }}</text>
+              </view>
               <text class="log-desc">{{ ev.desc }}</text>
-              <text class="log-time">{{ formatTime(ev.time) }}</text>
-              <text class="log-place" v-if="ev.place">{{ ev.place }}</text>
             </view>
           </view>
         </view>
         <view v-else class="log-empty">{{ order.trackingMessage || '暂无物流信息' }}</view>
         <view class="log-toggle-center">
-          <text class="toggle-icon" @click="toggleLogistics">{{ logisticsCollapsed ? '▼' : '▲' }}</text>
+          <text class="toggle-icon" @click="toggleLogistics">{{ logisticsCollapsed ? '展开更多物流明细 ▼' : '收起物流明细 ▲' }}</text>
         </view>
         <view v-if="order.mapUrl" class="logistics-map">
           <view v-if="isH5" class="map-frame">
             <iframe class="map-iframe" :src="order.mapUrl" frameborder="0"></iframe>
           </view>
           <!-- #ifdef MP-WEIXIN -->
-          <image v-else class="map-image" :src="mapError ? '/static/logo.png' : order.mapUrl" mode="widthFix" @click="openMap(order.mapUrl)" @error="onMapError" />
+          <view v-else>
+            <web-view v-if="!isImageLink(order.mapUrl)" class="map-webview" :src="order.mapUrl" />
+            <image v-else class="map-image" :src="mapError ? '/static/logo.png' : order.mapUrl" mode="widthFix" @click="openMap(order.mapUrl)" @error="onMapError" />
+          </view>
           <!-- #endif -->
           <!-- #ifndef MP-WEIXIN -->
           <view v-else class="map-link-row">
@@ -63,6 +68,7 @@
           <!-- #endif -->
         </view>
       </view>
+
       <view class="rooms">
         <view class="room" v-for="r in order.rooms" :key="r.name">
           <view class="room-hd">
@@ -158,6 +164,9 @@ export default {
     } catch (e) {}
   },
   methods: {
+    isImageLink(url) {
+      try { return /\.(png|jpg|jpeg|gif|bmp|webp)(\?.*)?$/i.test(String(url || '')) } catch (e) { return false }
+    },
     onMapError() { this.mapError = true; try { uni.showToast({ title: '物流地图加载失败', icon: 'none' }) } catch (e) { } },
     formatTime(t) { try { return new Date(t).toLocaleString() } catch { return t } },
     copyWaybill(no) { try { uni.setClipboardData({ data: String(no) }); uni.showToast({ title: '已复制运单号', icon: 'success' }) } catch (e) { } },
@@ -707,9 +716,18 @@ export default {
 .log-item {
   display: flex;
   align-items: flex-start;
-  gap: 10rpx;
-  padding: 8rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  gap: 16rpx;
+  padding: 14rpx 0;
+  position: relative;
+}
+.log-item::before {
+  content: '';
+  position: absolute;
+  left: 8rpx;
+  top: 0;
+  bottom: 0;
+  width: 2rpx;
+  background: #eee;
 }
 
 .log-empty {
@@ -722,6 +740,7 @@ export default {
 .map-frame { width: 100%; height: 420rpx; border-radius: 10rpx; overflow: hidden; background: #f5f5f5; }
 .map-iframe { width: 100%; height: 100%; border: 0; }
 .map-image { width: 100%; border-radius: 10rpx; background: #f5f5f5; }
+.map-webview { width: 100%; height: 420rpx; border-radius: 10rpx; overflow: hidden; }
 .map-link-row { display: flex; justify-content: center; padding: 12rpx 0; }
 .map-link { color: #007aff; font-size: 26rpx; }
 
@@ -734,7 +753,8 @@ export default {
 
 .toggle-icon {
   font-size: 28rpx;
-  color: #666;
+  color: #333;
+  font-weight: 700;
 }
 
 .floating-back {
@@ -757,10 +777,24 @@ export default {
 }
 
 .dot {
-  color: #ff7b2b;
-  font-weight: 700;
-  line-height: 1.6;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #bbb;
+  margin: 8rpx 0 0 0;
+  font-size: 0;
+  line-height: 16rpx;
 }
+.log-item:first-child .dot { background: #333; }
+.log-meta { flex: 1; display: flex; flex-direction: column; gap: 8rpx; }
+.log-row { display: flex; align-items: center; gap: 16rpx; flex-wrap: wrap; }
+.log-status { font-size: 30rpx; font-weight: 600; color: #333; }
+.log-time { font-size: 26rpx; color: #999; }
+.log-desc { font-size: 26rpx; color: #999; line-height: 1.5; }
+
+.log-item:first-child .log-status { color: #18FAE0; font-size: 32rpx; }
+.log-item:first-child .log-time { color: #18FAE0; }
+.log-item:first-child .log-desc { color: #333; }
 
 .log-status {
   font-weight: 600;
@@ -768,15 +802,15 @@ export default {
 
 /* #ifdef H5 */
 .waybill {
-  position: absolute;
-  top: 20rpx;
-  right: 20rpx;
-  margin: 0;
-  background: transparent;
-  padding: 0;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8rpx;
+  position: static;
+  margin: 10rpx 0;
+  background: #fff;
+  padding: 12rpx;
+  border-radius: 10rpx;
+  flex-direction: row;
+  align-items: center;
+  gap: 20rpx;
+  justify-content: flex-start;
 }
 
 .item {

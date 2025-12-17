@@ -562,7 +562,7 @@ export default {
   font-weight: bold;
 }
 
-.cate-dot { margin-right: 12rpx; font-size: 32rpx; color: #000; }
+.cate-dot { margin-right: 12rpx; font-size: 24rpx; color: #000; }
 .cate-name { font-size: 32rpx; }
 
 /* Center Banner */
