@@ -12,7 +12,8 @@
     "pages/search/index",
     "pages/category/list",
     "pages/address/index",
-    "pages/address/edit"
+    "pages/address/edit",
+    "pages/webview/index"
   ],
   "window": {
     "navigationBarTextStyle": "black",

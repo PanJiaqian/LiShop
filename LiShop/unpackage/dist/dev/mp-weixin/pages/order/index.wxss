@@ -351,7 +351,7 @@
   font-weight: 600;
 }
 .header .title.data-v-17a44f9d {
-  font-size: 36rpx;
+  font-size: 34rpx;
   font-weight: bold;
   margin-bottom: 20rpx;
   display: block;

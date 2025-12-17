@@ -54,7 +54,11 @@ const _sfc_main = {
     },
     formatTime(t) {
       try {
-        return new Date(t).toLocaleString();
+        let dateStr = t;
+        if (typeof dateStr === "string") {
+          dateStr = dateStr.replace(/-/g, "/");
+        }
+        return new Date(dateStr).toLocaleString();
       } catch {
         return t;
       }
@@ -137,11 +141,23 @@ const _sfc_main = {
         rawList = [];
       }
       rawList.forEach((ev) => {
+        let lat = null;
+        let lng = null;
+        const ac = ev.areaCenter || ev.area_center || "";
+        if (ac) {
+          const parts = String(ac).split(",");
+          if (parts.length >= 2) {
+            lng = Number(parts[0]);
+            lat = Number(parts[1]);
+          }
+        }
         tracking.push({
           status: ev.status || "",
           desc: ev.context || "",
           time: ev.ftime || ev.time || "",
-          place: ev.areaName || ev.location || ""
+          place: ev.areaName || ev.location || "",
+          lat,
+          lng
         });
       });
       return {
@@ -250,10 +266,48 @@ const _sfc_main = {
         }
       } catch (e) {
       }
+      if (url.indexOf("http") === 0) {
+        common_vendor.index.navigateTo({ url: "/pages/webview/index?url=" + encodeURIComponent(url) });
+        return;
+      }
       try {
         common_vendor.index.setClipboardData({ data: String(url) });
         common_vendor.index.showToast({ title: "链接已复制", icon: "none" });
       } catch (e) {
+      }
+    },
+    hasMapCoords(list) {
+      try {
+        return Array.isArray(list) && list.some((it) => it && typeof it.lat === "number" && typeof it.lng === "number");
+      } catch (e) {
+        return false;
+      }
+    },
+    mapCenter(list) {
+      try {
+        const arr = (Array.isArray(list) ? list : []).filter((it) => typeof it.lat === "number" && typeof it.lng === "number");
+        if (!arr.length)
+          return { latitude: 0, longitude: 0 };
+        const last = arr[arr.length - 1];
+        return { latitude: last.lat, longitude: last.lng };
+      } catch (e) {
+        return { latitude: 0, longitude: 0 };
+      }
+    },
+    mapMarkers(list) {
+      try {
+        const arr = (Array.isArray(list) ? list : []).filter((it) => typeof it.lat === "number" && typeof it.lng === "number");
+        return arr.map((it, i) => ({ id: i, latitude: it.lat, longitude: it.lng }));
+      } catch (e) {
+        return [];
+      }
+    },
+    mapPolyline(list) {
+      try {
+        const pts = (Array.isArray(list) ? list : []).filter((it) => typeof it.lat === "number" && typeof it.lng === "number").map((it) => ({ latitude: it.lat, longitude: it.lng }));
+        return pts.length > 1 ? [{ points: pts, color: "#FF4D4F", width: 4 }] : [];
+      } catch (e) {
+        return [];
       }
     },
     async confirmReceipt(id) {
@@ -350,15 +404,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $data.isH5 ? {
     A: $data.order.mapUrl
   } : common_vendor.e({
-    B: !$options.isImageLink($data.order.mapUrl)
-  }, !$options.isImageLink($data.order.mapUrl) ? {
-    C: $data.order.mapUrl
+    B: $options.hasMapCoords($data.order.tracking)
+  }, $options.hasMapCoords($data.order.tracking) ? {
+    C: $options.mapCenter($data.order.tracking).latitude,
+    D: $options.mapCenter($data.order.tracking).longitude,
+    E: $options.mapMarkers($data.order.tracking),
+    F: $options.mapPolyline($data.order.tracking)
+  } : $options.isImageLink($data.order.mapUrl) ? {
+    H: $data.mapError ? "/static/logo.png" : $data.order.mapUrl,
+    I: common_vendor.o(($event) => $options.openMap($data.order.mapUrl)),
+    J: common_vendor.o((...args) => $options.onMapError && $options.onMapError(...args))
   } : {
-    D: $data.mapError ? "/static/logo.png" : $data.order.mapUrl,
-    E: common_vendor.o(($event) => $options.openMap($data.order.mapUrl)),
-    F: common_vendor.o((...args) => $options.onMapError && $options.onMapError(...args))
+    K: common_vendor.o(($event) => $options.openMap($data.order.mapUrl))
+  }, {
+    G: $options.isImageLink($data.order.mapUrl)
   })) : {}, {
-    G: common_vendor.f($data.order.rooms, (r, k0, i0) => {
+    L: common_vendor.f($data.order.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: common_vendor.t(r.roomTotal.toFixed(2)),
@@ -376,20 +437,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: r.name
       };
     }),
-    H: common_vendor.t($data.order.total.toFixed(2)),
-    I: $data.order.status === "pending_receipt"
+    M: common_vendor.t($data.order.total.toFixed(2)),
+    N: common_vendor.o(($event) => $options.exportExcel($data.order)),
+    O: $data.order.status === "pending_receipt"
   }, $data.order.status === "pending_receipt" ? {
-    J: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+    P: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
   } : {}, {
-    K: ["pending_payment", "pending_shipment"].includes($data.order.status)
+    Q: ["pending_payment", "pending_shipment"].includes($data.order.status)
   }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
-    L: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
-  } : {}, {
-    M: common_vendor.o(($event) => $options.exportExcel($data.order))
-  }) : common_vendor.e({
-    N: $data.orders.length
+    R: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+  } : {}) : common_vendor.e({
+    S: $data.orders.length
   }, $data.orders.length ? {
-    O: common_vendor.f($data.orders, (o, k0, i0) => {
+    T: common_vendor.f($data.orders, (o, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(o.orderNo || o.id),
         b: o.createdAt

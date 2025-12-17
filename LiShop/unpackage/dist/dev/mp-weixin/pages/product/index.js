@@ -84,17 +84,37 @@ const _sfc_main = {
       const a = this.selectedAddress;
       return a ? `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(" ")}`.trim() : "";
     },
+    lengthUnitText() {
+      var _a;
+      try {
+        const u = String(((_a = this.selectedSpec) == null ? void 0 : _a.unit) || "").toLowerCase();
+        if (u.includes("mm"))
+          return "mm";
+        if (u.includes("cm"))
+          return "cm";
+        if (u.includes("dm"))
+          return "dm";
+        if (u.includes("m"))
+          return "m";
+        return "m";
+      } catch (e) {
+        return "m";
+      }
+    },
     displayTopPrice() {
       var _a;
       const sel = this.selectedSpec;
+      const basePerM = sel ? Number(sel.price || 0) || 0 : Number(((_a = this.product) == null ? void 0 : _a.price) || 0) || 0;
       if (sel && sel.has_length === 1) {
-        const perM = Number(this.displaySpecPrice(sel) || 0);
-        const len = Number(this.specLength || 0);
-        if (len > 0)
-          return (perM * len).toFixed(2);
-        return `${perM.toFixed(2)}/m`;
+        const rawStr = (this.specLength || "").replace(/[^0-9.]/g, "");
+        const raw = rawStr ? Number(rawStr) : 0;
+        if (raw > 0) {
+          const meters = this.toMeters(raw, this.lengthUnitText);
+          return (basePerM * meters).toFixed(2);
+        }
+        return `${basePerM.toFixed(2)}/m`;
       }
-      return Number(((_a = this.product) == null ? void 0 : _a.price) || 0).toFixed(2);
+      return basePerM.toFixed(2);
     }
   },
   watch: {
@@ -174,10 +194,14 @@ const _sfc_main = {
       const spec = this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex] ? this.specs[this.selectedSpecIndex] : null;
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
       api_index.addCartItem({ product_id: pid, quantity: 1 }).then((res) => {
+        var _a2;
         if (res && res.success)
           common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
-        else
-          common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "加入失败", icon: "none" });
+        else {
+          const tip = typeof (res == null ? void 0 : res.data) === "string" ? res.data : ((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.reason) || "";
+          const msg = tip || (res == null ? void 0 : res.message) || "加入失败";
+          common_vendor.index.showToast({ title: msg, icon: "none" });
+        }
       }).catch(() => {
         common_vendor.index.showToast({ title: "加入购物车失败", icon: "none" });
       });
@@ -207,16 +231,54 @@ const _sfc_main = {
       }
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
       api_index.addCartItem({ room_id: this.roomId, product_id: pid, length: lengthVal, quantity: this.qty, color: this.specTemp || "", note: "" }).then((res) => {
+        var _a2;
         if (res && res.success)
           common_vendor.index.showToast({ title: `已加入房间：${chosen}`, icon: "success" });
-        else
-          common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "加入失败", icon: "none" });
+        else {
+          const tip = typeof (res == null ? void 0 : res.data) === "string" ? res.data : ((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.reason) || "";
+          const msg = tip || (res == null ? void 0 : res.message) || "加入失败";
+          common_vendor.index.showToast({ title: msg, icon: "none" });
+        }
       }).catch(() => {
         common_vendor.index.showToast({ title: "加入购物车失败", icon: "none" });
       });
     },
     buyNow() {
-      common_vendor.index.showToast({ title: "暂未接入下单", icon: "none" });
+      var _a, _b, _c;
+      try {
+        const spec = this.selectedSpec;
+        const pid = spec ? spec.product_id || ((_a = this.product) == null ? void 0 : _a.id) || "" : ((_b = this.product) == null ? void 0 : _b.id) || "";
+        const addrId = ((_c = this.selectedAddress) == null ? void 0 : _c.id) || "";
+        const roomId = this.roomId || "";
+        const qty = this.qty || 1;
+        const note = this.h5OrderNote || "";
+        const rawLen = (this.specLength || "").replace(/[^0-9.]/g, "");
+        const lenNum = rawLen ? Number(rawLen) : "";
+        const lenMeters = lenNum === "" ? "" : this.toMeters(lenNum, this.lengthUnitText);
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const token = u && (u.token || u.data && u.data.token) || "";
+        common_vendor.index.showLoading({ title: "下单中" });
+        api_index.createDirectOrder({ product_id: pid, address_id: addrId, note, length: lenMeters, quantity: qty, room_id: roomId, token }).then((data) => {
+          var _a2;
+          common_vendor.index.hideLoading();
+          if (data && data.success) {
+            common_vendor.index.showToast({ title: "下单成功", icon: "success" });
+            const orderId = data && data.data && (data.data.order_id || data.data.id) || "";
+            if (orderId) {
+              common_vendor.index.navigateTo({ url: "/pages/order/index?id=" + orderId });
+            }
+          } else {
+            const tip = typeof (data == null ? void 0 : data.data) === "string" ? data.data : ((_a2 = data == null ? void 0 : data.data) == null ? void 0 : _a2.reason) || "";
+            const msg = tip || data && data.message || "下单失败";
+            common_vendor.index.showToast({ title: msg, icon: "none" });
+          }
+        }).catch(() => {
+          common_vendor.index.hideLoading();
+          common_vendor.index.showToast({ title: "网络错误", icon: "none" });
+        });
+      } catch (e) {
+        common_vendor.index.showToast({ title: "下单失败", icon: "none" });
+      }
     },
     // MP-WEIXIN 规格填写
     openSpecSheet() {
@@ -333,6 +395,7 @@ const _sfc_main = {
       const token = u && (u.token || u.data && u.data.token) || "";
       const data = { receiver: payload.receiver, phone: payload.phone, province: payload.province, city: payload.city, district: payload.district, detail_address: payload.detail_address, is_default: payload.is_default };
       api_index.addAddress({ ...data, token }).then((res) => {
+        var _a;
         if (res && res.success) {
           const id = res && res.data && (res.data.addresses_id || res.data.id) || "";
           const item = { id, receiver: data.receiver, phone: data.phone, province: data.province, city: data.city, district: data.district, detail_address: data.detail_address, is_default: data.is_default === 1 };
@@ -345,7 +408,9 @@ const _sfc_main = {
           common_vendor.index.showToast({ title: "已保存", icon: "success" });
           this.roomSelectorVisible = false;
         } else {
-          common_vendor.index.showToast({ title: res && res.message ? res.message : "保存失败", icon: "none" });
+          const tip = typeof (res == null ? void 0 : res.data) === "string" ? res.data : ((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.reason) || "";
+          const msg = tip || res && res.message || "保存失败";
+          common_vendor.index.showToast({ title: msg, icon: "none" });
         }
       }).catch(() => {
         common_vendor.index.showToast({ title: "保存失败", icon: "none" });
@@ -373,11 +438,14 @@ const _sfc_main = {
       }
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
       api_index.addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: this.mpQty, color: this.mpTemp || "", note: "" }).then((res) => {
+        var _a2;
         if (res && res.success) {
           this.mpSheet = false;
           common_vendor.index.showToast({ title: `已加入房间：${chosen}`, icon: "success" });
         } else {
-          common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "加入失败", icon: "none" });
+          const tip = typeof (res == null ? void 0 : res.data) === "string" ? res.data : ((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.reason) || "";
+          const msg = tip || (res == null ? void 0 : res.message) || "加入失败";
+          common_vendor.index.showToast({ title: msg, icon: "none" });
         }
       }).catch(() => {
         common_vendor.index.showToast({ title: "加入购物车失败", icon: "none" });
@@ -430,6 +498,16 @@ const _sfc_main = {
       if (unit === "dm")
         return 10;
       return 1;
+    },
+    toMeters(len, unit) {
+      const u = unit || "m";
+      if (u === "mm")
+        return Number(len) / 1e3;
+      if (u === "cm")
+        return Number(len) / 100;
+      if (u === "dm")
+        return Number(len) / 10;
+      return Number(len);
     }
   }
 };

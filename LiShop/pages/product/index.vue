@@ -81,7 +81,7 @@
                       <view class="spec-info">
                         <text class="spec-name">{{ it.name }}</text>
                         <view class="spec-price-row">
-                          <text class="spec-price">¥{{ Number(displaySpecPrice(it)).toFixed(2) }}</text>
+                          <text class="spec-price">¥{{ Number(it.price || 0).toFixed(2) }}</text>
                           <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
                             Number(it.original_price).toFixed(2) }}</text>
                         </view>
@@ -119,9 +119,7 @@
                   <view class="pd-field inline" v-if="selectedSpec && selectedSpec.has_length === 1">
                     <text class="label">长度</text>
                     <input class="pd-input" v-model="specLength" placeholder="填写数字" />
-                    <text v-if="selectedSpec.specification"
-                      style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx;">最长：{{ selectedSpec.specification
-                      }}</text>
+                    <text class="unit-tip">{{ lengthUnitText }}</text>
                   </view>
                 </view>
 
@@ -132,7 +130,7 @@
                     <view class="qty-btn" @click="incQty">+</view>
                   </view>
                   <button class="btn-action btn-cart" @click="addToCartWithQty">加入购物车</button>
-                  <!-- <button class="btn-action btn-buy" @click="buyNow">立即购买</button> -->
+                  <button class="btn-action btn-buy" @click="buyNow">立即购买</button>
                 </view>
               </view>
             </view>
@@ -280,7 +278,7 @@
 </template>
 
 <script>
-import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress } from '../../api/index.js'
+import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress, createDirectOrder } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -359,15 +357,29 @@ export default {
       const a = this.selectedAddress
       return a ? `${a.receiver} ${a.phone} ${[a.province, a.city, a.district, a.detail_address].filter(Boolean).join(' ')}`.trim() : ''
     },
+    lengthUnitText() {
+      try {
+        const u = String(this.selectedSpec?.unit || '').toLowerCase()
+        if (u.includes('mm')) return 'mm'
+        if (u.includes('cm')) return 'cm'
+        if (u.includes('dm')) return 'dm'
+        if (u.includes('m')) return 'm'
+        return 'm'
+      } catch (e) { return 'm' }
+    },
     displayTopPrice() {
       const sel = this.selectedSpec
+      const basePerM = sel ? (Number(sel.price || 0) || 0) : (Number(this.product?.price || 0) || 0)
       if (sel && sel.has_length === 1) {
-        const perM = Number(this.displaySpecPrice(sel) || 0)
-        const len = Number(this.specLength || 0)
-        if (len > 0) return (perM * len).toFixed(2)
-        return `${perM.toFixed(2)}/m`
+        const rawStr = (this.specLength || '').replace(/[^0-9.]/g, '')
+        const raw = rawStr ? Number(rawStr) : 0
+        if (raw > 0) {
+          const meters = this.toMeters(raw, this.lengthUnitText)
+          return (basePerM * meters).toFixed(2)
+        }
+        return `${basePerM.toFixed(2)}/m`
       }
-      return Number(this.product?.price || 0).toFixed(2)
+      return basePerM.toFixed(2)
     }
   },
   watch: {
@@ -468,7 +480,11 @@ export default {
       addCartItem({ product_id: pid, quantity: 1 })
         .then((res) => {
           if (res && res.success) uni.showToast({ title: '已加入购物车', icon: 'success' })
-          else uni.showToast({ title: res?.message || '加入失败', icon: 'none' })
+          else {
+            const tip = typeof res?.data === 'string' ? res.data : (res?.data?.reason || '')
+            const msg = tip || res?.message || '加入失败'
+            uni.showToast({ title: msg, icon: 'none' })
+          }
         })
         .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
     },
@@ -493,11 +509,46 @@ export default {
       addCartItem({ room_id: this.roomId, product_id: pid, length: lengthVal, quantity: this.qty, color: this.specTemp || '', note: '' })
         .then((res) => {
           if (res && res.success) uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
-          else uni.showToast({ title: res?.message || '加入失败', icon: 'none' })
+          else {
+            const tip = typeof res?.data === 'string' ? res.data : (res?.data?.reason || '')
+            const msg = tip || res?.message || '加入失败'
+            uni.showToast({ title: msg, icon: 'none' })
+          }
         })
         .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
     },
-    buyNow() { uni.showToast({ title: '暂未接入下单', icon: 'none' }) },
+    buyNow() {
+      try {
+        const spec = this.selectedSpec
+        const pid = spec ? (spec.product_id || this.product?.id || '') : (this.product?.id || '')
+        const addrId = this.selectedAddress?.id || ''
+        const roomId = this.roomId || ''
+        const qty = this.qty || 1
+        const note = this.h5OrderNote || ''
+        const rawLen = (this.specLength || '').replace(/[^0-9.]/g, '')
+        const lenNum = rawLen ? Number(rawLen) : ''
+        const lenMeters = lenNum === '' ? '' : this.toMeters(lenNum, this.lengthUnitText)
+
+        const u = uni.getStorageSync('user') || null
+        const token = (u && (u.token || (u.data && u.data.token))) || ''
+
+        uni.showLoading({ title: '下单中' })
+        createDirectOrder({ product_id: pid, address_id: addrId, note, length: lenMeters, quantity: qty, room_id: roomId, token })
+          .then((data) => {
+            uni.hideLoading()
+            if (data && data.success) {
+              uni.showToast({ title: '下单成功', icon: 'success' })
+              const orderId = (data && data.data && (data.data.order_id || data.data.id)) || ''
+              if (orderId) { uni.navigateTo({ url: '/pages/order/index?id=' + orderId }) }
+            } else {
+              const tip = typeof data?.data === 'string' ? data.data : (data?.data?.reason || '')
+              const msg = tip || (data && data.message) || '下单失败'
+              uni.showToast({ title: msg, icon: 'none' })
+            }
+          })
+          .catch(() => { uni.hideLoading(); uni.showToast({ title: '网络错误', icon: 'none' }) })
+      } catch (e) { uni.showToast({ title: '下单失败', icon: 'none' }) }
+    },
     // MP-WEIXIN 规格填写
     openSpecSheet() {
       this.mpSheet = true
@@ -612,7 +663,9 @@ export default {
           uni.showToast({ title: '已保存', icon: 'success' })
           this.roomSelectorVisible = false
         } else {
-          uni.showToast({ title: (res && res.message) ? res.message : '保存失败', icon: 'none' })
+          const tip = typeof res?.data === 'string' ? res.data : (res?.data?.reason || '')
+          const msg = tip || (res && res.message) || '保存失败'
+          uni.showToast({ title: msg, icon: 'none' })
         }
       }).catch(() => {
         uni.showToast({ title: '保存失败', icon: 'none' })
@@ -648,7 +701,9 @@ export default {
             this.mpSheet = false
             uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
           } else {
-            uni.showToast({ title: res?.message || '加入失败', icon: 'none' })
+            const tip = typeof res?.data === 'string' ? res.data : (res?.data?.reason || '')
+            const msg = tip || res?.message || '加入失败'
+            uni.showToast({ title: msg, icon: 'none' })
           }
         })
         .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
@@ -688,6 +743,13 @@ export default {
       if (unit === 'cm') return 100
       if (unit === 'dm') return 10
       return 1
+    },
+    toMeters(len, unit) {
+      const u = unit || 'm'
+      if (u === 'mm') return Number(len) / 1000
+      if (u === 'cm') return Number(len) / 100
+      if (u === 'dm') return Number(len) / 10
+      return Number(len)
     },
   }
 }
@@ -1289,6 +1351,12 @@ export default {
 .pd-field.inline .picker-display {
   flex: 1;
   /* width: 60%; */
+}
+
+.unit-tip {
+  margin-left: 12rpx;
+  font-size: 24rpx;
+  color: #666;
 }
 
 .pd-title {

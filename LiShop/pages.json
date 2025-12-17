@@ -104,6 +104,12 @@
 			"style": {
 				"navigationBarTitleText": "编辑收货地址"
 			}
+		},
+		{
+			"path": "pages/webview/index",
+			"style": {
+				"navigationBarTitleText": "物流详情"
+			}
 		}
 	],
 	"tabBar": {

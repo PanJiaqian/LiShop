@@ -57,8 +57,11 @@
           </view>
           <!-- #ifdef MP-WEIXIN -->
           <view v-else>
-            <web-view v-if="!isImageLink(order.mapUrl)" class="map-webview" :src="order.mapUrl" />
-            <image v-else class="map-image" :src="mapError ? '/static/logo.png' : order.mapUrl" mode="widthFix" @click="openMap(order.mapUrl)" @error="onMapError" />
+            <map v-if="hasMapCoords(order.tracking)" class="map-canvas" :latitude="mapCenter(order.tracking).latitude" :longitude="mapCenter(order.tracking).longitude" :markers="mapMarkers(order.tracking)" :polyline="mapPolyline(order.tracking)" scale="12"></map>
+            <image v-else-if="isImageLink(order.mapUrl)" class="map-image" :src="mapError ? '/static/logo.png' : order.mapUrl" mode="widthFix" @click="openMap(order.mapUrl)" @error="onMapError" />
+            <view v-else class="map-link-row">
+              <text class="map-link" @click="openMap(order.mapUrl)">查看物流地图</text>
+            </view>
           </view>
           <!-- #endif -->
           <!-- #ifndef MP-WEIXIN -->
@@ -95,10 +98,10 @@
       <view class="ops">
         <text class="total-text">合计：¥{{ order.total.toFixed(2) }}</text>
         <view class="btns">
+          <button class="btn" @click="exportExcel(order)">导出Excel</button>
           <button class="btn" v-if="order.status === 'pending_receipt'" @click="confirmReceipt(order.id)">确认收货</button>
           <button class="btn" v-if="['pending_payment', 'pending_shipment'].includes(order.status)"
             @click="handleCancelOrder(order.id)">取消订单</button>
-          <button class="btn" @click="exportExcel(order)">导出Excel</button>
         </view>
       </view>
     </view>
@@ -168,7 +171,15 @@ export default {
       try { return /\.(png|jpg|jpeg|gif|bmp|webp)(\?.*)?$/i.test(String(url || '')) } catch (e) { return false }
     },
     onMapError() { this.mapError = true; try { uni.showToast({ title: '物流地图加载失败', icon: 'none' }) } catch (e) { } },
-    formatTime(t) { try { return new Date(t).toLocaleString() } catch { return t } },
+    formatTime(t) { 
+      try { 
+        let dateStr = t;
+        if (typeof dateStr === 'string') {
+          dateStr = dateStr.replace(/-/g, '/')
+        }
+        return new Date(dateStr).toLocaleString() 
+      } catch { return t } 
+    },
     copyWaybill(no) { try { uni.setClipboardData({ data: String(no) }); uni.showToast({ title: '已复制运单号', icon: 'success' }) } catch (e) { } },
     openDetail(id) { uni.navigateTo({ url: '/pages/order/index?id=' + id }) },
     firstThumbs(o) {
@@ -258,11 +269,23 @@ export default {
         mapUrl = (last && last.trailUrl) ? String(last.trailUrl).replace(/`/g, '').trim() : ''
       } catch (e) { rawList = [] }
       rawList.forEach(ev => {
+        let lat = null
+        let lng = null
+        const ac = ev.areaCenter || ev.area_center || ''
+        if (ac) {
+          const parts = String(ac).split(',')
+          if (parts.length >= 2) {
+            lng = Number(parts[0])
+            lat = Number(parts[1])
+          }
+        }
         tracking.push({
           status: ev.status || '',
           desc: ev.context || '',
           time: ev.ftime || ev.time || '',
-          place: ev.areaName || ev.location || ''
+          place: ev.areaName || ev.location || '',
+          lat: lat,
+          lng: lng
         })
       })
       return {
@@ -356,7 +379,36 @@ export default {
           return
         }
       } catch (e) {}
+
+      if (url.indexOf('http') === 0) {
+        uni.navigateTo({ url: '/pages/webview/index?url=' + encodeURIComponent(url) })
+        return
+      }
+
       try { uni.setClipboardData({ data: String(url) }); uni.showToast({ title: '链接已复制', icon: 'none' }) } catch (e) {}
+    },
+    hasMapCoords(list) {
+      try { return Array.isArray(list) && list.some(it => it && typeof it.lat === 'number' && typeof it.lng === 'number') } catch (e) { return false }
+    },
+    mapCenter(list) {
+      try {
+        const arr = (Array.isArray(list) ? list : []).filter(it => typeof it.lat === 'number' && typeof it.lng === 'number')
+        if (!arr.length) return { latitude: 0, longitude: 0 }
+        const last = arr[arr.length - 1]
+        return { latitude: last.lat, longitude: last.lng }
+      } catch (e) { return { latitude: 0, longitude: 0 } }
+    },
+    mapMarkers(list) {
+      try {
+        const arr = (Array.isArray(list) ? list : []).filter(it => typeof it.lat === 'number' && typeof it.lng === 'number')
+        return arr.map((it, i) => ({ id: i, latitude: it.lat, longitude: it.lng }))
+      } catch (e) { return [] }
+    },
+    mapPolyline(list) {
+      try {
+        const pts = (Array.isArray(list) ? list : []).filter(it => typeof it.lat === 'number' && typeof it.lng === 'number').map(it => ({ latitude: it.lat, longitude: it.lng }))
+        return pts.length > 1 ? [{ points: pts, color: '#FF4D4F', width: 4 }] : []
+      } catch (e) { return [] }
     },
     async confirmReceipt(id) {
       try {
@@ -869,7 +921,7 @@ export default {
 
 /* #ifdef MP-WEIXIN */
 .header .title {
-  font-size: 36rpx;
+  font-size: 34rpx;
   font-weight: bold;
   margin-bottom: 20rpx;
   display: block;

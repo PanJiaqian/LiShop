@@ -15,6 +15,7 @@ if (!Math) {
   "./pages/category/list.js";
   "./pages/address/index.js";
   "./pages/address/edit.js";
+  "./pages/webview/index.js";
 }
 const _sfc_main = {
   onLaunch: function() {

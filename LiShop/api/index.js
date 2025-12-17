@@ -898,6 +898,28 @@ export function confirmOrderReceipt(options = {}) {
   })
 }
 
+export function createDirectOrder(options = {}) {
+  const { product_id, address_id, note, length, quantity, room_id, token } = options
+  const query = toQuery({ product_id, address_id, note, length, quantity, room_id })
+  const url = `${BASE_URL}/api/orders/create_direct${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(data || res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
 export function createOrderByIds(options = {}) {
   const { ids, address_id, note, token } = options
   const query = toQuery({ ids, address_id, note })
