@@ -87,7 +87,7 @@ const _sfc_main = {
     lengthUnitText() {
       var _a;
       try {
-        const u = String(((_a = this.selectedSpec) == null ? void 0 : _a.unit) || "").toLowerCase();
+        const u = String(((_a = this.selectedSpec) == null ? void 0 : _a.length_unit) || "").toLowerCase();
         if (u.includes("mm"))
           return "mm";
         if (u.includes("cm"))
@@ -170,6 +170,7 @@ const _sfc_main = {
           product_id: it.product_id || "",
           name: it.name || "",
           unit: it.unit || "",
+          length_unit: it.length_unit || "",
           price: Number(it.price ?? 0) || 0,
           original_price: Number(it.original_price ?? 0) || 0,
           image_url: clean(it.image_url) || "",
@@ -221,6 +222,15 @@ const _sfc_main = {
       }
       const lengthNum = (this.specLength || "").replace(/[^0-9.]/g, "");
       const lengthVal = lengthNum ? Number(lengthNum) : void 0;
+      const needLength = this.selectedSpec && this.selectedSpec.has_length === 1;
+      if (needLength && (!lengthVal || Number(lengthVal) <= 0)) {
+        common_vendor.index.showToast({ title: "请填写长度", icon: "none" });
+        return;
+      }
+      if (!this.qty || this.qty <= 0) {
+        common_vendor.index.showToast({ title: "请填写数量", icon: "none" });
+        return;
+      }
       const spec = this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex] ? this.specs[this.selectedSpecIndex] : null;
       if (spec && spec.specification && lengthVal) {
         const max = parseFloat(spec.specification);
@@ -249,12 +259,26 @@ const _sfc_main = {
         const spec = this.selectedSpec;
         const pid = spec ? spec.product_id || ((_a = this.product) == null ? void 0 : _a.id) || "" : ((_b = this.product) == null ? void 0 : _b.id) || "";
         const addrId = ((_c = this.selectedAddress) == null ? void 0 : _c.id) || "";
+        const roomName = (this.roomName || "").trim();
+        if (!roomName) {
+          common_vendor.index.showToast({ title: "请填写房间名", icon: "none" });
+          return;
+        }
+        const needLength = spec && spec.has_length === 1;
+        const rawLen = (this.specLength || "").replace(/[^0-9.]/g, "");
+        const lenNum = rawLen ? Number(rawLen) : 0;
+        if (needLength && (!lenNum || lenNum <= 0)) {
+          common_vendor.index.showToast({ title: "请填写长度", icon: "none" });
+          return;
+        }
+        if (!addrId) {
+          common_vendor.index.showToast({ title: "请先选择收货地址", icon: "none" });
+          return;
+        }
         const roomId = this.roomId || "";
         const qty = this.qty || 1;
         const note = this.h5OrderNote || "";
-        const rawLen = (this.specLength || "").replace(/[^0-9.]/g, "");
-        const lenNum = rawLen ? Number(rawLen) : "";
-        const lenMeters = lenNum === "" ? "" : this.toMeters(lenNum, this.lengthUnitText);
+        const lenMeters = !needLength ? "" : this.toMeters(lenNum, this.lengthUnitText);
         const u = common_vendor.index.getStorageSync("user") || null;
         const token = u && (u.token || u.data && u.data.token) || "";
         common_vendor.index.showLoading({ title: "下单中" });
@@ -473,7 +497,7 @@ const _sfc_main = {
       if (it.has_length !== 1)
         return base;
       const spec = String(it.specification || "").toLowerCase();
-      const unit = this.parseLengthUnit(it.unit, spec);
+      const unit = this.parseLengthUnit(it.length_unit || it.unit, spec);
       const mult = this.unitMultiplier(unit);
       return base * mult;
     },
