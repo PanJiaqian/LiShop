@@ -7,7 +7,7 @@ const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
   components: { FloatingNav, Skeleton },
   data() {
-    return { order: null, orders: [], activeTab: "all", loading: true, logisticsCollapsed: true, isH5: false, mapError: false };
+    return { order: null, orders: [], activeTab: "all", loading: true, logisticsCollapsed: true, isH5: false, mapError: false, detailStatusHint: "" };
   },
   onLoad(query) {
     const id = query == null ? void 0 : query.id;
@@ -15,6 +15,10 @@ const _sfc_main = {
       this.isH5 = typeof window !== "undefined";
     } catch (e) {
       this.isH5 = false;
+    }
+    const status = query == null ? void 0 : query.status;
+    if (status) {
+      this.detailStatusHint = String(status);
     }
     if (id) {
       this.fetchDetail(id);
@@ -52,6 +56,14 @@ const _sfc_main = {
       } catch (e) {
       }
     },
+    isPendingReceipt(status) {
+      try {
+        const s = String(status || "");
+        return s === "pending_receipt" || s.includes("待收货");
+      } catch (e) {
+        return false;
+      }
+    },
     formatTime(t) {
       try {
         let dateStr = t;
@@ -70,8 +82,9 @@ const _sfc_main = {
       } catch (e) {
       }
     },
-    openDetail(id) {
-      common_vendor.index.navigateTo({ url: "/pages/order/index?id=" + id });
+    openDetail(id, status) {
+      const qs = status ? "&status=" + encodeURIComponent(status) : "";
+      common_vendor.index.navigateTo({ url: "/pages/order/index?id=" + id + qs });
     },
     firstThumbs(o) {
       try {
@@ -84,14 +97,39 @@ const _sfc_main = {
     },
     async exportExcel(order) {
       try {
-        common_vendor.index.showModal({ title: "提示", content: "小程序暂不支持导出", showCancel: false });
-        return;
         common_vendor.index.showLoading({ title: "请求导出" });
         const res = await api_index.exportOrderExcel({ order_id: order.id });
         common_vendor.index.hideLoading();
         if (res.success) {
           const msg = res.message || "导出请求已发送";
           common_vendor.index.showToast({ title: msg, icon: "success" });
+          if (res.blob) {
+            try {
+              const fs = typeof common_vendor.wx$1 !== "undefined" && typeof common_vendor.wx$1.getFileSystemManager === "function" ? common_vendor.wx$1.getFileSystemManager() : null;
+              const base = typeof common_vendor.wx$1 !== "undefined" && common_vendor.wx$1.env && common_vendor.wx$1.env.USER_DATA_PATH ? common_vendor.wx$1.env.USER_DATA_PATH : common_vendor.index && common_vendor.index.env && common_vendor.index.env.USER_DATA_PATH ? common_vendor.index.env.USER_DATA_PATH : "";
+              const fname = res.filename || "订单导出.xlsx";
+              const filePath = base ? base + "/" + fname : fname;
+              if (fs && filePath) {
+                fs.writeFile({
+                  filePath,
+                  data: res.blob,
+                  success: () => {
+                    common_vendor.index.showToast({ title: "文件已保存", icon: "success" });
+                    try {
+                      if (typeof common_vendor.wx$1 !== "undefined" && typeof common_vendor.wx$1.openDocument === "function")
+                        common_vendor.wx$1.openDocument({ filePath });
+                    } catch (e) {
+                    }
+                  },
+                  fail: () => {
+                    common_vendor.index.showToast({ title: "文件保存失败", icon: "none" });
+                  }
+                });
+                return;
+              }
+            } catch (e) {
+            }
+          }
           const possibleUrl = res && res.url || res && res.data && res.data.url || (res && res.data && typeof res.data === "string" ? res.data : "");
           if (possibleUrl && typeof possibleUrl === "string") {
             const url = possibleUrl;
@@ -226,6 +264,9 @@ const _sfc_main = {
         const res = await api_index.getOrderDetail({ order_id: id });
         if (res.success && res.data) {
           this.order = this.mapApiOrderToLocal(res.data);
+          if (this.order && (!this.order.status || this.order.status === "unknown") && this.detailStatusHint) {
+            this.order.status = this.detailStatusHint;
+          }
         }
       } catch (e) {
       }
@@ -438,15 +479,16 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     }),
     M: common_vendor.t($data.order.total.toFixed(2)),
-    N: common_vendor.o(($event) => $options.exportExcel($data.order)),
-    O: $data.order.status === "pending_receipt"
-  }, $data.order.status === "pending_receipt" ? {
-    P: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+    N: $options.isPendingReceipt($data.order.status)
+  }, $options.isPendingReceipt($data.order.status) ? {
+    O: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
   } : {}, {
-    Q: ["pending_payment", "pending_shipment"].includes($data.order.status)
+    P: ["pending_payment", "pending_shipment"].includes($data.order.status)
   }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
-    R: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
-  } : {}) : common_vendor.e({
+    Q: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+  } : {}, {
+    R: common_vendor.o(($event) => $options.exportExcel($data.order))
+  }) : common_vendor.e({
     S: $data.orders.length
   }, $data.orders.length ? {
     T: common_vendor.f($data.orders, (o, k0, i0) => {
@@ -471,7 +513,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       }, ["pending_payment", "pending_shipment"].includes(o.status) ? {
         i: common_vendor.o(($event) => $options.handleCancelOrder(o.orderNo || o.id), o.id)
       } : {}, {
-        j: common_vendor.o(($event) => $options.openDetail(o.id), o.id),
+        j: common_vendor.o(($event) => $options.openDetail(o.id, o.status), o.id),
         k: o.id
       });
     })

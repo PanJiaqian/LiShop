@@ -20,7 +20,7 @@
     <view class="order" v-if="order">
       <view class="header">
         <text class="title">订单号：{{ order.orderNo || order.id }}</text>
-                  <text class="log-title">物流信息</text>
+        <text class="log-title">物流信息</text>
         <text class="time" v-if="order.createdAt">下单时间：{{ formatTime(order.createdAt) }}</text>
         <!-- Total moved to footer for H5 and MP -->
         <!-- #ifndef H5 -->
@@ -29,14 +29,15 @@
       </view>
       <view class="logistics">
         <view class="log-header">
-                <view class="waybill" v-if="order.waybillNo">
-        <text>运单号：{{ order.waybillNo }}</text>
-        <button size="mini" class="copy" @click="copyWaybill(order.waybillNo)">复制运单号</button>
-      </view>
+          <view class="waybill" v-if="order.waybillNo">
+            <text>运单号：{{ order.waybillNo }}</text>
+            <button size="mini" class="copy" @click="copyWaybill(order.waybillNo)">复制运单号</button>
+          </view>
 
         </view>
         <view v-if="(order.tracking || []).length">
-          <view class="log-item" v-for="(ev, i) in (logisticsCollapsed ? (order.tracking || []).slice(0,1) : order.tracking)" :key="i">
+          <view class="log-item"
+            v-for="(ev, i) in (logisticsCollapsed ? (order.tracking || []).slice(0, 1) : order.tracking)" :key="i">
             <view class="dot">•</view>
             <view class="log-meta">
               <view class="log-row">
@@ -57,8 +58,12 @@
           </view>
           <!-- #ifdef MP-WEIXIN -->
           <view v-else>
-            <map v-if="hasMapCoords(order.tracking)" class="map-canvas" :latitude="mapCenter(order.tracking).latitude" :longitude="mapCenter(order.tracking).longitude" :markers="mapMarkers(order.tracking)" :polyline="mapPolyline(order.tracking)" scale="12"></map>
-            <image v-else-if="isImageLink(order.mapUrl)" class="map-image" :src="mapError ? '/static/logo.png' : order.mapUrl" mode="widthFix" @click="openMap(order.mapUrl)" @error="onMapError" />
+            <map v-if="hasMapCoords(order.tracking)" class="map-canvas" :latitude="mapCenter(order.tracking).latitude"
+              :longitude="mapCenter(order.tracking).longitude" :markers="mapMarkers(order.tracking)"
+              :polyline="mapPolyline(order.tracking)" scale="12"></map>
+            <image v-else-if="isImageLink(order.mapUrl)" class="map-image"
+              :src="mapError ? '/static/logo.png' : order.mapUrl" mode="widthFix" @click="openMap(order.mapUrl)"
+              @error="onMapError" />
             <view v-else class="map-link-row">
               <text class="map-link" @click="openMap(order.mapUrl)">查看物流地图</text>
             </view>
@@ -98,10 +103,11 @@
       <view class="ops">
         <text class="total-text">合计：¥{{ order.total.toFixed(2) }}</text>
         <view class="btns">
-          <button class="btn" @click="exportExcel(order)">导出Excel</button>
-          <button class="btn" v-if="order.status === 'pending_receipt'" @click="confirmReceipt(order.id)">确认收货</button>
-          <button class="btn" v-if="['pending_payment', 'pending_shipment'].includes(order.status)"
-            @click="handleCancelOrder(order.id)">取消订单</button>
+          <button class="btn-action" v-if="isPendingReceipt(order.status)"
+            @click="confirmReceipt(order.id)">确认收货</button>
+          <button class="btn-action" v-if="['pending_payment', 'pending_shipment'].includes(order.status)"
+            @click="handleCancelOrder(order.id)">取消订单</button><button class="btn"
+            @click="exportExcel(order)">导出Excel</button>
         </view>
       </view>
     </view>
@@ -124,7 +130,7 @@
                 @click.stop="confirmReceipt(o.orderNo || o.id)">确认收货</button>
               <button size="mini" class="btn-action" v-if="['pending_payment', 'pending_shipment'].includes(o.status)"
                 @click.stop="handleCancelOrder(o.orderNo || o.id)">取消订单</button>
-              <button size="mini" class="btn-action primary" @click.stop="openDetail(o.id)">查看详情</button>
+              <button size="mini" class="btn-action primary" @click.stop="openDetail(o.id, o.status)">查看详情</button>
             </view>
           </view>
         </view>
@@ -145,10 +151,12 @@ import Skeleton from '@/components/Skeleton.vue'
 
 export default {
   components: { FloatingNav, Skeleton },
-  data() { return { order: null, orders: [], activeTab: 'all', loading: true, logisticsCollapsed: true, isH5: false, mapError: false } },
+  data() { return { order: null, orders: [], activeTab: 'all', loading: true, logisticsCollapsed: true, isH5: false, mapError: false, detailStatusHint: '' } },
   onLoad(query) {
     const id = query?.id
     try { this.isH5 = typeof window !== 'undefined' } catch (e) { this.isH5 = false }
+    const status = query?.status
+    if (status) { this.detailStatusHint = String(status) }
     if (id) {
       this.fetchDetail(id)
     } else {
@@ -164,24 +172,33 @@ export default {
           try { uni.setStorageSync('last_order_back', ref) } catch (e) { }
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   },
   methods: {
     isImageLink(url) {
       try { return /\.(png|jpg|jpeg|gif|bmp|webp)(\?.*)?$/i.test(String(url || '')) } catch (e) { return false }
     },
     onMapError() { this.mapError = true; try { uni.showToast({ title: '物流地图加载失败', icon: 'none' }) } catch (e) { } },
-    formatTime(t) { 
-      try { 
+    isPendingReceipt(status) {
+      try {
+        const s = String(status || '')
+        return s === 'pending_receipt' || s.includes('待收货')
+      } catch (e) { return false }
+    },
+    formatTime(t) {
+      try {
         let dateStr = t;
         if (typeof dateStr === 'string') {
           dateStr = dateStr.replace(/-/g, '/')
         }
-        return new Date(dateStr).toLocaleString() 
-      } catch { return t } 
+        return new Date(dateStr).toLocaleString()
+      } catch { return t }
     },
     copyWaybill(no) { try { uni.setClipboardData({ data: String(no) }); uni.showToast({ title: '已复制运单号', icon: 'success' }) } catch (e) { } },
-    openDetail(id) { uni.navigateTo({ url: '/pages/order/index?id=' + id }) },
+    openDetail(id, status) {
+      const qs = status ? ('&status=' + encodeURIComponent(status)) : ''
+      uni.navigateTo({ url: '/pages/order/index?id=' + id + qs })
+    },
     firstThumbs(o) {
       try {
         const imgs = []
@@ -191,10 +208,6 @@ export default {
     },
     async exportExcel(order) {
       try {
-        // #ifdef MP-WEIXIN
-        uni.showModal({ title: '提示', content: '小程序暂不支持导出', showCancel: false })
-        return
-        // #endif
         uni.showLoading({ title: '请求导出' })
         const res = await exportOrderExcel({ order_id: order.id })
         uni.hideLoading()
@@ -213,6 +226,30 @@ export default {
               a.remove()
               try { URL.revokeObjectURL(url) } catch (e) { }
               return
+            } catch (e) { }
+          }
+          // #endif
+          // #ifndef H5
+          if (res.blob) {
+            try {
+              const fs = (typeof wx !== 'undefined' && typeof wx.getFileSystemManager === 'function') ? wx.getFileSystemManager() : null
+              const base = (typeof wx !== 'undefined' && wx.env && wx.env.USER_DATA_PATH) ? wx.env.USER_DATA_PATH : ((uni && uni.env && uni.env.USER_DATA_PATH) ? uni.env.USER_DATA_PATH : '')
+              const fname = res.filename || '订单导出.xlsx'
+              const filePath = base ? (base + '/' + fname) : fname
+              if (fs && filePath) {
+                fs.writeFile({
+                  filePath,
+                  data: res.blob,
+                  success: () => {
+                    uni.showToast({ title: '文件已保存', icon: 'success' })
+                    try { if (typeof wx !== 'undefined' && typeof wx.openDocument === 'function') wx.openDocument({ filePath }) } catch (e) { }
+                  },
+                  fail: () => {
+                    uni.showToast({ title: '文件保存失败', icon: 'none' })
+                  }
+                })
+                return
+              }
             } catch (e) { }
           }
           // #endif
@@ -354,6 +391,9 @@ export default {
         const res = await getOrderDetail({ order_id: id })
         if (res.success && res.data) {
           this.order = this.mapApiOrderToLocal(res.data)
+          if (this.order && (!this.order.status || this.order.status === 'unknown') && this.detailStatusHint) {
+            this.order.status = this.detailStatusHint
+          }
         }
       } catch (e) { }
       this.loading = false
@@ -364,7 +404,7 @@ export default {
     },
     goBack() {
       if (this.order) {
-        try { uni.navigateTo({ url: '/pages/order/index' }); return } catch (e) {}
+        try { uni.navigateTo({ url: '/pages/order/index' }); return } catch (e) { }
         this.goHome()
       } else {
         this.goHome()
@@ -378,14 +418,14 @@ export default {
           window.open(url, '_blank')
           return
         }
-      } catch (e) {}
+      } catch (e) { }
 
       if (url.indexOf('http') === 0) {
         uni.navigateTo({ url: '/pages/webview/index?url=' + encodeURIComponent(url) })
         return
       }
 
-      try { uni.setClipboardData({ data: String(url) }); uni.showToast({ title: '链接已复制', icon: 'none' }) } catch (e) {}
+      try { uni.setClipboardData({ data: String(url) }); uni.showToast({ title: '链接已复制', icon: 'none' }) } catch (e) { }
     },
     hasMapCoords(list) {
       try { return Array.isArray(list) && list.some(it => it && typeof it.lat === 'number' && typeof it.lng === 'number') } catch (e) { return false }
@@ -454,11 +494,13 @@ export default {
 .page {
   min-height: 100vh;
 }
+
 /* #ifdef H5 */
 .page {
   background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
   background-size: cover;
 }
+
 /* #endif */
 
 .nav {
@@ -772,6 +814,7 @@ export default {
   padding: 14rpx 0;
   position: relative;
 }
+
 .log-item::before {
   content: '';
   position: absolute;
@@ -788,13 +831,47 @@ export default {
   font-size: 26rpx;
 }
 
-.logistics-map { margin-top: 12rpx; }
-.map-frame { width: 100%; height: 420rpx; border-radius: 10rpx; overflow: hidden; background: #f5f5f5; }
-.map-iframe { width: 100%; height: 100%; border: 0; }
-.map-image { width: 100%; border-radius: 10rpx; background: #f5f5f5; }
-.map-webview { width: 100%; height: 420rpx; border-radius: 10rpx; overflow: hidden; }
-.map-link-row { display: flex; justify-content: center; padding: 12rpx 0; }
-.map-link { color: #007aff; font-size: 26rpx; }
+.logistics-map {
+  margin-top: 12rpx;
+}
+
+.map-frame {
+  width: 100%;
+  height: 420rpx;
+  border-radius: 10rpx;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.map-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.map-image {
+  width: 100%;
+  border-radius: 10rpx;
+  background: #f5f5f5;
+}
+
+.map-webview {
+  width: 100%;
+  height: 420rpx;
+  border-radius: 10rpx;
+  overflow: hidden;
+}
+
+.map-link-row {
+  display: flex;
+  justify-content: center;
+  padding: 12rpx 0;
+}
+
+.map-link {
+  color: #007aff;
+  font-size: 26rpx;
+}
 
 .log-toggle-center {
   display: flex;
@@ -837,16 +914,54 @@ export default {
   font-size: 0;
   line-height: 16rpx;
 }
-.log-item:first-child .dot { background: #333; }
-.log-meta { flex: 1; display: flex; flex-direction: column; gap: 8rpx; }
-.log-row { display: flex; align-items: center; gap: 16rpx; flex-wrap: wrap; }
-.log-status { font-size: 30rpx; font-weight: 600; color: #333; }
-.log-time { font-size: 26rpx; color: #999; }
-.log-desc { font-size: 26rpx; color: #999; line-height: 1.5; }
 
-.log-item:first-child .log-status { color: #18FAE0; font-size: 32rpx; }
-.log-item:first-child .log-time { color: #18FAE0; }
-.log-item:first-child .log-desc { color: #333; }
+.log-item:first-child .dot {
+  background: #333;
+}
+
+.log-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
+.log-status {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.log-time {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.log-desc {
+  font-size: 26rpx;
+  color: #999;
+  line-height: 1.5;
+}
+
+.log-item:first-child .log-status {
+  color: #18FAE0;
+  font-size: 32rpx;
+}
+
+.log-item:first-child .log-time {
+  color: #18FAE0;
+}
+
+.log-item:first-child .log-desc {
+  color: #333;
+}
 
 .log-status {
   font-weight: 600;
@@ -920,6 +1035,21 @@ export default {
 /* #endif */
 
 /* #ifdef MP-WEIXIN */
+.waybill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.waybill .copy {
+  width: 300rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 40rpx;
+  border-radius: 40rpx;
+}
+
 .header .title {
   font-size: 34rpx;
   font-weight: bold;
@@ -947,7 +1077,10 @@ export default {
 
 /* #endif */
 /* #ifdef MP-WEIXIN */
-.page { position: relative; }
+.page {
+  position: relative;
+}
+
 .page-bg {
   position: fixed;
   left: 0;
@@ -959,5 +1092,6 @@ export default {
   z-index: -1;
   pointer-events: none;
 }
+
 /* #endif */
 </style>

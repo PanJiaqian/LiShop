@@ -94,6 +94,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 99;
 }
 .sum.data-v-8039fbf1 {
   color: #e1251b;
