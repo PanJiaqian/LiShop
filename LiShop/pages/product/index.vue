@@ -516,7 +516,7 @@ export default {
       }
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
-      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthVal, quantity: this.qty, color: this.specTemp || '', note: '' })
+      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: this.qty, color: this.specTemp || '', note: '' })
         .then((res) => {
           if (res && res.success) uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
           else {
@@ -551,7 +551,7 @@ export default {
         const roomId = this.roomId || ''
         const qty = this.qty || 1
         const note = this.h5OrderNote || ''
-        const lenMeters = !needLength ? '' : this.toMeters(lenNum, this.lengthUnitText)
+        const lenMeters = !needLength ? '' : lenNum
 
         const u = uni.getStorageSync('user') || null
         const token = (u && (u.token || (u.data && u.data.token))) || ''

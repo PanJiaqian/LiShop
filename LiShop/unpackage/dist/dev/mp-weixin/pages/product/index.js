@@ -240,7 +240,7 @@ const _sfc_main = {
         }
       }
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
-      api_index.addCartItem({ room_id: this.roomId, product_id: pid, length: lengthVal, quantity: this.qty, color: this.specTemp || "", note: "" }).then((res) => {
+      api_index.addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: this.qty, color: this.specTemp || "", note: "" }).then((res) => {
         var _a2;
         if (res && res.success)
           common_vendor.index.showToast({ title: `已加入房间：${chosen}`, icon: "success" });
@@ -278,7 +278,7 @@ const _sfc_main = {
         const roomId = this.roomId || "";
         const qty = this.qty || 1;
         const note = this.h5OrderNote || "";
-        const lenMeters = !needLength ? "" : this.toMeters(lenNum, this.lengthUnitText);
+        const lenMeters = !needLength ? "" : lenNum;
         const u = common_vendor.index.getStorageSync("user") || null;
         const token = u && (u.token || u.data && u.data.token) || "";
         common_vendor.index.showLoading({ title: "下单中" });
