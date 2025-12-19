@@ -93,7 +93,7 @@ const _sfc_main = {
         title: (it == null ? void 0 : it.name) || "商品 " + (i + 1),
         price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
         sales: 0,
-        image: this.cleanImage(it == null ? void 0 : it.thumbnail)
+        image: this.cleanImage(it == null ? void 0 : it.main_image) || this.cleanImage(it == null ? void 0 : it.thumbnail)
       }));
     },
     async loadSubChildren() {

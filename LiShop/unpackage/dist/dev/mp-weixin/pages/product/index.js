@@ -7,7 +7,7 @@ const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
   components: { RoomSelector, FloatingNav, Skeleton },
   data() {
-    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "" };
+    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
@@ -532,6 +532,47 @@ const _sfc_main = {
       if (u === "dm")
         return Number(len) / 10;
       return Number(len);
+    },
+    favProduct() {
+      var _a;
+      try {
+        const pid = ((_a = this.product) == null ? void 0 : _a.id) || "";
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const token = u && (u.token || u.data && u.data.token) || "";
+        if (!pid) {
+          common_vendor.index.showToast({ title: "商品信息缺失", icon: "none" });
+          return;
+        }
+        if (!token) {
+          common_vendor.index.showToast({ title: "请先登录", icon: "none" });
+          return;
+        }
+        if (!this.isFavorite) {
+          api_index.addFavorite({ product_id: pid, token }).then((res) => {
+            if (res && res.success) {
+              this.isFavorite = true;
+              common_vendor.index.showToast({ title: "已收藏", icon: "success" });
+            } else {
+              common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "收藏失败", icon: "none" });
+            }
+          }).catch(() => {
+            common_vendor.index.showToast({ title: "收藏失败", icon: "none" });
+          });
+        } else {
+          api_index.deleteFavorite({ product_id: pid, token }).then((res) => {
+            if (res && res.success) {
+              this.isFavorite = false;
+              common_vendor.index.showToast({ title: "已取消收藏", icon: "success" });
+            } else {
+              common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "取消失败", icon: "none" });
+            }
+          }).catch(() => {
+            common_vendor.index.showToast({ title: "取消失败", icon: "none" });
+          });
+        }
+      } catch (e) {
+        common_vendor.index.showToast({ title: "收藏失败", icon: "none" });
+      }
     }
   }
 };
@@ -560,41 +601,44 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     }),
     d: common_vendor.t($data.product.title),
-    e: common_vendor.t($data.product.price.toFixed(2)),
-    f: common_vendor.t($data.product.sales),
-    g: common_vendor.t($data.product.id || "默认款"),
-    h: common_vendor.t($data.product.title),
-    i: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
-    j: common_vendor.t($data.product.price.toFixed(2)),
-    k: common_vendor.f($data.product.details_images, (src, i, i0) => {
+    e: common_vendor.t($data.isFavorite ? "★" : "☆"),
+    f: $data.isFavorite ? 1 : "",
+    g: common_vendor.o((...args) => $options.favProduct && $options.favProduct(...args)),
+    h: common_vendor.t($data.product.price.toFixed(2)),
+    i: common_vendor.t($data.product.sales),
+    j: common_vendor.t($data.product.id || "默认款"),
+    k: common_vendor.t($data.product.title),
+    l: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
+    m: common_vendor.t($data.product.price.toFixed(2)),
+    n: common_vendor.f($data.product.details_images, (src, i, i0) => {
       return {
         a: "md" + i,
         b: src
       };
     }),
-    l: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
-    m: $data.mpSheet
+    o: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
+    p: $data.mpSheet
   }, $data.mpSheet ? common_vendor.e({
-    n: $data.selectedAddress
-  }, $data.selectedAddress ? {
-    o: common_vendor.t($data.selectedAddress.receiver),
-    p: common_vendor.t($data.selectedAddress.phone)
-  } : {}, {
     q: $data.selectedAddress
   }, $data.selectedAddress ? {
-    r: common_vendor.t($data.selectedAddress.province),
-    s: common_vendor.t($data.selectedAddress.city),
-    t: common_vendor.t($data.selectedAddress.district),
-    v: common_vendor.t($data.selectedAddress.detail_address)
+    r: common_vendor.t($data.selectedAddress.receiver),
+    s: common_vendor.t($data.selectedAddress.phone)
   } : {}, {
-    w: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
-    x: $data.specsLoading
+    t: $data.selectedAddress
+  }, $data.selectedAddress ? {
+    v: common_vendor.t($data.selectedAddress.province),
+    w: common_vendor.t($data.selectedAddress.city),
+    x: common_vendor.t($data.selectedAddress.district),
+    y: common_vendor.t($data.selectedAddress.detail_address)
+  } : {}, {
+    z: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
+    A: $data.specsLoading
   }, $data.specsLoading ? {} : $data.specs && $data.specs.length ? common_vendor.e({
-    z: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
+    C: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
       return common_vendor.e({
         a: it.image_url || "/static/logo.png",
         b: common_vendor.t(it.name),
-        c: common_vendor.t(Number($options.displaySpecPrice(it)).toFixed(2)),
+        c: common_vendor.t(Number(it.price || 0).toFixed(2)),
         d: Number(it.original_price) > 0
       }, Number(it.original_price) > 0 ? {
         e: common_vendor.t(Number(it.original_price).toFixed(2))
@@ -605,45 +649,45 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         i: common_vendor.o(($event) => $options.selectSpec(i), "mpsp" + i)
       });
     }),
-    A: $data.specs.length > 3
+    D: $data.specs.length > 3
   }, $data.specs.length > 3 ? {
-    B: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
-    C: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
-    D: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
+    E: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
+    F: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
+    G: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
   } : {}) : {}, {
-    y: $data.specs && $data.specs.length,
-    E: common_vendor.t($data.mpRoom || "请选择房间"),
-    F: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
-    G: $options.selectedSpec && $options.selectedSpec.has_length === 1
+    B: $data.specs && $data.specs.length,
+    H: common_vendor.t($data.mpRoom || "请选择房间"),
+    I: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
+    J: $options.selectedSpec && $options.selectedSpec.has_length === 1
   }, $options.selectedSpec && $options.selectedSpec.has_length === 1 ? common_vendor.e({
-    H: $data.mpLength,
-    I: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
-    J: $options.selectedSpec.specification
-  }, $options.selectedSpec.specification ? {
-    K: common_vendor.t($options.selectedSpec.specification)
+    K: $data.mpLength,
+    L: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
+    M: $options.selectedSpec.length_unit
+  }, $options.selectedSpec.length_unit ? {
+    N: common_vendor.t($options.selectedSpec.length_unit)
   } : {}) : {}, {
-    L: common_vendor.o(($event) => $data.mpQty = Math.max(1, $data.mpQty - 1)),
-    M: common_vendor.t($data.mpQty),
-    N: common_vendor.o(($event) => $data.mpQty = $data.mpQty + 1),
-    O: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    P: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
-    Q: common_vendor.o(() => {
-    }),
+    O: common_vendor.o(($event) => $data.mpQty = Math.max(1, $data.mpQty - 1)),
+    P: common_vendor.t($data.mpQty),
+    Q: common_vendor.o(($event) => $data.mpQty = $data.mpQty + 1),
     R: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    S: common_vendor.o(() => {
+    S: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
+    T: common_vendor.o(() => {
+    }),
+    U: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    V: common_vendor.o(() => {
     })
   }) : {}) : {}, {
-    T: common_vendor.o($options.closeRoomSheet),
-    U: common_vendor.o($options.onRoomSelect),
-    V: common_vendor.o($options.onRoomCreate),
-    W: common_vendor.o($options.onCreateAddress),
-    X: common_vendor.p({
+    W: common_vendor.o($options.closeRoomSheet),
+    X: common_vendor.o($options.onRoomSelect),
+    Y: common_vendor.o($options.onRoomCreate),
+    Z: common_vendor.o($options.onCreateAddress),
+    aa: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    Y: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
+    ab: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);

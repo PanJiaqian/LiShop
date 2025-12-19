@@ -229,7 +229,7 @@
                 <view class="spec-info">
                   <text class="spec-name">{{ it.name }}</text>
                   <view class="spec-price-row">
-                    <text class="spec-price">¥{{ Number(displaySpecPrice(it)).toFixed(2) }}</text>
+                    <text class="spec-price">¥{{ Number(it.price || 0).toFixed(2) }}</text>
                     <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
                       Number(it.original_price).toFixed(2) }}</text>
                   </view>
@@ -254,9 +254,7 @@
             <view class="mp-field" v-if="selectedSpec && selectedSpec.has_length === 1">
               <text class="label">长度</text>
               <input class="mp-input" v-model="mpLength" placeholder="填写数字" />
-              <text v-if="selectedSpec.specification"
-                style="font-size: 24rpx; color: #ff2d55; margin-left: 12rpx; white-space: nowrap;">最长：{{
-                  selectedSpec.specification }}</text>
+              <text v-if="selectedSpec.length_unit" class="unit-tip">{{ selectedSpec.length_unit }}</text>
             </view>
             <view class="mp-field">
               <text class="label">数量</text>

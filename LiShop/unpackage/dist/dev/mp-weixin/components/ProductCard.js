@@ -13,7 +13,14 @@ const _sfc_main = {
     openDetail() {
       var _a;
       const id = ((_a = this.product) == null ? void 0 : _a.id) ?? "";
-      common_vendor.index.navigateTo({ url: "/pages/product/index?id=" + encodeURIComponent(id) });
+      const url = "/pages/product/index?id=" + encodeURIComponent(id);
+      if (typeof window !== "undefined" && window.open) {
+        const base = typeof location !== "undefined" && location.href ? location.href.split("#")[0] : "";
+        const full = base ? base + "#/pages/product/index?id=" + encodeURIComponent(id) : url;
+        window.open(full, "_blank");
+      } else {
+        common_vendor.index.navigateTo({ url });
+      }
     }
   }
 };

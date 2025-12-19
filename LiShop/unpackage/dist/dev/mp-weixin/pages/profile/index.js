@@ -19,7 +19,8 @@ const _sfc_main = {
       securityForm: { value: "", code: "" },
       countdown: 0,
       timer: null,
-      addresses: []
+      addresses: [],
+      avatarError: false
     };
   },
   computed: {
@@ -32,10 +33,11 @@ const _sfc_main = {
           email: (u == null ? void 0 : u.email) || "未设置",
           companyName: (u == null ? void 0 : u.company_name) || (u == null ? void 0 : u.companyName) || "未设置",
           contactName: (u == null ? void 0 : u.contact_name) || (u == null ? void 0 : u.contactName) || "未设置",
-          region: (u == null ? void 0 : u.region) || "未设置"
+          region: (u == null ? void 0 : u.region) || "未设置",
+          avatarUrl: typeof ((u == null ? void 0 : u.avatar) || (u == null ? void 0 : u.avatar_url)) === "string" ? (u.avatar || u.avatar_url).replace(/`/g, "").trim() : ""
         };
       } catch (e) {
-        return { username: "未设置", phone: "未设置", email: "未设置", companyName: "未设置", contactName: "未设置", region: "未设置" };
+        return { username: "未设置", phone: "未设置", email: "未设置", companyName: "未设置", contactName: "未设置", region: "未设置", avatarUrl: "" };
       }
     },
     securityTitle() {
@@ -45,6 +47,14 @@ const _sfc_main = {
     securityPlaceholder() {
       const map = { phone: "请输入新手机号", email: "请输入新邮箱", password: "请输入新密码" };
       return map[this.securityType] || "";
+    },
+    avatarInitial() {
+      try {
+        const name = (this.profile.contactName || this.profile.username || "").trim();
+        return name ? name.charAt(0) : "U";
+      } catch (e) {
+        return "U";
+      }
     }
   },
   onShow() {
@@ -111,6 +121,7 @@ const _sfc_main = {
           this.fetchedProfile = res.data;
           if (res.data.username)
             this.displayName = res.data.username;
+          this.avatarError = false;
         }
       }).catch((err) => {
         console.error("Fetch user profile failed", err);
@@ -284,6 +295,120 @@ const _sfc_main = {
           common_vendor.index.showToast({ title: err && err.message || "修改出错", icon: "none" });
         });
       }
+    },
+    triggerAvatarPicker() {
+      try {
+        if (common_vendor.index && typeof common_vendor.index.chooseImage === "function") {
+          const u = common_vendor.index.getStorageSync("user") || null;
+          const token = u && (u.token || u.data && u.data.token) || "";
+          if (!token) {
+            common_vendor.index.showToast({ title: "请先登录", icon: "none" });
+            return;
+          }
+          common_vendor.index.chooseImage({
+            count: 1,
+            sizeType: ["compressed", "original"],
+            sourceType: ["album", "camera"],
+            success: (ret) => {
+              const path = Array.isArray(ret.tempFilePaths) ? ret.tempFilePaths[0] : ret.tempFiles && ret.tempFiles[0] && (ret.tempFiles[0].path || ret.tempFiles[0]) || "";
+              if (!path) {
+                common_vendor.index.showToast({ title: "选择失败", icon: "none" });
+                return;
+              }
+              common_vendor.index.showLoading({ title: "上传中" });
+              api_index.updateUserAvatar({ filePath: path, token }).then((res) => {
+                common_vendor.index.hideLoading();
+                if (res && res.success) {
+                  common_vendor.index.showToast({ title: "上传成功", icon: "success" });
+                  this.loadUserProfile(token);
+                } else {
+                  common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "上传失败", icon: "none" });
+                }
+              }).catch(() => {
+                common_vendor.index.hideLoading();
+                common_vendor.index.showToast({ title: "上传失败", icon: "none" });
+              });
+            }
+          });
+          return;
+        }
+        const el = typeof document !== "undefined" ? document.getElementById("avatar-file") : null;
+        if (el && typeof el.click === "function")
+          el.click();
+      } catch (e) {
+      }
+    },
+    onAvatarFileChange(e) {
+      try {
+        const files = e && e.target && e.target.files ? e.target.files : [];
+        if (!files || !files.length) {
+          common_vendor.index.showToast({ title: "请选择图片", icon: "none" });
+          return;
+        }
+        const file = files[0];
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const token = u && (u.token || u.data && u.data.token) || "";
+        if (!token) {
+          common_vendor.index.showToast({ title: "请先登录", icon: "none" });
+          return;
+        }
+        common_vendor.index.showLoading({ title: "上传中" });
+        api_index.updateUserAvatar({ file, token }).then((res) => {
+          common_vendor.index.hideLoading();
+          if (res && res.success) {
+            common_vendor.index.showToast({ title: "上传成功", icon: "success" });
+            this.loadUserProfile(token);
+          } else {
+            common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "上传失败", icon: "none" });
+          }
+        }).catch(() => {
+          common_vendor.index.hideLoading();
+          common_vendor.index.showToast({ title: "上传失败", icon: "none" });
+        });
+      } catch (err) {
+        common_vendor.index.hideLoading();
+        common_vendor.index.showToast({ title: "上传失败", icon: "none" });
+      }
+    },
+    chooseAvatarWx() {
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const token = u && (u.token || u.data && u.data.token) || "";
+        if (!token) {
+          common_vendor.index.showToast({ title: "请先登录", icon: "none" });
+          return;
+        }
+        common_vendor.index.chooseImage({
+          count: 1,
+          sizeType: ["compressed", "original"],
+          sourceType: ["album", "camera"],
+          success: (ret) => {
+            const path = Array.isArray(ret.tempFilePaths) ? ret.tempFilePaths[0] : ret.tempFiles && ret.tempFiles[0] && ret.tempFiles[0].path || "";
+            if (!path) {
+              common_vendor.index.showToast({ title: "选择失败", icon: "none" });
+              return;
+            }
+            common_vendor.index.showLoading({ title: "上传中" });
+            api_index.updateUserAvatar({ filePath: path, token }).then((res) => {
+              common_vendor.index.hideLoading();
+              if (res && res.success) {
+                common_vendor.index.showToast({ title: "上传成功", icon: "success" });
+                this.loadUserProfile(token);
+              } else {
+                common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "上传失败", icon: "none" });
+              }
+            }).catch(() => {
+              common_vendor.index.hideLoading();
+              common_vendor.index.showToast({ title: "上传失败", icon: "none" });
+            });
+          }
+        });
+      } catch (e) {
+        common_vendor.index.showToast({ title: "上传失败", icon: "none" });
+      }
+    },
+    onAvatarError() {
+      this.avatarError = true;
     }
   }
 };
@@ -298,60 +423,67 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       showTitle: true
     }),
     b: common_assets._imports_0,
-    c: common_assets._imports_1$1,
-    d: $data.isEditing
-  }, $data.isEditing ? {
-    e: $data.editForm.username,
-    f: common_vendor.o(($event) => $data.editForm.username = $event.detail.value)
+    c: $options.profile.avatarUrl && !$data.avatarError
+  }, $options.profile.avatarUrl && !$data.avatarError ? {
+    d: $options.profile.avatarUrl,
+    e: common_vendor.o((...args) => $options.onAvatarError && $options.onAvatarError(...args))
   } : {
-    g: common_vendor.t($options.profile.username)
+    f: common_vendor.t($options.avatarInitial)
   }, {
-    h: common_vendor.t($options.profile.phone),
-    i: $data.loggedIn
-  }, $data.loggedIn ? {
-    j: common_vendor.o(($event) => $options.openSecurityModal("phone"))
-  } : {}, {
-    k: common_vendor.t($options.profile.email),
-    l: $data.loggedIn
-  }, $data.loggedIn ? {
-    m: common_vendor.o(($event) => $options.openSecurityModal("email"))
-  } : {}, {
-    n: $data.loggedIn
-  }, $data.loggedIn ? {
-    o: common_vendor.o(($event) => $options.openSecurityModal("password"))
-  } : {}, {
-    p: $data.isEditing
+    g: common_vendor.o((...args) => $options.chooseAvatarWx && $options.chooseAvatarWx(...args)),
+    h: $data.isEditing
   }, $data.isEditing ? {
-    q: $data.editForm.company_name,
-    r: common_vendor.o(($event) => $data.editForm.company_name = $event.detail.value)
+    i: $data.editForm.username,
+    j: common_vendor.o(($event) => $data.editForm.username = $event.detail.value)
   } : {
-    s: common_vendor.t($options.profile.companyName)
+    k: common_vendor.t($options.profile.username)
   }, {
+    l: common_vendor.t($options.profile.phone),
+    m: $data.loggedIn
+  }, $data.loggedIn ? {
+    n: common_vendor.o(($event) => $options.openSecurityModal("phone"))
+  } : {}, {
+    o: common_vendor.t($options.profile.email),
+    p: $data.loggedIn
+  }, $data.loggedIn ? {
+    q: common_vendor.o(($event) => $options.openSecurityModal("email"))
+  } : {}, {
+    r: $data.loggedIn
+  }, $data.loggedIn ? {
+    s: common_vendor.o(($event) => $options.openSecurityModal("password"))
+  } : {}, {
     t: $data.isEditing
   }, $data.isEditing ? {
-    v: $data.editForm.contact_name,
-    w: common_vendor.o(($event) => $data.editForm.contact_name = $event.detail.value)
+    v: $data.editForm.company_name,
+    w: common_vendor.o(($event) => $data.editForm.company_name = $event.detail.value)
   } : {
-    x: common_vendor.t($options.profile.contactName)
+    x: common_vendor.t($options.profile.companyName)
   }, {
     y: $data.isEditing
   }, $data.isEditing ? {
-    z: $data.editForm.region,
-    A: common_vendor.o(($event) => $data.editForm.region = $event.detail.value)
+    z: $data.editForm.contact_name,
+    A: common_vendor.o(($event) => $data.editForm.contact_name = $event.detail.value)
   } : {
-    B: common_vendor.t($options.profile.region)
+    B: common_vendor.t($options.profile.contactName)
   }, {
-    C: $data.loggedIn
+    C: $data.isEditing
+  }, $data.isEditing ? {
+    D: $data.editForm.region,
+    E: common_vendor.o(($event) => $data.editForm.region = $event.detail.value)
+  } : {
+    F: common_vendor.t($options.profile.region)
+  }, {
+    G: $data.loggedIn
   }, $data.loggedIn ? {
-    D: common_vendor.t($data.isEditing ? "保存修改" : "编辑资料"),
-    E: common_vendor.o(($event) => $data.isEditing ? $options.handleSave() : $options.handleEdit()),
-    F: common_vendor.t($data.isEditing ? "取消" : "退出登录"),
-    G: common_vendor.o(($event) => $data.isEditing ? $options.handleCancel() : $options.logout())
+    H: common_vendor.t($data.isEditing ? "保存修改" : "编辑资料"),
+    I: common_vendor.o(($event) => $data.isEditing ? $options.handleSave() : $options.handleEdit()),
+    J: common_vendor.t($data.isEditing ? "取消" : "退出登录"),
+    K: common_vendor.o(($event) => $data.isEditing ? $options.handleCancel() : $options.logout())
   } : {
-    H: common_vendor.o((...args) => $options.login && $options.login(...args))
+    L: common_vendor.o((...args) => $options.login && $options.login(...args))
   }, {
-    I: common_vendor.o((...args) => $options.goCreateAddress && $options.goCreateAddress(...args)),
-    J: common_vendor.f($data.addresses, (addr, k0, i0) => {
+    M: common_vendor.o((...args) => $options.goCreateAddress && $options.goCreateAddress(...args)),
+    N: common_vendor.f($data.addresses, (addr, k0, i0) => {
       return {
         a: common_vendor.t(addr.full),
         b: common_vendor.t(addr.receiver),
@@ -360,24 +492,24 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => $options.editAddress(addr), addr.id)
       };
     }),
-    K: $data.addresses.length === 0
+    O: $data.addresses.length === 0
   }, $data.addresses.length === 0 ? {} : {}, {
-    L: $data.showSecurityModal
+    P: $data.showSecurityModal
   }, $data.showSecurityModal ? {
-    M: common_vendor.t($options.securityTitle),
-    N: $options.securityPlaceholder,
-    O: $data.securityForm.value,
-    P: common_vendor.o(($event) => $data.securityForm.value = $event.detail.value),
-    Q: $data.securityForm.code,
-    R: common_vendor.o(($event) => $data.securityForm.code = $event.detail.value),
-    S: common_vendor.t($data.countdown > 0 ? `${$data.countdown}s` : "获取验证码"),
-    T: $data.countdown > 0,
-    U: common_vendor.o((...args) => $options.sendCode && $options.sendCode(...args)),
-    V: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args)),
-    W: common_vendor.o((...args) => $options.confirmSecurityEdit && $options.confirmSecurityEdit(...args)),
-    X: common_vendor.o(() => {
+    Q: common_vendor.t($options.securityTitle),
+    R: $options.securityPlaceholder,
+    S: $data.securityForm.value,
+    T: common_vendor.o(($event) => $data.securityForm.value = $event.detail.value),
+    U: $data.securityForm.code,
+    V: common_vendor.o(($event) => $data.securityForm.code = $event.detail.value),
+    W: common_vendor.t($data.countdown > 0 ? `${$data.countdown}s` : "获取验证码"),
+    X: $data.countdown > 0,
+    Y: common_vendor.o((...args) => $options.sendCode && $options.sendCode(...args)),
+    Z: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args)),
+    aa: common_vendor.o((...args) => $options.confirmSecurityEdit && $options.confirmSecurityEdit(...args)),
+    ab: common_vendor.o(() => {
     }),
-    Y: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args))
+    ac: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-201c0da5"]]);

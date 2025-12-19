@@ -68,7 +68,7 @@ const _sfc_main = {
           title: (it == null ? void 0 : it.name) || "推荐商品 " + (i + 1),
           price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
           sales: Number((it == null ? void 0 : it.order_count) ?? (it == null ? void 0 : it.sales) ?? 0) || 0,
-          image: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || "/static/logo.png"
+          image: (typeof (it == null ? void 0 : it.main_image) === "string" ? it.main_image.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || "/static/logo.png"
         }));
       }).catch(() => {
       });

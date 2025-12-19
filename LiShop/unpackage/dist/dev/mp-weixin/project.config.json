@@ -11,6 +11,7 @@
     "minified": false,
     "newFeature": true,
     "bigPackageSizeSupport": true,
+    "packNpmRelationList": [],
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],
@@ -19,7 +20,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.11.3",
-  "appid": "wxa10e632addbceed3",
+  "appid": "wxb01c76212b0f4218",
   "projectname": "LiShop",
   "condition": {
     "search": {

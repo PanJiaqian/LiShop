@@ -20,6 +20,28 @@
   font-size: 32rpx;
   display: block;
 }
+.pd-title-row.data-v-a911e391 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+.mp-title-row.data-v-a911e391 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+.fav-star.data-v-a911e391 {
+  font-size: 32rpx;
+  color: #ccc;
+}
+.fav-star.active.data-v-a911e391 {
+  background: #ffec99;
+  color: #e3b609;
+  border-radius: 8rpx;
+  padding: 2rpx 8rpx;
+}
 .price.data-v-a911e391 {
 
   color: #333;
