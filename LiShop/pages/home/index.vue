@@ -76,6 +76,10 @@
                   <text class="uc-icon">📋</text>
                   <text>我的订单</text>
                </navigator>
+               <!-- <navigator class="uc-link-item" url="/pages/favorites/index">
+                  <text class="uc-icon">★</text>
+                  <text>我的收藏</text>
+               </navigator> -->
                <!-- <navigator class="uc-link-item" url="/pages/messages/index">
                    <text class="uc-icon">💬</text>
                   <text>信息</text>
@@ -224,7 +228,9 @@ export default {
             title: it?.name || ('推荐商品 ' + (i + 1)),
             price: Number(it?.price ?? 0) || 0,
             sales: Number(it?.order_count ?? it?.sales ?? 0) || 0,
-            image: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || '/static/logo.png'
+            image: (typeof it?.main_image === 'string' ? it.main_image.replace(/`/g, '').trim() : '')
+              || (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '')
+              || '/static/logo.png'
           }))
         })
         .catch(() => { })

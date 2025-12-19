@@ -12,8 +12,17 @@
           </view>
           
           <view class="user-brief">
-             <image class="avatar" src="/static/logo.png" />
-             <!-- <text class="name">{{ loggedIn ? displayName : '未登录' }}</text> -->
+             <view class="avatar-wrapper">
+               <image v-if="profile.avatarUrl && !avatarError" class="avatar" :src="profile.avatarUrl" @error="onAvatarError" />
+               <view v-else class="avatar avatar-initial">{{ avatarInitial }}</view>
+               <!-- #ifdef H5 -->
+               <input id="avatar-file" type="file" accept="image/*" style="position:absolute;left:-9999px;opacity:0;width:1px;height:1px;" @change="onAvatarFileChange" />
+               <view class="avatar-edit" @click="triggerAvatarPicker">✎</view>
+               <!-- #endif -->
+               <!-- #ifdef MP-WEIXIN -->
+               <view class="avatar-edit" @click="chooseAvatarWx">✎</view>
+               <!-- #endif -->
+             </view>
           </view>
 
           <view class="form-grid">
@@ -101,6 +110,10 @@
                 <text>我的购物车</text>
                 <text class="arrow">›</text>
               </navigator>
+              <navigator url="/pages/favorites/index" class="menu-row">
+                <text>我的收藏</text>
+                <text class="arrow">›</text>
+              </navigator>
               <navigator url="/pages/settings/index" class="menu-row">
                 <text>设置</text>
                 <text class="arrow">›</text>
@@ -163,14 +176,15 @@
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses } from '../../api/index.js'
+import { getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, updateUserAvatar } from '../../api/index.js'
 export default {
   components: { FloatingNav, Skeleton },
   data() { return { 
     loading: true,
     loggedIn: false, displayName: '', fetchedProfile: {}, isEditing: false, editForm: {},
     showSecurityModal: false, securityType: '', securityForm: { value: '', code: '' }, countdown: 0, timer: null,
-    addresses: []
+    addresses: [],
+    avatarError: false
   } },
   computed: {
     profile() {
@@ -182,9 +196,10 @@ export default {
           email: u?.email || '未设置',
           companyName: u?.company_name || u?.companyName || '未设置',
           contactName: u?.contact_name || u?.contactName || '未设置',
-          region: u?.region || '未设置'
+          region: u?.region || '未设置',
+          avatarUrl: (typeof (u?.avatar || u?.avatar_url) === 'string' ? (u.avatar || u.avatar_url).replace(/`/g, '').trim() : '')
         }
-      } catch (e) { return { username: '未设置', phone: '未设置', email: '未设置', companyName: '未设置', contactName: '未设置', region: '未设置' } }
+      } catch (e) { return { username: '未设置', phone: '未设置', email: '未设置', companyName: '未设置', contactName: '未设置', region: '未设置', avatarUrl: '' } }
     },
     securityTitle() {
       const map = { phone: '更换手机号', email: '更换邮箱', password: '修改登录密码' }
@@ -193,6 +208,12 @@ export default {
     securityPlaceholder() {
       const map = { phone: '请输入新手机号', email: '请输入新邮箱', password: '请输入新密码' }
       return map[this.securityType] || ''
+    },
+    avatarInitial() {
+      try {
+        const name = (this.profile.contactName || this.profile.username || '').trim()
+        return name ? name.charAt(0) : 'U'
+      } catch (e) { return 'U' }
     }
   },
   onShow() {
@@ -253,6 +274,7 @@ export default {
         if (res && res.success) {
           this.fetchedProfile = res.data
           if (res.data.username) this.displayName = res.data.username
+          this.avatarError = false
         }
       }).catch(err => {
         console.error('Fetch user profile failed', err)
@@ -414,6 +436,87 @@ export default {
         })
       }
     }
+    ,
+    triggerAvatarPicker() {
+      try {
+        if (uni && typeof uni.chooseImage === 'function') {
+          const u = uni.getStorageSync('user') || null
+          const token = (u && (u.token || (u.data && u.data.token))) || ''
+          if (!token) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
+          uni.chooseImage({
+            count: 1,
+            sizeType: ['compressed', 'original'],
+            sourceType: ['album', 'camera'],
+            success: (ret) => {
+              const path = Array.isArray(ret.tempFilePaths) ? ret.tempFilePaths[0] : (ret.tempFiles && ret.tempFiles[0] && (ret.tempFiles[0].path || ret.tempFiles[0])) || ''
+              if (!path) { uni.showToast({ title: '选择失败', icon: 'none' }); return }
+              uni.showLoading({ title: '上传中' })
+              updateUserAvatar({ filePath: path, token }).then((res) => {
+                uni.hideLoading()
+                if (res && res.success) {
+                  uni.showToast({ title: '上传成功', icon: 'success' })
+                  this.loadUserProfile(token)
+                } else {
+                  uni.showToast({ title: res?.message || '上传失败', icon: 'none' })
+                }
+              }).catch(() => { uni.hideLoading(); uni.showToast({ title: '上传失败', icon: 'none' }) })
+            }
+          })
+          return
+        }
+        const el = typeof document !== 'undefined' ? document.getElementById('avatar-file') : null
+        if (el && typeof el.click === 'function') el.click()
+      } catch (e) {}
+    },
+    onAvatarFileChange(e) {
+      try {
+        const files = e && e.target && e.target.files ? e.target.files : []
+        if (!files || !files.length) { uni.showToast({ title: '请选择图片', icon: 'none' }); return }
+        const file = files[0]
+        const u = uni.getStorageSync('user') || null
+        const token = (u && (u.token || (u.data && u.data.token))) || ''
+        if (!token) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
+        uni.showLoading({ title: '上传中' })
+        updateUserAvatar({ file, token }).then((res) => {
+          uni.hideLoading()
+          if (res && res.success) {
+            uni.showToast({ title: '上传成功', icon: 'success' })
+            this.loadUserProfile(token)
+          } else {
+            uni.showToast({ title: res?.message || '上传失败', icon: 'none' })
+          }
+        }).catch(() => { uni.hideLoading(); uni.showToast({ title: '上传失败', icon: 'none' }) })
+      } catch (err) { uni.hideLoading(); uni.showToast({ title: '上传失败', icon: 'none' }) }
+    },
+    chooseAvatarWx() {
+      try {
+        const u = uni.getStorageSync('user') || null
+        const token = (u && (u.token || (u.data && u.data.token))) || ''
+        if (!token) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
+        uni.chooseImage({
+          count: 1,
+          sizeType: ['compressed', 'original'],
+          sourceType: ['album', 'camera'],
+          success: (ret) => {
+            const path = Array.isArray(ret.tempFilePaths) ? ret.tempFilePaths[0] : (ret.tempFiles && ret.tempFiles[0] && ret.tempFiles[0].path) || ''
+            if (!path) { uni.showToast({ title: '选择失败', icon: 'none' }); return }
+            uni.showLoading({ title: '上传中' })
+            updateUserAvatar({ filePath: path, token }).then((res) => {
+              uni.hideLoading()
+              if (res && res.success) {
+                uni.showToast({ title: '上传成功', icon: 'success' })
+                this.loadUserProfile(token)
+              } else {
+                uni.showToast({ title: res?.message || '上传失败', icon: 'none' })
+              }
+            }).catch(() => { uni.hideLoading(); uni.showToast({ title: '上传失败', icon: 'none' }) })
+          }
+        })
+      } catch (e) { uni.showToast({ title: '上传失败', icon: 'none' }) }
+    },
+    onAvatarError() {
+      this.avatarError = true
+    }
   }
 }
 </script>
@@ -495,6 +598,35 @@ export default {
   height: 160rpx;
   border-radius: 50%;
   background: #f0f0f0;
+}
+.avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #555;
+}
+.avatar-wrapper {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+}
+.avatar-edit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  opacity: 0.85;
+  z-index: 2;
+  cursor: pointer;
 }
 
 .form-grid {

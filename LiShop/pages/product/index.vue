@@ -59,7 +59,10 @@
             <!-- 右侧：保持现有信息与按钮，不做其它改动 -->
             <view class="pd-right">
               <view class="pd-info">
-                <text class="pd-title">{{ product.title }}</text>
+                <view class="pd-title-row">
+                  <text class="pd-title">{{ product.title }}</text>
+                  <text class="fav-star" :class="{ active: isFavorite }" @click="favProduct">{{ isFavorite ? '★' : '☆' }}</text>
+                </view>
                 <view class="pd-meta">
                   <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ?
                     (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ?
@@ -153,7 +156,10 @@
         </swiper-item>
       </swiper>
       <view class="info mp-info-spacing">
-        <text class="title">{{ product.title }}</text>
+        <view class="mp-title-row">
+          <text class="title">{{ product.title }}</text>
+          <text class="fav-star" :class="{ active: isFavorite }" @click="favProduct">{{ isFavorite ? '★' : '☆' }}</text>
+        </view>
         <view class="mp-price-row">
           <text class="price">¥{{ product.price.toFixed(2) }}</text>
           <text class="sales">销量 {{ product.sales }}</text>
@@ -278,14 +284,14 @@
 </template>
 
 <script>
-import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress, createDirectOrder } from '../../api/index.js'
+import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress, createDirectOrder, addFavorite, deleteFavorite } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
 
 export default {
   components: { RoomSelector, FloatingNav, Skeleton },
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '' } },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -775,6 +781,26 @@ export default {
       if (u === 'dm') return Number(len) / 10
       return Number(len)
     },
+    favProduct() {
+      try {
+        const pid = this.product?.id || ''
+        const u = uni.getStorageSync('user') || null
+        const token = (u && (u.token || (u.data && u.data.token))) || ''
+        if (!pid) { uni.showToast({ title: '商品信息缺失', icon: 'none' }); return }
+        if (!token) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
+        if (!this.isFavorite) {
+          addFavorite({ product_id: pid, token }).then((res) => {
+            if (res && res.success) { this.isFavorite = true; uni.showToast({ title: '已收藏', icon: 'success' }) }
+            else { uni.showToast({ title: res?.message || '收藏失败', icon: 'none' }) }
+          }).catch(() => { uni.showToast({ title: '收藏失败', icon: 'none' }) })
+        } else {
+          deleteFavorite({ product_id: pid, token }).then((res) => {
+            if (res && res.success) { this.isFavorite = false; uni.showToast({ title: '已取消收藏', icon: 'success' }) }
+            else { uni.showToast({ title: res?.message || '取消失败', icon: 'none' }) }
+          }).catch(() => { uni.showToast({ title: '取消失败', icon: 'none' }) })
+        }
+      } catch (e) { uni.showToast({ title: '收藏失败', icon: 'none' }) }
+    }
   }
 }
 </script>
@@ -805,6 +831,31 @@ export default {
 .title {
   font-size: 32rpx;
   display: block;
+}
+
+.pd-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.mp-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.fav-star {
+  font-size: 32rpx;
+  color: #ccc;
+}
+.fav-star.active {
+  background: #ffec99;
+  color: #e3b609;
+  border-radius: 8rpx;
+  padding: 2rpx 8rpx;
 }
 
 .price {

@@ -124,7 +124,7 @@ export default {
         title: it?.name || ('商品 ' + (i + 1)),
         price: Number(it?.price ?? 0) || 0,
         sales: 0,
-        image: this.cleanImage(it?.thumbnail)
+        image: this.cleanImage(it?.main_image) || this.cleanImage(it?.thumbnail)
       }))
     },
     async loadSubChildren() {

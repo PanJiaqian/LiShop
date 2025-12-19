@@ -525,6 +525,113 @@ export function updateCartItem(options = {}) {
   })
 }
 
+export function updateUserAvatar(options = {}) {
+  const { filePath, file, token } = options
+  const url = `${BASE_URL}/api/user/avatar/update`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    if (filePath && typeof uni.uploadFile === 'function') {
+      uni.uploadFile({
+        url,
+        filePath,
+        name: 'file',
+        header,
+        success: (res) => {
+          let data = res?.data
+          if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+          resolve(data)
+        },
+        fail: (err) => reject(err)
+      })
+      return
+    }
+    if (file && typeof FormData !== 'undefined') {
+      try {
+        const formdata = new FormData()
+        formdata.append('file', file)
+        fetch(url, { method: 'POST', headers: header, body: formdata })
+          .then(async (resp) => {
+            let text = await resp.text()
+            try { text = JSON.parse(text) } catch (e) { }
+            resolve(text)
+          })
+          .catch((err) => reject(err))
+      } catch (e) {
+        reject(e)
+      }
+      return
+    }
+    reject(new Error('No file provided'))
+  })
+}
+
+export function addFavorite(options = {}) {
+  const { product_id, token } = options
+  const query = toQuery({ product_id })
+  const url = `${BASE_URL}/api/user/favorites${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function deleteFavorite(options = {}) {
+  const { product_id, token } = options
+  const query = toQuery({ product_id })
+  const url = `${BASE_URL}/api/user/favorites/delete${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function getFavorites(options = {}) {
+  const { addresses_id, token } = options
+  const query = toQuery({ addresses_id })
+  const url = `${BASE_URL}/api/user/favorites${query ? `?${query}` : ''}`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
 export function getUserProfile(options = {}) {
   const { token } = options
   const url = `${BASE_URL}/api/user/profile`
@@ -1027,5 +1134,5 @@ export function exportOrderExcel(options = {}) {
   })
 }
 
-export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress, getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, createOrderByIds, cancelOrder, getCartItemsByIDs, exportOrderExcel, getCarousel }
+export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress, getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, createOrderByIds, cancelOrder, getCartItemsByIDs, exportOrderExcel, getCarousel, updateUserAvatar, addFavorite, getFavorites }
 
