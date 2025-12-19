@@ -27,7 +27,14 @@ export default {
     },
     openDetail() {
       const id = this.product?.id ?? ''
-      uni.navigateTo({ url: '/pages/product/index?id=' + encodeURIComponent(id) })
+      const url = '/pages/product/index?id=' + encodeURIComponent(id)
+      if (typeof window !== 'undefined' && window.open) {
+        const base = (typeof location !== 'undefined' && location.href) ? location.href.split('#')[0] : ''
+        const full = base ? (base + '#/pages/product/index?id=' + encodeURIComponent(id)) : url
+        window.open(full, '_blank')
+      } else {
+        uni.navigateTo({ url })
+      }
     }
   }
 }

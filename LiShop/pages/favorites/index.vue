@@ -60,7 +60,13 @@ export default {
     openProduct(id) {
       if (!id) return
       const url = '/pages/product/index?id=' + encodeURIComponent(id)
-      if (uni && uni.navigateTo) uni.navigateTo({ url })
+      if (typeof window !== 'undefined' && window.open) {
+        const base = (typeof location !== 'undefined' && location.href) ? location.href.split('#')[0] : ''
+        const full = base ? (base + '#/pages/product/index?id=' + encodeURIComponent(id)) : url
+        window.open(full, '_blank')
+      } else if (uni && uni.navigateTo) {
+        uni.navigateTo({ url })
+      }
     }
   }
 }
@@ -71,7 +77,9 @@ export default {
   min-height: 100vh;
   padding: 20rpx;
   box-sizing: border-box;
-  background: #f7f7f7;
+  background: url('/static/product_detail_background.jpg') no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
 }
 .header {
   display: flex;
@@ -89,36 +97,83 @@ export default {
   grid-template-columns: repeat(2, 1fr);
   grid-gap: 20rpx;
 }
+/* #ifdef H5 */
+.grid {
+  display: flex;
+  flex-direction: column;
+}
+/* #endif */
+
 .item {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.9);
   border: 1rpx solid #eee;
   border-radius: 12rpx;
   overflow: hidden;
+  transition: all 0.3s;
 }
+/* #ifdef H5 */
+.item {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20rpx;
+  padding: 20rpx;
+}
+/* #endif */
+
 .thumb {
   width: 100%;
   height: 300rpx;
   background: #f5f5f5;
 }
+/* #ifdef H5 */
+.thumb {
+  width: 200rpx;
+  height: 200rpx;
+  flex-shrink: 0;
+  margin-right: 20rpx;
+  border-radius: 8rpx;
+}
+/* #endif */
+
 .info {
   padding: 16rpx;
 }
+/* #ifdef H5 */
+.info {
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+/* #endif */
+
 .name {
   display: block;
   font-size: 28rpx;
   color: #333;
   margin-bottom: 12rpx;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .price {
   display: block;
-  font-size: 26rpx;
+  font-size: 32rpx;
   color: #e1251b;
+  font-weight: bold;
 }
 .empty {
   text-align: center;
-  color: #999;
+  color: #666;
   font-size: 28rpx;
   padding: 60rpx 0;
+  background: rgba(255,255,255,0.8);
+  border-radius: 12rpx;
+  margin-top: 40rpx;
 }
 </style>
 
