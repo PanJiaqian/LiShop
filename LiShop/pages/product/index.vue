@@ -32,17 +32,17 @@
               <view class="pd-card pd-params">
                 <text class="pd-section-title">参数信息</text>
                 <view class="pd-param-grid">
-                  <view class="pd-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款'
+                  <view class="pd-param-item"><text class="key" selectable="true">型号</text><text class="val" selectable="true">{{ product.id || '默认款'
                   }}</text></view>
-                  <view class="pd-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text>
+                  <view class="pd-param-item"><text class="key" selectable="true">名称</text><text class="val" selectable="true">{{ product.title }}</text>
                   </view>
-                  <view class="pd-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
-                  <view class="pd-param-item"><text class="key">产地</text><text class="val">{{ product.shipping_origin ?
+                  <view class="pd-param-item"><text class="key" selectable="true">规格</text><text class="val" selectable="true">默认规格</text></view>
+                  <view class="pd-param-item"><text class="key" selectable="true">产地</text><text class="val" selectable="true">{{ product.shipping_origin ?
                     product.shipping_origin.replace(/省|市/g, '') : '—' }}</text></view>
-                  <view class="pd-param-item"><text class="key">单位</text><text class="val">件</text></view>
+                  <view class="pd-param-item"><text class="key" selectable="true">单位</text><text class="val" selectable="true">件</text></view>
                   <!-- <view class="pd-param-item"><text class="key">价格</text><text class="val">¥{{ product.price.toFixed(2)
                   }}</text></view> -->
-                  <view class="pd-param-item"><text class="key">发货</text><text class="val">{{
+                  <view class="pd-param-item"><text class="key" selectable="true">发货</text><text class="val" selectable="true">{{
                     product.shipping_time_hours ? (product.shipping_time_hours + '小时') : '待定' }}</text></view>
                   <!-- <view class="pd-param-item"><text class="key">售后</text><text class="val">{{
                     product.support_no_reason_return_7d ? '七天无理由' : '无' }}</text></view> -->
@@ -127,11 +127,8 @@
                 </view>
 
                 <view class="pd-actions-row">
-                  <view class="qty-box-large">
-                    <view class="qty-btn" @click="decQty">-</view>
-                    <text class="qty-num">{{ qty }}</text>
-                    <view class="qty-btn" @click="incQty">+</view>
-                  </view>
+                  <text class="label">数量</text>
+                  <input class="pd-input" v-model="qty" type="number" placeholder="数量" />
                   <button class="btn-action btn-cart" @click="addToCartWithQty">加入购物车</button>
                   <button class="btn-action btn-buy" @click="buyNow">立即购买</button>
                 </view>
@@ -169,16 +166,16 @@
       <view class="mp-section mp-section-spacing">
         <text class="mp-title">参数信息</text>
         <view class="mp-param-grid">
-          <view class="mp-param-item"><text class="key">型号</text><text class="val">{{ product.id || '默认款' }}</text>
+          <view class="mp-param-item"><text class="key" selectable="true">型号</text><text class="val" selectable="true">{{ product.id || '默认款' }}</text>
           </view>
-          <view class="mp-param-item"><text class="key">名称</text><text class="val">{{ product.title }}</text></view>
-          <view class="mp-param-item"><text class="key">规格</text><text class="val">默认规格</text></view>
+          <view class="mp-param-item"><text class="key" selectable="true">名称</text><text class="val" selectable="true">{{ product.title }}</text></view>
+          <view class="mp-param-item"><text class="key" selectable="true">规格</text><text class="val" selectable="true">默认规格</text></view>
           <view class="mp-param-row-inline">
-            <view class="mp-param-item inline"><text class="key">产地</text><text class="val">{{ product.shipping_origin ?
+            <view class="mp-param-item inline"><text class="key" selectable="true">产地</text><text class="val" selectable="true">{{ product.shipping_origin ?
               product.shipping_origin.replace(/省|市/g, '') :
               '—' }}</text></view>
-            <view class="mp-param-item inline"><text class="key">单位</text><text class="val">件</text></view>
-            <view class="mp-param-item inline"><text class="key">单位价格</text><text class="val">¥{{
+            <view class="mp-param-item inline"><text class="key" selectable="true">单位</text><text class="val" selectable="true">件</text></view>
+            <view class="mp-param-item inline"><text class="key" selectable="true">单位价格</text><text class="val" selectable="true">¥{{
               product.price.toFixed(2)
             }}</text></view>
           </view>
@@ -258,11 +255,7 @@
             </view>
             <view class="mp-field">
               <text class="label">数量</text>
-              <view class="qty-stepper">
-                <button class="step" @click="mpQty = Math.max(1, mpQty - 1)">-</button>
-                <text class="count">{{ mpQty }}</text>
-                <button class="step" @click="mpQty = mpQty + 1">+</button>
-              </view>
+              <input class="mp-input" v-model="mpQty" type="number" placeholder="填写数量" />
             </view>
           </scroll-view>
           <view class="mp-actions">
@@ -1273,6 +1266,10 @@ export default {
   font-size: 26rpx;
   margin-top: 0rpx;
   flex: 1;
+}
+.pd-param-grid, .pd-param-item .key, .pd-param-item .val, .mp-param-grid, .mp-param-item .key, .mp-param-item .val {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .pd-detail-img {

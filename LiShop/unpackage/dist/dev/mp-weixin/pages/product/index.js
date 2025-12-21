@@ -666,28 +666,27 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $options.selectedSpec.length_unit ? {
     N: common_vendor.t($options.selectedSpec.length_unit)
   } : {}) : {}, {
-    O: common_vendor.o(($event) => $data.mpQty = Math.max(1, $data.mpQty - 1)),
-    P: common_vendor.t($data.mpQty),
-    Q: common_vendor.o(($event) => $data.mpQty = $data.mpQty + 1),
-    R: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    S: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
-    T: common_vendor.o(() => {
+    O: $data.mpQty,
+    P: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
+    Q: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    R: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
+    S: common_vendor.o(() => {
     }),
-    U: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    V: common_vendor.o(() => {
+    T: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    U: common_vendor.o(() => {
     })
   }) : {}) : {}, {
-    W: common_vendor.o($options.closeRoomSheet),
-    X: common_vendor.o($options.onRoomSelect),
-    Y: common_vendor.o($options.onRoomCreate),
-    Z: common_vendor.o($options.onCreateAddress),
-    aa: common_vendor.p({
+    V: common_vendor.o($options.closeRoomSheet),
+    W: common_vendor.o($options.onRoomSelect),
+    X: common_vendor.o($options.onRoomCreate),
+    Y: common_vendor.o($options.onCreateAddress),
+    Z: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    ab: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
+    aa: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);
