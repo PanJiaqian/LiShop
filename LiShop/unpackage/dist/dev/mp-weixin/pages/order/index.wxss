@@ -59,7 +59,7 @@
   margin-bottom: 25rpx;
 }
 .title.data-v-17a44f9d {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
 }
 .time.data-v-17a44f9d {
@@ -243,7 +243,7 @@
   border-bottom: 1rpx solid #f0f0f0;
 }
 .log-title.data-v-17a44f9d {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #333;
 }
@@ -268,7 +268,7 @@
   content: '';
   position: absolute;
   left: 8rpx;
-  top: 0;
+  top: 36rpx;
   bottom: 0;
   width: 2rpx;
   background: #eee;
@@ -380,11 +380,11 @@
   line-height: 1.5;
 }
 .log-item:first-child .log-status.data-v-17a44f9d {
-  color: #18FAE0;
+  color: #54D1F4 ;
   font-size: 32rpx;
 }
 .log-item:first-child .log-time.data-v-17a44f9d {
-  color: #18FAE0;
+  color: #54D1F4 ;
 }
 .log-item:first-child .log-desc.data-v-17a44f9d {
   color: #333;
@@ -406,10 +406,13 @@
   border-radius: 40rpx;
 }
 .header .title.data-v-17a44f9d {
-  font-size: 34rpx;
+  font-size: 28rpx;
   font-weight: bold;
   margin-bottom: 20rpx;
   display: block;
+}
+.log-title.data-v-17a44f9d {
+  font-size: 28rpx;
 }
 .meta .title.data-v-17a44f9d {
   display: block;

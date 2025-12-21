@@ -75,7 +75,7 @@ export default {
 }
 
 .price {
-  color: #333;
+  color: #000;
   font-size: 30rpx;
   font-weight: 600;
 }

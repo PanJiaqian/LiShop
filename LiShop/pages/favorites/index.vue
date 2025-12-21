@@ -1,9 +1,7 @@
 <template>
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" />
-    <view class="header">
-      <text class="title">我的收藏</text>
-    </view>
+      <view class="back-btn" @click="goBack">←</view>
     <view v-if="favorites.length" class="grid">
       <view class="item" v-for="(it, i) in favorites" :key="i" @click="openProduct(it.id)">
         <image class="thumb" :src="it.image" mode="aspectFill" />
@@ -57,6 +55,17 @@ export default {
     } catch (e) { this.loading = false; this.favorites = [] }
   },
   methods: {
+    goBack() {
+      try {
+        if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
+      } catch (e) {}
+      if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+      if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+      try {
+        const base = (typeof location !== 'undefined' && location.href) ? location.href.split('#')[0] : ''
+        if (base) location.href = base + '#/pages/home/index'
+      } catch (e) {}
+    },
     openProduct(id) {
       if (!id) return
       const url = '/pages/product/index?id=' + encodeURIComponent(id)
@@ -75,7 +84,7 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 20rpx;
+  padding: 120rpx;
   box-sizing: border-box;
   background: url('/static/product_detail_background.jpg') no-repeat center center;
   background-size: cover;
@@ -98,6 +107,7 @@ export default {
   grid-gap: 20rpx;
 }
 /* #ifdef H5 */
+.header { display: none; }
 .grid {
   display: flex;
   flex-direction: column;
@@ -115,6 +125,7 @@ export default {
 .item {
   display: flex;
   flex-direction: row;
+  align-items: center;
   margin-bottom: 20rpx;
   padding: 20rpx;
 }
@@ -143,29 +154,60 @@ export default {
   padding: 0;
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
 }
 /* #endif */
 
 .name {
-  display: block;
+  display: inline-block;
   font-size: 28rpx;
   color: #333;
-  margin-bottom: 12rpx;
   line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 .price {
-  display: block;
+  display: inline-block;
   font-size: 32rpx;
-  color: #e1251b;
+  color: #000;
   font-weight: bold;
 }
+/* #ifdef H5 */
+.page {
+  padding-left: 400rpx;
+  padding-right: 400rpx;
+}
+.h5-topbar {
+  display: none;
+}
+.back-btn {
+  position: fixed;
+  left: 40rpx;
+  top: 40rpx;
+  width: 80rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  /* border-radius: 50%; */
+  /* background: rgba(255,255,255,0.7); */
+  /* box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); */
+  color: #333;
+  font-size: 36rpx;
+  z-index: 999;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.h5-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  height: 100rpx;
+  padding: 20rpx;
+}
+/* #endif */
 .empty {
   text-align: center;
   color: #666;

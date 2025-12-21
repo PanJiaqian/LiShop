@@ -76,10 +76,10 @@
                   <text class="uc-icon">📋</text>
                   <text>我的订单</text>
                </navigator>
-               <!-- <navigator class="uc-link-item" url="/pages/favorites/index">
+               <navigator class="uc-link-item" url="/pages/favorites/index">
                   <text class="uc-icon">★</text>
                   <text>我的收藏</text>
-               </navigator> -->
+               </navigator>
                <!-- <navigator class="uc-link-item" url="/pages/messages/index">
                    <text class="uc-icon">💬</text>
                   <text>信息</text>

@@ -6,7 +6,7 @@
     <view class="h5-topbar">
       <button class="back-btn" @click="goBack">←</button>
       <view class="h5-search">
-         <image src="/static/logo.png?v=20251211" style="width:200rpx;height:60rpx;margin-right:20rpx;" mode="aspectFit" />
+         <image src="/static/logo.png?v=20251211" style="width:240rpx;height:60rpx;margin-right:20rpx;" mode="aspectFit" />
         <view class="search-bar-box">
           <view class="search-type">宝贝<text class="arrow-down">∨</text></view>
           <view class="divider-v"></view>

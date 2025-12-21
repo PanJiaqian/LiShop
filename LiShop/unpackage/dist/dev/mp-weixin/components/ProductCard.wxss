@@ -28,7 +28,7 @@
   margin-top: 12rpx;
 }
 .price.data-v-fe52aa40 {
-  color: #333;
+  color: #000;
   font-size: 30rpx;
   font-weight: 600;
 }

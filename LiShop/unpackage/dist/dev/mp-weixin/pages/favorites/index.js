@@ -41,6 +41,29 @@ const _sfc_main = {
     }
   },
   methods: {
+    goBack() {
+      try {
+        if (typeof window !== "undefined" && window.history && window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+      } catch (e) {
+      }
+      if (common_vendor.index && common_vendor.index.switchTab) {
+        common_vendor.index.switchTab({ url: "/pages/home/index" });
+        return;
+      }
+      if (common_vendor.index && common_vendor.index.navigateTo) {
+        common_vendor.index.navigateTo({ url: "/pages/home/index" });
+        return;
+      }
+      try {
+        const base = typeof location !== "undefined" && location.href ? location.href.split("#")[0] : "";
+        if (base)
+          location.href = base + "#/pages/home/index";
+      } catch (e) {
+      }
+    },
     openProduct(id) {
       if (!id)
         return;
@@ -65,9 +88,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       loading: $data.loading,
       showTitle: true
     }),
-    b: $data.favorites.length
+    b: common_vendor.o((...args) => $options.goBack && $options.goBack(...args)),
+    c: $data.favorites.length
   }, $data.favorites.length ? {
-    c: common_vendor.f($data.favorites, (it, i, i0) => {
+    d: common_vendor.f($data.favorites, (it, i, i0) => {
       return {
         a: it.image,
         b: common_vendor.t(it.title),
@@ -77,7 +101,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : !$data.loading ? {} : {}, {
-    d: !$data.loading
+    e: !$data.loading
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-bbc2a813"]]);

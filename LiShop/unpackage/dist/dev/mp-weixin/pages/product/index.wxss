@@ -37,18 +37,13 @@
   color: #ccc;
 }
 .fav-star.active.data-v-a911e391 {
-  background: #ffec99;
+  /* background: #ffec99; */
   color: #e3b609;
   border-radius: 8rpx;
   padding: 2rpx 8rpx;
 }
 .price.data-v-a911e391 {
-
-  color: #333;
-
-
-
-
+  color: #000;
   font-size: 34rpx;
   margin-top: 8rpx;
   display: block;
@@ -127,7 +122,7 @@
   gap: 10rpx;
 }
 .spec-price.data-v-a911e391 {
-  color: #333;
+  color: #000;
   font-size: 32rpx;
   font-weight: 700;
 }

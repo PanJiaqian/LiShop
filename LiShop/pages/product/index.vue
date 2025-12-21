@@ -310,6 +310,7 @@ export default {
           images: [...main, ...videos].length ? [...main, ...videos] : ['/static/logo.png']
         }
         this.product = base
+        this.isFavorite = (String(d.is_favorite) === '1') || (d.is_favorite === 1) || (d.is_favorite === true)
         this.fetchSpecs(base.id)
       })
       .catch(() => {
@@ -843,19 +844,14 @@ export default {
   color: #ccc;
 }
 .fav-star.active {
-  background: #ffec99;
+  /* background: #ffec99; */
   color: #e3b609;
   border-radius: 8rpx;
   padding: 2rpx 8rpx;
 }
 
 .price {
-  /* #ifndef H5 */
-  color: #333;
-  /* #endif */
-  /* #ifdef H5 */
-  color: #e1251b;
-  /* #endif */
+  color: #000;
   font-size: 34rpx;
   margin-top: 8rpx;
   display: block;
@@ -944,7 +940,7 @@ export default {
 }
 
 .spec-price {
-  color: #333;
+  color: #000;
   font-size: 32rpx;
   font-weight: 700;
 }
@@ -1445,7 +1441,7 @@ export default {
 }
 
 .pd-price {
-  color: #333;
+  color: #000;
   font-size: 50rpx;
   font-weight: 700;
 }

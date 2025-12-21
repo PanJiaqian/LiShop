@@ -38,6 +38,7 @@ const _sfc_main = {
         images: [...main, ...videos].length ? [...main, ...videos] : ["/static/logo.png"]
       };
       this.product = base;
+      this.isFavorite = String(d.is_favorite) === "1" || d.is_favorite === 1 || d.is_favorite === true;
       this.fetchSpecs(base.id);
     }).catch(() => {
       this.product = { id, title: "商品 " + id, price: 0, sales: 0, shipping_origin: "", image: "/static/logo.png", images: ["/static/logo.png"] };

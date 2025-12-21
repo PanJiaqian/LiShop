@@ -70,9 +70,9 @@
           </view>
           <!-- #endif -->
           <!-- #ifndef MP-WEIXIN -->
-          <view v-else class="map-link-row">
+          <!-- <view v-else class="map-link-row">
             <text class="map-link" @click="openMap(order.mapUrl)">查看物流地图</text>
-          </view>
+          </view> -->
           <!-- #endif -->
         </view>
       </view>
@@ -575,7 +575,7 @@ export default {
 }
 
 .title {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
 }
 
@@ -791,7 +791,7 @@ export default {
 }
 
 .log-title {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #333;
 }
@@ -819,7 +819,7 @@ export default {
   content: '';
   position: absolute;
   left: 8rpx;
-  top: 0;
+  top: 36rpx;
   bottom: 0;
   width: 2rpx;
   background: #eee;
@@ -951,12 +951,12 @@ export default {
 }
 
 .log-item:first-child .log-status {
-  color: #18FAE0;
+  color: #54D1F4 ;
   font-size: 32rpx;
 }
 
 .log-item:first-child .log-time {
-  color: #18FAE0;
+  color: #54D1F4 ;
 }
 
 .log-item:first-child .log-desc {
@@ -1022,6 +1022,10 @@ export default {
   font-size: 36rpx;
   font-weight: bold;
 }
+.log-title {
+  font-size: 36rpx;
+  font-weight: bold;
+}
 
 .btn,
 .btn-action {
@@ -1051,10 +1055,13 @@ export default {
 }
 
 .header .title {
-  font-size: 34rpx;
+  font-size: 28rpx;
   font-weight: bold;
   margin-bottom: 20rpx;
   display: block;
+}
+.log-title {
+  font-size: 28rpx;
 }
 
 .meta .title {
