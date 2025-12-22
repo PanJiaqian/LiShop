@@ -30,7 +30,7 @@
               </view>
 
               <view class="pd-card pd-params">
-                <text class="pd-section-title">参数信息</text>
+                <text class="pd-section-title" selectable="true">参数信息</text>
                 <view class="pd-param-grid">
                   <view class="pd-param-item"><text class="key" selectable="true">型号</text><text class="val" selectable="true">{{ product.id || '默认款'
                   }}</text></view>
@@ -50,7 +50,7 @@
               </view>
 
               <view class="pd-card pd-detail">
-                <text class="pd-section-title">图文详情</text>
+                <text class="pd-section-title" selectable="true">图文详情</text>
                 <image v-for="(src, i) in product.details_images" :key="'d' + i" class="pd-detail-img" :src="src"
                   mode="widthFix" />
               </view>
@@ -60,35 +60,35 @@
             <view class="pd-right">
               <view class="pd-info">
                 <view class="pd-title-row">
-                  <text class="pd-title">{{ product.title }}</text>
+                  <text class="pd-title" selectable="true">{{ product.title }}</text>
                   <text class="fav-star" :class="{ active: isFavorite }" @click="favProduct">{{ isFavorite ? '★' : '☆' }}</text>
                 </view>
                 <view class="pd-meta">
-                  <text>{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ?
+                  <text selectable="true">{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ?
                     (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ?
                       '七天无理由' : '不支持七天无理由' }}</text>
                 </view>
                 <view class="pd-price-row">
-                  <text class="pd-price">¥{{ displayTopPrice }}</text>
-                  <text class="pd-coupon">券后更低</text>
+                  <text class="pd-price" selectable="true">¥{{ displayTopPrice }}</text>
+                  <text class="pd-coupon" selectable="true">券后更低</text>
                 </view>
 
 
                 <view>
-                  <text class="pd-section-title">规格明细</text>
+                  <text class="pd-section-title" selectable="true">规格明细</text>
                   <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
                   <view v-else-if="specs && specs.length" class="specs-list">
                     <view class="spec-item" v-for="(it, i) in specs" :key="'h5sp' + i"
                       :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
                       <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
                       <view class="spec-info">
-                        <text class="spec-name">{{ it.name }}</text>
+                        <text class="spec-name" selectable="true">{{ it.name }}</text>
                         <view class="spec-price-row">
-                          <text class="spec-price">¥{{ Number(it.price || 0).toFixed(2) }}</text>
+                          <text class="spec-price" selectable="true">¥{{ Number(it.price || 0).toFixed(2) }}</text>
                           <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
                             Number(it.original_price).toFixed(2) }}</text>
                         </view>
-                        <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
+                        <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
                       </view>
                     </view>
                   </view>
@@ -96,14 +96,14 @@
                 </view>
 
                 <view class="pd-address">
-                  <text class="pd-section-title">收货地址</text>
+                  <text class="pd-section-title" selectable="true">收货地址</text>
                   <view class="address-card">
                     <view v-if="selectedAddress" class="addr-body">
-                      <text class="addr-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
-                      <text class="addr-line">{{ selectedAddress.province }} {{ selectedAddress.city }} {{
+                      <text class="addr-line" selectable="true">{{ selectedAddress.receiver }} {{ selectedAddress.phone }}</text>
+                      <text class="addr-line" selectable="true">{{ selectedAddress.province }} {{ selectedAddress.city }} {{
                         selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
                     </view>
-                    <view v-else class="addr-empty">未选择收货地址</view>
+                    <view v-else class="addr-empty" selectable="true">未选择收货地址</view>
                     <view class="addr-actions">
                       <button class="addr-btn" @click="openH5AddressSheet">选择地址</button>
                     </view>
@@ -112,7 +112,7 @@
 
                 <view class="pd-form">
                   <view class="pd-field inline">
-                    <text class="pd-section-title">房间</text>
+                    <text class="pd-section-title" selectable="true">房间</text>
                     <view class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
                   </view>
                   <!-- <view class="pd-field inline">
@@ -127,8 +127,12 @@
                 </view>
 
                 <view class="pd-actions-row">
-                  <text class="label">数量</text>
-                  <input class="pd-input" v-model="qty" type="number" placeholder="数量" />
+                  <!-- <text class="label" selectable="true">数量</text> -->
+                  <view class="qty-box-large">
+                    <view class="qty-btn" @click="decQty">-</view>
+                    <input class="qty-input" v-model="qty" type="number" placeholder="数量" @blur="normalizeQty" />
+                    <view class="qty-btn" @click="incQty">+</view>
+                  </view>
                   <button class="btn-action btn-cart" @click="addToCartWithQty">加入购物车</button>
                   <button class="btn-action btn-buy" @click="buyNow">立即购买</button>
                 </view>
@@ -154,17 +158,17 @@
       </swiper>
       <view class="info mp-info-spacing">
         <view class="mp-title-row">
-          <text class="title">{{ product.title }}</text>
+          <text class="title" selectable="true">{{ product.title }}</text>
           <text class="fav-star" :class="{ active: isFavorite }" @click="favProduct">{{ isFavorite ? '★' : '☆' }}</text>
         </view>
         <view class="mp-price-row">
-          <text class="price">¥{{ product.price.toFixed(2) }}</text>
-          <text class="sales">销量 {{ product.sales }}</text>
+          <text class="price" selectable="true">¥{{ product.price.toFixed(2) }}</text>
+          <text class="sales" selectable="true">销量 {{ product.sales }}</text>
         </view>
       </view>
       <!-- MP 端参数信息与图文详情 -->
       <view class="mp-section mp-section-spacing">
-        <text class="mp-title">参数信息</text>
+        <text class="mp-title" selectable="true">参数信息</text>
         <view class="mp-param-grid">
           <view class="mp-param-item"><text class="key" selectable="true">型号</text><text class="val" selectable="true">{{ product.id || '默认款' }}</text>
           </view>
@@ -182,7 +186,7 @@
         </view>
       </view>
       <view class="mp-section">
-        <text class="mp-title">图文详情</text>
+        <text class="mp-title" selectable="true">图文详情</text>
         <image v-for="(src, i) in product.details_images" :key="'md' + i" class="mp-detail-img" :src="src"
           mode="widthFix" />
       </view>
@@ -199,7 +203,7 @@
       <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet" catchtouchmove="true"
         @touchmove.stop.prevent="() => { }">
         <view class="mp-sheet" @click.stop>
-          <view class="mp-title">填写规格</view>
+          <view class="mp-title" selectable="true">填写规格</view>
           <scroll-view scroll-y class="mp-scroll-view">
             <view class="mp-address-bar" @click="openMpAddressSheet">
               <view class="bar-left">
@@ -215,7 +219,7 @@
               <button size="mini" class="bar-btn">选择收货地址</button>
             </view>
             <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
-            <view class="mp-title">规格明细</view>
+            <view class="mp-title" selectable="true">规格明细</view>
             <view v-if="specsLoading" class="mp-param-grid">
               <view class="mp-param-item"><text class="key">加载中...</text><text class="val"></text></view>
             </view>
@@ -224,13 +228,13 @@
                 :key="'mpsp' + i" :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
                 <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
                 <view class="spec-info">
-                  <text class="spec-name">{{ it.name }}</text>
+                  <text class="spec-name" selectable="true">{{ it.name }}</text>
                   <view class="spec-price-row">
-                    <text class="spec-price">¥{{ Number(it.price || 0).toFixed(2) }}</text>
+                    <text class="spec-price" selectable="true">¥{{ Number(it.price || 0).toFixed(2) }}</text>
                     <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
                       Number(it.original_price).toFixed(2) }}</text>
                   </view>
-                  <text class="spec-unit">单位：{{ it.unit || '—' }}</text>
+                  <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
                 </view>
               </view>
               <!-- 展开/收起按钮 -->
@@ -254,8 +258,12 @@
               <text v-if="selectedSpec.length_unit" class="unit-tip">{{ selectedSpec.length_unit }}</text>
             </view>
             <view class="mp-field">
-              <text class="label">数量</text>
-              <input class="mp-input" v-model="mpQty" type="number" placeholder="填写数量" />
+              <!-- <text class="label" selectable="true">数量</text> -->
+              <view class="qty-stepper">
+                <button class="step" @click="mpQty = Math.max(1, Number(mpQty) - 1)">-</button>
+                <input class="count-input" v-model="mpQty" type="number" placeholder="填写数量" @blur="normalizeMpQty" />
+                <button class="step" @click="mpQty = Math.max(1, Number(mpQty) + 1)">+</button>
+              </view>
             </view>
           </scroll-view>
           <view class="mp-actions">
@@ -487,8 +495,12 @@ export default {
         })
         .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
     },
-    incQty() { this.qty += 1 },
-    decQty() { this.qty = Math.max(1, this.qty - 1) },
+    incQty() { this.qty = Math.max(1, Number(this.qty || 0) + 1) },
+    decQty() { this.qty = Math.max(1, Number(this.qty || 0) - 1) },
+    normalizeQty() {
+      const n = Number(this.qty)
+      this.qty = isNaN(n) ? 1 : Math.max(1, Math.floor(n))
+    },
     addToCartWithQty() {
       const chosen = (this.roomName || '').trim()
       if (!chosen) { uni.showToast({ title: '请先填写房间名', icon: 'none' }); return }
@@ -514,7 +526,8 @@ export default {
       }
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
-      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: this.qty, color: this.specTemp || '', note: '' })
+      const q = Math.max(1, Number(this.qty || 1))
+      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: q, color: this.specTemp || '', note: '' })
         .then((res) => {
           if (res && res.success) uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
           else {
@@ -717,7 +730,8 @@ export default {
       }
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
-      addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: this.mpQty, color: this.mpTemp || '', note: '' })
+      const mq = Math.max(1, Number(this.mpQty || 1))
+      addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: mq, color: this.mpTemp || '', note: '' })
         .then((res) => {
           if (res && res.success) {
             this.mpSheet = false
@@ -729,6 +743,10 @@ export default {
           }
         })
         .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
+    },
+    normalizeMpQty() {
+      const n = Number(this.mpQty)
+      this.mpQty = isNaN(n) ? 1 : Math.max(1, Math.floor(n))
     },
     // MP Room Sheet Methods
     openMpRoomSheet() {
@@ -1267,6 +1285,10 @@ export default {
   user-select: text;
   -webkit-user-select: text;
 }
+.product-page, .product-page * {
+  user-select: text;
+  -webkit-user-select: text;
+}
 
 .pd-detail-img {
   width: 100%;
@@ -1628,10 +1650,22 @@ export default {
   font-size: 32rpx;
   font-weight: 700;
   color: #333;
-  padding-bottom: 12rpx;
+}
+.count-input {
+  width: 140rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  border: 1rpx solid #e5e5e5;
+  border-radius: 10rpx;
+  text-align: center;
+  font-size: 28rpx;
+  background: #fff;
+  margin: 0 12rpx;
+}
+  /* padding-bottom: 12rpx;
   border-bottom: 1rpx solid #f0f0f0;
   margin-bottom: 20rpx;
-}
+} */
 
 .mp-field {
   display: flex;
@@ -2008,6 +2042,15 @@ export default {
 .qty-box-large .qty-num {
   font-size: 30rpx;
   font-weight: 600;
+  color: #333;
+}
+.qty-box-large .qty-input {
+  width: 72rpx;
+  height: 100%;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 30rpx;
   color: #333;
 }
 
