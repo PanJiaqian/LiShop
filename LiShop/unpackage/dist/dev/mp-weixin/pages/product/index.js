@@ -209,10 +209,14 @@ const _sfc_main = {
       });
     },
     incQty() {
-      this.qty += 1;
+      this.qty = Math.max(1, Number(this.qty || 0) + 1);
     },
     decQty() {
-      this.qty = Math.max(1, this.qty - 1);
+      this.qty = Math.max(1, Number(this.qty || 0) - 1);
+    },
+    normalizeQty() {
+      const n = Number(this.qty);
+      this.qty = isNaN(n) ? 1 : Math.max(1, Math.floor(n));
     },
     addToCartWithQty() {
       var _a;
@@ -241,7 +245,8 @@ const _sfc_main = {
         }
       }
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
-      api_index.addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: this.qty, color: this.specTemp || "", note: "" }).then((res) => {
+      const q = Math.max(1, Number(this.qty || 1));
+      api_index.addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: q, color: this.specTemp || "", note: "" }).then((res) => {
         var _a2;
         if (res && res.success)
           common_vendor.index.showToast({ title: `已加入房间：${chosen}`, icon: "success" });
@@ -462,7 +467,8 @@ const _sfc_main = {
         }
       }
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
-      api_index.addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: this.mpQty, color: this.mpTemp || "", note: "" }).then((res) => {
+      const mq = Math.max(1, Number(this.mpQty || 1));
+      api_index.addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: mq, color: this.mpTemp || "", note: "" }).then((res) => {
         var _a2;
         if (res && res.success) {
           this.mpSheet = false;
@@ -475,6 +481,10 @@ const _sfc_main = {
       }).catch(() => {
         common_vendor.index.showToast({ title: "加入购物车失败", icon: "none" });
       });
+    },
+    normalizeMpQty() {
+      const n = Number(this.mpQty);
+      this.mpQty = isNaN(n) ? 1 : Math.max(1, Math.floor(n));
     },
     // MP Room Sheet Methods
     openMpRoomSheet() {
@@ -667,27 +677,30 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $options.selectedSpec.length_unit ? {
     N: common_vendor.t($options.selectedSpec.length_unit)
   } : {}) : {}, {
-    O: $data.mpQty,
-    P: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
-    Q: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    R: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
-    S: common_vendor.o(() => {
-    }),
+    O: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
+    P: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
+    Q: $data.mpQty,
+    R: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
+    S: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
     T: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    U: common_vendor.o(() => {
+    U: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
+    V: common_vendor.o(() => {
+    }),
+    W: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    X: common_vendor.o(() => {
     })
   }) : {}) : {}, {
-    V: common_vendor.o($options.closeRoomSheet),
-    W: common_vendor.o($options.onRoomSelect),
-    X: common_vendor.o($options.onRoomCreate),
-    Y: common_vendor.o($options.onCreateAddress),
-    Z: common_vendor.p({
+    Y: common_vendor.o($options.closeRoomSheet),
+    Z: common_vendor.o($options.onRoomSelect),
+    aa: common_vendor.o($options.onRoomCreate),
+    ab: common_vendor.o($options.onCreateAddress),
+    ac: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    aa: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
+    ad: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);

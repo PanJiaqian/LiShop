@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "LiShop",
+  "navigationBarTitleText": "诺米",
   "enablePullDownRefresh": true,
   "usingComponents": {
     "search-bar": "../../components/SearchBar",

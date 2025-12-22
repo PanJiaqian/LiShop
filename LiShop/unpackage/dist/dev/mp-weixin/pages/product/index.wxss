@@ -224,10 +224,22 @@
   font-size: 32rpx;
   font-weight: 700;
   color: #333;
-  padding-bottom: 12rpx;
+}
+.count-input.data-v-a911e391 {
+  width: 140rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  border: 1rpx solid #e5e5e5;
+  border-radius: 10rpx;
+  text-align: center;
+  font-size: 28rpx;
+  background: #fff;
+  margin: 0 12rpx;
+}
+  /* padding-bottom: 12rpx;
   border-bottom: 1rpx solid #f0f0f0;
   margin-bottom: 20rpx;
-}
+} */
 .mp-field.data-v-a911e391 {
   display: flex;
   align-items: center;
@@ -562,6 +574,15 @@ to {
 .qty-box-large .qty-num.data-v-a911e391 {
   font-size: 30rpx;
   font-weight: 600;
+  color: #333;
+}
+.qty-box-large .qty-input.data-v-a911e391 {
+  width: 72rpx;
+  height: 100%;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 30rpx;
   color: #333;
 }
 .btn-action.data-v-a911e391 {

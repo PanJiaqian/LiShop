@@ -41,7 +41,7 @@
                   <text class="qty-num">{{ it.quantity }}</text>
                   <view class="qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
-              <!-- <text class="del-btn" @click.stop="removeById(it.id)">删除</text> -->
+              <text class="del-btn" v-if="it.isOutOfStock" @click.stop="removeById(it.id)">删除</text>
               <view class="stock-tip" v-if="it.isOutOfStock">无货</view>
             </view>
           </view>
@@ -156,7 +156,7 @@
                 <view class="qty-btn mp-qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
               <view class="actions-col">
-                <!-- <text class="act-txt del" @click.stop="removeById(it.id)">删除</text> -->
+                <text class="act-txt del" v-if="it.isOutOfStock" @click.stop="removeById(it.id)">删除</text>
               </view>
             </view>
             <view class="stock-tip" v-if="it.isOutOfStock">无货</view>

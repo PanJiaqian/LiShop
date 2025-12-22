@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "Lishop",
+  "navigationBarTitleText": "诺米",
   "usingComponents": {
     "product-card": "../../components/ProductCard",
     "skeleton": "../../components/Skeleton"

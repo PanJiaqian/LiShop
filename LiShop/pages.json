@@ -22,7 +22,7 @@
 		{
 			"path": "pages/home/index",
 			"style": {
-				"navigationBarTitleText": "LiShop",
+				"navigationBarTitleText": "诺米",
 				"enablePullDownRefresh": true,
 				"h5": {
 					"navigationStyle": "custom"
@@ -90,7 +90,7 @@
 		{
 			"path": "pages/search/index",
 			"style": {
-				"navigationBarTitleText": "Lishop"
+				"navigationBarTitleText": "诺米"
 			}
 		},
 		{
@@ -148,7 +148,7 @@
 	},
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "LiShop",
+		"navigationBarTitleText": "诺米",
 		"navigationBarBackgroundColor": "#ffffff",
 		"backgroundColor": "#f7f7f7"
 	},

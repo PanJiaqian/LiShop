@@ -565,9 +565,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
             l: common_vendor.t(it.quantity),
             m: common_vendor.o(($event) => $options.incById(it.id), it.id),
             n: it.isOutOfStock
+          }, it.isOutOfStock ? {
+            o: common_vendor.o(($event) => $options.removeById(it.id), it.id)
+          } : {}, {
+            p: it.isOutOfStock
           }, it.isOutOfStock ? {} : {}, {
-            o: it.id,
-            p: it.isOutOfStock ? 1 : ""
+            q: it.id,
+            r: it.isOutOfStock ? 1 : ""
           });
         }),
         d: grp.name
