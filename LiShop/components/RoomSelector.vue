@@ -32,11 +32,16 @@
           </view>
           <view class="form-item">
             <text class="label">所在地区</text>
-            <view class="region-inputs">
-              <input class="input region-input" v-model="addrForm.province" placeholder="省" />
-              <input class="input region-input" v-model="addrForm.city" placeholder="市" />
-              <input class="input region-input" v-model="addrForm.district" placeholder="区" />
-            </view>
+            <!-- #ifdef MP-WEIXIN -->
+            <picker mode="region" @change="onAddrRegionChange">
+              <view class="region-display">{{ addrRegionDisplay }}</view>
+            </picker>
+            <!-- #endif -->
+            <!-- #ifdef H5 -->
+            <picker mode="multiSelector" :range="addrRegionRange" :value="addrRegionIndex" @columnchange="onH5AddrRegionColumnChange" @change="onH5AddrRegionChange">
+              <view class="region-display">{{ addrRegionDisplay }}</view>
+            </picker>
+            <!-- #endif -->
           </view>
           <view class="form-item">
             <text class="label">详细地址</text>
@@ -98,6 +103,16 @@ export default {
         district: '',
         detail_address: '',
         is_default: 0
+      },
+      addrRegionRange: [[], [], []],
+      addrRegionIndex: [0, 0, 0],
+      addrAreaTree: {
+        '北京市': { '北京市': ['东城区', '西城区', '朝阳区', '海淀区'] },
+        '上海市': { '上海市': ['黄浦区', '徐汇区', '浦东新区'] },
+        '广东省': { '广州市': ['天河区', '海珠区', '越秀区'], '深圳市': ['南山区', '福田区', '罗湖区'] },
+        '浙江省': { '杭州市': ['西湖区', '上城区', '拱墅区'], '宁波市': ['海曙区', '江北区'] },
+        '江苏省': { '南京市': ['玄武区', '秦淮区'], '苏州市': ['姑苏区', '吴中区'] },
+        '重庆市': { '重庆市': ['渝中区', '江北区'] }
       }
     }
   },
@@ -111,6 +126,11 @@ export default {
         return !!(a && a.raw)
       }
       return false
+    },
+    addrRegionDisplay() {
+      const { province, city, district } = this.addrForm
+      const arr = [province, city, district].filter(Boolean)
+      return arr.length ? arr.join(' ') : '请选择省/市/区'
     }
   },
   watch: {
@@ -119,6 +139,7 @@ export default {
         this.newRoomName = ''
         this.createAddressMode = false
         this.addrForm = { receiver: '', phone: '', province: '', city: '', district: '', detail_address: '', is_default: 0 }
+        this.initH5AddrRegion()
       }
     }
   },
@@ -148,6 +169,53 @@ export default {
     },
     onAddrSwitchChange(e) {
       this.addrForm.is_default = e.detail.value ? 1 : 0
+    },
+    onAddrRegionChange(e) {
+      const val = e?.detail?.value || []
+      this.addrForm.province = val[0] || ''
+      this.addrForm.city = val[1] || ''
+      this.addrForm.district = val[2] || ''
+    },
+    initH5AddrRegion() {
+      try {
+        const isH5 = typeof window !== 'undefined'
+        if (!isH5) return
+        const provinces = Object.keys(this.addrAreaTree || {})
+        const p = provinces[0] || ''
+        const cities = Object.keys((this.addrAreaTree && this.addrAreaTree[p]) || {})
+        const c = cities[0] || ''
+        const areas = ((this.addrAreaTree && this.addrAreaTree[p] && this.addrAreaTree[p][c]) || [])
+        this.addrRegionRange = [provinces, cities, areas]
+        this.addrRegionIndex = [0, 0, 0]
+      } catch (e) {}
+    },
+    onH5AddrRegionColumnChange(e) {
+      const col = e.detail.column
+      const idx = e.detail.value
+      this.addrRegionIndex[col] = idx
+      const p = this.addrRegionRange[0][this.addrRegionIndex[0]] || ''
+      if (col === 0) {
+        const cities = Object.keys((this.addrAreaTree && this.addrAreaTree[p]) || {})
+        const c = cities[0] || ''
+        const areas = ((this.addrAreaTree && this.addrAreaTree[p] && this.addrAreaTree[p][c]) || [])
+        this.addrRegionRange = [this.addrRegionRange[0], cities, areas]
+        this.addrRegionIndex[1] = 0
+        this.addrRegionIndex[2] = 0
+      } else if (col === 1) {
+        const c = this.addrRegionRange[1][this.addrRegionIndex[1]] || ''
+        const areas = ((this.addrAreaTree && this.addrAreaTree[p] && this.addrAreaTree[p][c]) || [])
+        this.addrRegionRange = [this.addrRegionRange[0], this.addrRegionRange[1], areas]
+        this.addrRegionIndex[2] = 0
+      }
+    },
+    onH5AddrRegionChange(e) {
+      this.addrRegionIndex = e.detail.value
+      const p = this.addrRegionRange[0][this.addrRegionIndex[0]] || ''
+      const c = this.addrRegionRange[1][this.addrRegionIndex[1]] || ''
+      const a = this.addrRegionRange[2][this.addrRegionIndex[2]] || ''
+      this.addrForm.province = p
+      this.addrForm.city = c
+      this.addrForm.district = a
     },
     saveAddress() {
       const f = this.addrForm
@@ -185,6 +253,11 @@ export default {
   flex-direction: column;
   max-height: 80vh;
 }
+
+/* #ifdef H5 */
+.rs-mask { z-index: 100; }
+.rs-content { z-index: 101; }
+/* #endif */
 
 .rs-header {
   padding: 30rpx 30rpx 20rpx;
@@ -377,6 +450,16 @@ export default {
 .input { flex: 1; font-size: 28rpx; }
 .region-inputs { flex: 1; display: flex; gap: 10rpx; }
 .region-input { flex: 1; }
+.region-display {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  border: 1rpx solid #e6e6e6;
+  border-radius: 12rpx;
+  padding: 0 14rpx;
+  font-size: 28rpx;
+  color: #333;
+}
 .textarea { flex: 1; height: 120rpx; font-size: 28rpx; padding-top: 10rpx; }
 .switch-item { justify-content: space-between; }
 

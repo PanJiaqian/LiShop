@@ -188,6 +188,16 @@
 }
 .region-input.data-v-9c17e027 { flex: 1;
 }
+.region-display.data-v-9c17e027 {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  border: 1rpx solid #e6e6e6;
+  border-radius: 12rpx;
+  padding: 0 14rpx;
+  font-size: 28rpx;
+  color: #333;
+}
 .textarea.data-v-9c17e027 { flex: 1; height: 120rpx; font-size: 28rpx; padding-top: 10rpx;
 }
 .switch-item.data-v-9c17e027 { justify-content: space-between;

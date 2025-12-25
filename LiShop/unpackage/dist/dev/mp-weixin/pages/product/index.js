@@ -7,7 +7,7 @@ const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
   components: { RoomSelector, FloatingNav, Skeleton },
   data() {
-    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false };
+    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
@@ -246,7 +246,7 @@ const _sfc_main = {
       }
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
       const q = Math.max(1, Number(this.qty || 1));
-      api_index.addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: q, color: this.specTemp || "", note: "" }).then((res) => {
+      api_index.addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: q, color: this.specTemp || "", note: this.h5OrderNote || "" }).then((res) => {
         var _a2;
         if (res && res.success)
           common_vendor.index.showToast({ title: `已加入房间：${chosen}`, icon: "success" });
@@ -468,7 +468,7 @@ const _sfc_main = {
       }
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
       const mq = Math.max(1, Number(this.mpQty || 1));
-      api_index.addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: mq, color: this.mpTemp || "", note: "" }).then((res) => {
+      api_index.addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: mq, color: this.mpTemp || "", note: this.mpOrderNote || "" }).then((res) => {
         var _a2;
         if (res && res.success) {
           this.mpSheet = false;
@@ -677,30 +677,32 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $options.selectedSpec.length_unit ? {
     N: common_vendor.t($options.selectedSpec.length_unit)
   } : {}) : {}, {
-    O: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
-    P: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
-    Q: $data.mpQty,
-    R: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
-    S: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
-    T: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    U: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
-    V: common_vendor.o(() => {
-    }),
-    W: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    O: $data.mpOrderNote,
+    P: common_vendor.o(($event) => $data.mpOrderNote = $event.detail.value),
+    Q: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
+    R: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
+    S: $data.mpQty,
+    T: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
+    U: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
+    V: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    W: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
     X: common_vendor.o(() => {
+    }),
+    Y: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    Z: common_vendor.o(() => {
     })
   }) : {}) : {}, {
-    Y: common_vendor.o($options.closeRoomSheet),
-    Z: common_vendor.o($options.onRoomSelect),
-    aa: common_vendor.o($options.onRoomCreate),
-    ab: common_vendor.o($options.onCreateAddress),
-    ac: common_vendor.p({
+    aa: common_vendor.o($options.closeRoomSheet),
+    ab: common_vendor.o($options.onRoomSelect),
+    ac: common_vendor.o($options.onRoomCreate),
+    ad: common_vendor.o($options.onCreateAddress),
+    ae: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    ad: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
+    af: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);

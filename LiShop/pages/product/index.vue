@@ -124,6 +124,10 @@
                     <input class="pd-input" v-model="specLength" placeholder="填写数字" />
                     <text class="unit-tip">{{ lengthUnitText }}</text>
                   </view>
+                  <view class="pd-field inline">
+                    <text class="label">备注</text>
+                    <input class="pd-input" v-model="h5OrderNote" placeholder="填写备注" />
+                  </view>
                 </view>
 
                 <view class="pd-actions-row">
@@ -258,7 +262,10 @@
               <text v-if="selectedSpec.length_unit" class="unit-tip">{{ selectedSpec.length_unit }}</text>
             </view>
             <view class="mp-field">
-              <!-- <text class="label" selectable="true">数量</text> -->
+              <text class="label">备注</text>
+              <input class="mp-input" v-model="mpOrderNote" placeholder="填写备注" />
+            </view>
+            <view class="mp-field">
               <view class="qty-stepper">
                 <button class="step" @click="mpQty = Math.max(1, Number(mpQty) - 1)">-</button>
                 <input class="count-input" v-model="mpQty" type="number" placeholder="填写数量" @blur="normalizeMpQty" />
@@ -290,7 +297,7 @@ import Skeleton from '@/components/Skeleton.vue'
 
 export default {
   components: { RoomSelector, FloatingNav, Skeleton },
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false } },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -527,7 +534,7 @@ export default {
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
       const q = Math.max(1, Number(this.qty || 1))
-      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: q, color: this.specTemp || '', note: '' })
+      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: q, color: this.specTemp || '', note: this.h5OrderNote || '' })
         .then((res) => {
           if (res && res.success) uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
           else {
@@ -731,7 +738,7 @@ export default {
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
       const mq = Math.max(1, Number(this.mpQty || 1))
-      addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: mq, color: this.mpTemp || '', note: '' })
+      addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: mq, color: this.mpTemp || '', note: this.mpOrderNote || '' })
         .then((res) => {
           if (res && res.success) {
             this.mpSheet = false
@@ -858,7 +865,7 @@ export default {
 }
 
 .fav-star {
-  font-size: 32rpx;
+  font-size: 48rpx;
   color: #ccc;
 }
 .fav-star.active {
@@ -1652,14 +1659,15 @@ export default {
   color: #333;
 }
 .count-input {
-  width: 140rpx;
-  height: 64rpx;
-  line-height: 64rpx;
-  border: 1rpx solid #e5e5e5;
-  border-radius: 10rpx;
+  width: 72rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  border: none;
+  border-radius: 0;
   text-align: center;
-  font-size: 28rpx;
-  background: #fff;
+  font-size: 30rpx;
+  background: transparent;
+  color: #333;
   margin: 0 12rpx;
 }
   /* padding-bottom: 12rpx;
@@ -1718,24 +1726,20 @@ export default {
   flex-direction: row;
   align-items: center;
   background: #f7f7f7;
-  border-radius: 6rpx;
-  height: 60rpx;
-  /* Match Cart */
+  border-radius: 40rpx;
+  height: 80rpx;
+  padding: 0 4rpx;
 }
 
 /* 淘宝风格：步进器在弹窗内的样式适配 */
 .mp-sheet .qty-stepper .step {
-  width: 60rpx;
-  /* Match Cart */
-  height: 60rpx;
-  /* Match Cart */
+  width: 64rpx;
+  height: 100%;
   border-radius: 0;
-  /* Remove individual radius */
   background: transparent;
   border: none;
   color: #333;
-  font-size: 32rpx;
-  /* Match Cart */
+  font-size: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;

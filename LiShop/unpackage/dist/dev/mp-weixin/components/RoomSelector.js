@@ -21,6 +21,16 @@ const _sfc_main = {
         district: "",
         detail_address: "",
         is_default: 0
+      },
+      addrRegionRange: [[], [], []],
+      addrRegionIndex: [0, 0, 0],
+      addrAreaTree: {
+        "北京市": { "北京市": ["东城区", "西城区", "朝阳区", "海淀区"] },
+        "上海市": { "上海市": ["黄浦区", "徐汇区", "浦东新区"] },
+        "广东省": { "广州市": ["天河区", "海珠区", "越秀区"], "深圳市": ["南山区", "福田区", "罗湖区"] },
+        "浙江省": { "杭州市": ["西湖区", "上城区", "拱墅区"], "宁波市": ["海曙区", "江北区"] },
+        "江苏省": { "南京市": ["玄武区", "秦淮区"], "苏州市": ["姑苏区", "吴中区"] },
+        "重庆市": { "重庆市": ["渝中区", "江北区"] }
       }
     };
   },
@@ -36,6 +46,11 @@ const _sfc_main = {
         return !!(a && a.raw);
       }
       return false;
+    },
+    addrRegionDisplay() {
+      const { province, city, district } = this.addrForm;
+      const arr = [province, city, district].filter(Boolean);
+      return arr.length ? arr.join(" ") : "请选择省/市/区";
     }
   },
   watch: {
@@ -44,6 +59,7 @@ const _sfc_main = {
         this.newRoomName = "";
         this.createAddressMode = false;
         this.addrForm = { receiver: "", phone: "", province: "", city: "", district: "", detail_address: "", is_default: 0 };
+        this.initH5AddrRegion();
       }
     }
   },
@@ -73,6 +89,56 @@ const _sfc_main = {
     },
     onAddrSwitchChange(e) {
       this.addrForm.is_default = e.detail.value ? 1 : 0;
+    },
+    onAddrRegionChange(e) {
+      var _a;
+      const val = ((_a = e == null ? void 0 : e.detail) == null ? void 0 : _a.value) || [];
+      this.addrForm.province = val[0] || "";
+      this.addrForm.city = val[1] || "";
+      this.addrForm.district = val[2] || "";
+    },
+    initH5AddrRegion() {
+      try {
+        const isH5 = typeof window !== "undefined";
+        if (!isH5)
+          return;
+        const provinces = Object.keys(this.addrAreaTree || {});
+        const p = provinces[0] || "";
+        const cities = Object.keys(this.addrAreaTree && this.addrAreaTree[p] || {});
+        const c = cities[0] || "";
+        const areas = this.addrAreaTree && this.addrAreaTree[p] && this.addrAreaTree[p][c] || [];
+        this.addrRegionRange = [provinces, cities, areas];
+        this.addrRegionIndex = [0, 0, 0];
+      } catch (e) {
+      }
+    },
+    onH5AddrRegionColumnChange(e) {
+      const col = e.detail.column;
+      const idx = e.detail.value;
+      this.addrRegionIndex[col] = idx;
+      const p = this.addrRegionRange[0][this.addrRegionIndex[0]] || "";
+      if (col === 0) {
+        const cities = Object.keys(this.addrAreaTree && this.addrAreaTree[p] || {});
+        const c = cities[0] || "";
+        const areas = this.addrAreaTree && this.addrAreaTree[p] && this.addrAreaTree[p][c] || [];
+        this.addrRegionRange = [this.addrRegionRange[0], cities, areas];
+        this.addrRegionIndex[1] = 0;
+        this.addrRegionIndex[2] = 0;
+      } else if (col === 1) {
+        const c = this.addrRegionRange[1][this.addrRegionIndex[1]] || "";
+        const areas = this.addrAreaTree && this.addrAreaTree[p] && this.addrAreaTree[p][c] || [];
+        this.addrRegionRange = [this.addrRegionRange[0], this.addrRegionRange[1], areas];
+        this.addrRegionIndex[2] = 0;
+      }
+    },
+    onH5AddrRegionChange(e) {
+      this.addrRegionIndex = e.detail.value;
+      const p = this.addrRegionRange[0][this.addrRegionIndex[0]] || "";
+      const c = this.addrRegionRange[1][this.addrRegionIndex[1]] || "";
+      const a = this.addrRegionRange[2][this.addrRegionIndex[2]] || "";
+      this.addrForm.province = p;
+      this.addrForm.city = c;
+      this.addrForm.district = a;
     },
     saveAddress() {
       const f = this.addrForm;
@@ -107,18 +173,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     j: common_vendor.o(($event) => $data.addrForm.receiver = $event.detail.value),
     k: $data.addrForm.phone,
     l: common_vendor.o(($event) => $data.addrForm.phone = $event.detail.value),
-    m: $data.addrForm.province,
-    n: common_vendor.o(($event) => $data.addrForm.province = $event.detail.value),
-    o: $data.addrForm.city,
-    p: common_vendor.o(($event) => $data.addrForm.city = $event.detail.value),
-    q: $data.addrForm.district,
-    r: common_vendor.o(($event) => $data.addrForm.district = $event.detail.value),
-    s: $data.addrForm.detail_address,
-    t: common_vendor.o(($event) => $data.addrForm.detail_address = $event.detail.value),
-    v: $data.addrForm.is_default === 1,
-    w: common_vendor.o((...args) => $options.onAddrSwitchChange && $options.onAddrSwitchChange(...args))
+    m: common_vendor.t($options.addrRegionDisplay),
+    n: common_vendor.o((...args) => $options.onAddrRegionChange && $options.onAddrRegionChange(...args)),
+    o: $data.addrForm.detail_address,
+    p: common_vendor.o(($event) => $data.addrForm.detail_address = $event.detail.value),
+    q: $data.addrForm.is_default === 1,
+    r: common_vendor.o((...args) => $options.onAddrSwitchChange && $options.onAddrSwitchChange(...args))
   } : {}, {
-    x: common_vendor.f($props.rooms, (room, index, i0) => {
+    s: common_vendor.f($props.rooms, (room, index, i0) => {
       return {
         a: common_vendor.t(room.name),
         b: index,
@@ -126,23 +188,23 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.select(room), index)
       };
     }),
-    y: common_assets._imports_0$1,
-    z: common_vendor.o((...args) => $options.close && $options.close(...args)),
-    A: !$options.isAddressMode
+    t: common_assets._imports_0$1,
+    v: common_vendor.o((...args) => $options.close && $options.close(...args)),
+    w: !$options.isAddressMode
   }, !$options.isAddressMode ? {
-    B: common_vendor.o((...args) => $options.confirmCreate && $options.confirmCreate(...args))
+    x: common_vendor.o((...args) => $options.confirmCreate && $options.confirmCreate(...args))
   } : {}, {
-    C: $options.isAddressMode && !$data.createAddressMode
+    y: $options.isAddressMode && !$data.createAddressMode
   }, $options.isAddressMode && !$data.createAddressMode ? {
-    D: common_vendor.o((...args) => $options.toggleCreateAddress && $options.toggleCreateAddress(...args))
+    z: common_vendor.o((...args) => $options.toggleCreateAddress && $options.toggleCreateAddress(...args))
   } : {}, {
-    E: $options.isAddressMode && $data.createAddressMode
+    A: $options.isAddressMode && $data.createAddressMode
   }, $options.isAddressMode && $data.createAddressMode ? {
-    F: common_vendor.o((...args) => $options.saveAddress && $options.saveAddress(...args))
+    B: common_vendor.o((...args) => $options.saveAddress && $options.saveAddress(...args))
   } : {}, {
-    G: common_vendor.o(() => {
+    C: common_vendor.o(() => {
     }),
-    H: common_vendor.o((...args) => $options.close && $options.close(...args))
+    D: common_vendor.o((...args) => $options.close && $options.close(...args))
   }) : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-9c17e027"]]);

@@ -33,7 +33,7 @@
   gap: 12rpx;
 }
 .fav-star.data-v-a911e391 {
-  font-size: 32rpx;
+  font-size: 48rpx;
   color: #ccc;
 }
 .fav-star.active.data-v-a911e391 {
@@ -226,14 +226,15 @@
   color: #333;
 }
 .count-input.data-v-a911e391 {
-  width: 140rpx;
-  height: 64rpx;
-  line-height: 64rpx;
-  border: 1rpx solid #e5e5e5;
-  border-radius: 10rpx;
+  width: 72rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  border: none;
+  border-radius: 0;
   text-align: center;
-  font-size: 28rpx;
-  background: #fff;
+  font-size: 30rpx;
+  background: transparent;
+  color: #333;
   margin: 0 12rpx;
 }
   /* padding-bottom: 12rpx;
@@ -286,24 +287,20 @@
   flex-direction: row;
   align-items: center;
   background: #f7f7f7;
-  border-radius: 6rpx;
-  height: 60rpx;
-  /* Match Cart */
+  border-radius: 40rpx;
+  height: 80rpx;
+  padding: 0 4rpx;
 }
 
 /* 淘宝风格：步进器在弹窗内的样式适配 */
 .mp-sheet .qty-stepper .step.data-v-a911e391 {
-  width: 60rpx;
-  /* Match Cart */
-  height: 60rpx;
-  /* Match Cart */
+  width: 64rpx;
+  height: 100%;
   border-radius: 0;
-  /* Remove individual radius */
   background: transparent;
   border: none;
   color: #333;
-  font-size: 32rpx;
-  /* Match Cart */
+  font-size: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;

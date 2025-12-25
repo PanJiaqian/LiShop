@@ -38,6 +38,16 @@
 .region-input {
   flex: 1;
 }
+.region-display {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  border: 1rpx solid #e6e6e6;
+  border-radius: 12rpx;
+  padding: 0 14rpx;
+  font-size: 30rpx;
+  color: #333;
+}
 .textarea {
   flex: 1;
   height: 120rpx;
@@ -50,17 +60,42 @@
 .footer {
   margin-top: 60rpx;
   padding: 30rpx;
+  display: flex;
+  gap: 12rpx;
 }
 .btn-save {
-  background-color: #e1251b;
+  flex: 1;
+  height: 80rpx;
+  background-color: #000;
   color: #fff;
   border-radius: 40rpx;
   font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+.btn-delete {
+  flex: 1;
+  height: 80rpx;
+  background-color: #434343;
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
 }
 .switch-item .label {
   width: 240rpx;
   /* Increase width to prevent wrapping */
 }
+
+
+
+
+
 
 
 
