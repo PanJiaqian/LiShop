@@ -1,4 +1,4 @@
-const BASE_URL = 'http://182.61.54.90:6149'
+const BASE_URL = 'https://www.nuomi-light.com:6149'
 
 function getBearer(token) {
   if (token) return token.startsWith('Bearer ') ? token : `Bearer ${token}`
