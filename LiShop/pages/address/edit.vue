@@ -226,17 +226,25 @@ export default {
     },
     deleteAddressHandler() {
       if (!this.id) return
-      const u = uni.getStorageSync('user')
-      const token = (u && (u.token || (u.data && u.data.token))) || ''
-      deleteAddress({ addresses_id: this.id, token }).then(res => {
-        if (res && res.success) {
-          uni.showToast({ title: '删除成功', icon: 'success' })
-          setTimeout(() => { uni.navigateBack() }, 1200)
-        } else {
-          uni.showToast({ title: res?.message || '删除失败', icon: 'none' })
+      uni.showModal({
+        title: '提示',
+        content: '确定要删除该收货地址吗？',
+        success: (res) => {
+          if (res.confirm) {
+            const u = uni.getStorageSync('user')
+            const token = (u && (u.token || (u.data && u.data.token))) || ''
+            deleteAddress({ addresses_id: this.id, token }).then(res => {
+              if (res && res.success) {
+                uni.showToast({ title: '删除成功', icon: 'success' })
+                setTimeout(() => { uni.navigateBack() }, 1200)
+              } else {
+                uni.showToast({ title: res?.message || '删除失败', icon: 'none' })
+              }
+            }).catch(() => {
+              uni.showToast({ title: '删除失败', icon: 'none' })
+            })
+          }
         }
-      }).catch(() => {
-        uni.showToast({ title: '删除失败', icon: 'none' })
       })
     }
   }
