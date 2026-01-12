@@ -66,7 +66,7 @@ export default {
       page: 1,
       page_size: 32,
       total: 0,
-      loading: false
+      loading: true
     }
   },
   computed: {

@@ -14,8 +14,8 @@
 import Skeleton from '@/components/Skeleton.vue'
 export default {
   components: { Skeleton },
-  data() { return { loading: false } },
-  onShow() { }
+  data() { return { loading: true } },
+  onShow() { this.loading = false }
 }
 </script>
 

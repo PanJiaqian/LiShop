@@ -29,7 +29,7 @@ import { loginAdmin } from '../../api/index.js'
 export default {
   components: { Skeleton },
   data() {
-    return { username: '', password: '', loading: false }
+    return { username: '', password: '', loading: true }
   },
   onShow() {
     try {
@@ -41,6 +41,7 @@ export default {
         if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
       }
     } catch (e) {}
+    this.loading = false
   },
   methods: {
     login() {

@@ -2,21 +2,18 @@
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" />
     <!-- #ifdef H5 -->
-    <view class="h5-announcement-bg">
-      <view class="h5-topbar">
-        <button class="back-btn" @click="goBack">←</button>
-      </view>
-      <view class="h5-announcement-card">
-        <view class="header">
-          <text class="title">公告</text>
-          <FloatingNav />
+    <view class="h5-mask">
+      <view class="h5-modal">
+        <view class="modal-header">
+          <text class="modal-title">公告</text>
+          <view class="modal-close" @click="goBack">✕</view>
         </view>
-        <view v-if="announcement" class="card">
+        <view v-if="announcement" class="modal-body">
           <text class="a-title">{{ announcement.title }}</text>
           <text class="a-time">{{ displayTime }}</text>
           <view class="a-content">{{ announcement.content }}</view>
         </view>
-        <view v-else class="empty">
+        <view v-else class="modal-body empty">
           <text>暂无公告</text>
         </view>
       </view>
@@ -110,48 +107,13 @@ export default {
   position: fixed; left: 0; right: 0; top: 0; bottom: 0;
   width: 100vw; height: 100vh; z-index: -1;
 }
-.h5-announcement-bg {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: url('/static/product_detail_background.jpg');
-  background-size: cover;
-  background-position: center;
-  z-index: 0;
-  overflow-y: auto;
-  padding: 40rpx;
-}
-.h5-topbar {
-  position: fixed;
-  top: 0; left: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  height: 100rpx;
-  padding: 20rpx;
-}
-.back-btn {
-  height: 60rpx;
-  width: 60rpx;
-  line-height: 60rpx;
-  padding: 0;
-  border: none !important;
-  border-radius: 0;
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none;
-  color: #000;
-  font-size: 44rpx;
-}
-.back-btn::after { border: none !important; }
-.h5-announcement-card {
-  max-width: 1000px;
-  margin: 0 auto;
-  border-radius: 24rpx;
-  position: relative;
-  z-index: 1;
-  background: rgba(255,255,255,0.92);
-  padding: 24rpx;
-}
+.h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.h5-modal { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #f0f0f0; margin-bottom: 16rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; color: #333; }
+.modal-close { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #999; cursor: pointer; }
+.modal-close:active { color: #333; }
+.modal-body { max-height: 70vh; overflow-y: auto; }
 .container {
   max-width: 1200px;
   margin: 0 auto;

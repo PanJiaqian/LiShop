@@ -80,10 +80,10 @@
                   <text class="uc-icon" style="margin-left: 5px;">★</text>
                   <text style="margin-left: 1px;">我的收藏</text>
                </navigator>
-               <navigator class="uc-link-item" url="/pages/announcement/index">
+               <view class="uc-link-item" @click="openAnnouncementModalH5">
                   <text class="uc-icon">📣</text>
                   <text>公告</text>
-               </navigator>
+               </view>
                <!-- <navigator class="uc-link-item" url="/pages/messages/index">
                    <text class="uc-icon">💬</text>
                   <text>信息</text>
@@ -113,6 +113,22 @@
       </view>
     </view>
     <FloatingNav />
+    <view v-if="showAnnouncementModal" class="h5-mask" @click="closeAnnouncementModal">
+      <view class="h5-modal" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">公告</text>
+          <view class="modal-close" @click="closeAnnouncementModal">✕</view>
+        </view>
+        <view v-if="announcement" class="modal-body">
+          <text class="a-title">{{ announcement.title }}</text>
+          <text class="a-time">{{ (announcement.created_at || '') }}</text>
+          <view class="a-content">{{ announcement.content }}</view>
+        </view>
+        <view v-else class="modal-body">
+          <text>暂无公告</text>
+        </view>
+      </view>
+    </view>
     <!-- #endif -->
 
     <!-- 其他平台保持原布局 -->
@@ -163,7 +179,7 @@ import CategoryGrid from '@/components/CategoryGrid.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { getRecommendedProducts, getVisibleCategories, searchProducts, getCarousel } from '../../api/index.js'
+import { getRecommendedProducts, getVisibleCategories, searchProducts, getCarousel, getCurrentAnnouncement } from '../../api/index.js'
 
 export default {
   components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton },
@@ -190,6 +206,9 @@ export default {
       , panelRight: 0
       , hoveringPanel: false
       , leaveTimer: null
+      , showAnnouncementModal: false
+      , announcementLoading: false
+      , announcement: null
     }
   },
   onShow() {
@@ -306,6 +325,38 @@ export default {
       uni.navigateTo({ url: '/pages/search/index?q=' + encodeURIComponent(q) })
       // #endif
     },
+    openAnnouncementModalH5() {
+      this.announcementLoading = true
+      try {
+        const u = uni.getStorageSync('user') || null
+        const token = (u && (u.token || (u.data && u.data.token))) || ''
+        getCurrentAnnouncement({ token }).then(res => {
+          const ok = !!(res && res.success)
+          const data = res?.data || null
+          if (ok && data) {
+            this.announcement = {
+              id: data.announcement_id || data.id || '',
+              title: data.title || '',
+              content: data.content || '',
+              created_at: data.created_at || res.timestamp || ''
+            }
+          } else {
+            this.announcement = null
+          }
+        }).catch(() => { this.announcement = null })
+        .finally(() => {
+          this.announcementLoading = false
+          this.showAnnouncementModal = true
+        })
+      } catch (e) {
+        this.announcement = null
+        this.announcementLoading = false
+        this.showAnnouncementModal = true
+      }
+    },
+    closeAnnouncementModal() {
+      this.showAnnouncementModal = false
+    },
     openCategory(cat) {
       // #ifdef H5
       const id = cat?.categories_id || ''
@@ -407,16 +458,7 @@ export default {
   /* #endif */
 }
 
-.page-bg {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-}
+.page-bg { position: fixed; left: 0; right: 0; top: 0; bottom: 0; width: 100vw; height: 100vh; z-index: -1; }
 
 /* H5 New Layout Styles */
 /* #ifdef H5 */
@@ -849,6 +891,17 @@ export default {
 :deep(.btn-cart) {
   display: none !important;
 }
+
+.h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.h5-modal { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #f0f0f0; margin-bottom: 16rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; color: #333; }
+.modal-close { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #999; cursor: pointer; }
+.modal-close:active { color: #333; }
+.modal-body { max-height: 70vh; overflow-y: auto; }
+.a-title { font-size: 34rpx; font-weight: 600; color: #333; display: block; }
+.a-time { font-size: 24rpx; color: #999; display: block; margin-top: 8rpx; margin-bottom: 16rpx; }
+.a-content { font-size: 28rpx; color: #333; line-height: 1.6; white-space: pre-wrap; }
 
 /* 房间名输入样式（H5和小程序通用） */
 .room-block {
