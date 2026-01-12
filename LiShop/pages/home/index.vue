@@ -80,6 +80,10 @@
                   <text class="uc-icon">★</text>
                   <text>我的收藏</text>
                </navigator>
+               <navigator class="uc-link-item" url="/pages/announcement/index">
+                  <text class="uc-icon">📣</text>
+                  <text>公告</text>
+               </navigator>
                <!-- <navigator class="uc-link-item" url="/pages/messages/index">
                    <text class="uc-icon">💬</text>
                   <text>信息</text>

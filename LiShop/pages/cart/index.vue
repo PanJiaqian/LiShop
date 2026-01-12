@@ -414,7 +414,10 @@ export default {
             const roomName = g && g.room_name ? g.room_name : ''
             const items = Array.isArray(g && g.items) ? g.items : []
             for (const x of items) {
-              const isOutOfStock = (x.inventory === 0 || x.available_product_status === 0)
+              const typeRaw = (x && (x.product_type || x.available_product_type || x.type || x.comment)) || ''
+              const typeLower = String(typeRaw || '').toLowerCase()
+              const isStagnant = typeLower.includes('stagnant') || typeLower.includes('呆滞')
+              const isOutOfStock = (x.available_product_status === 0) || ((x.inventory === 0) && isStagnant)
               list.push({
                 id: (x && x.id) ? x.id : '',
                 title: (x && (x.available_product_name || x.product_name)) ? (x.available_product_name || x.product_name) : '',

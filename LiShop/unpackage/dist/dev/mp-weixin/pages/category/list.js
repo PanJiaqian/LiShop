@@ -65,7 +65,7 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "请输入关键字", icon: "none" });
         return;
       }
-      common_vendor.index.navigateTo({ url: "/pages/search/index?q=" + encodeURIComponent(q) });
+      common_vendor.index.navigateTo({ url: "/pages/search/index?q=" + encodeURIComponent(q) + "&category_name=" + encodeURIComponent(this.activeName || "") });
     },
     goBack() {
       if (typeof window !== "undefined" && window.history && window.history.length > 1) {

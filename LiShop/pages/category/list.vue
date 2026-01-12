@@ -106,7 +106,7 @@ export default {
     onSearch(val) {
       const q = (val || this.keyword || '').trim()
       if (!q) { uni.showToast({ title: '请输入关键字', icon: 'none' }); return }
-      uni.navigateTo({ url: '/pages/search/index?q=' + encodeURIComponent(q) })
+      uni.navigateTo({ url: '/pages/search/index?q=' + encodeURIComponent(q) + '&category_name=' + encodeURIComponent(this.activeName || '') })
     },
     goBack() {
       if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }

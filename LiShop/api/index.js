@@ -184,10 +184,11 @@ export function searchProducts(options = {}) {
     length,
     quantity,
     color_temperature,
-    token
+    token,
+    category_name
   } = options
 
-  const query = toQuery({ user_input, page, page_size, sort_by, sort_order, available_product_id, length, quantity, color_temperature })
+  const query = toQuery({ user_input, page, page_size, sort_by, sort_order, available_product_id, length, quantity, color_temperature, category_name })
   const url = `${BASE_URL}/api/products/search${query ? `?${query}` : ''}`
 
   return new Promise((resolve, reject) => {
@@ -1128,6 +1129,33 @@ export function exportOrderExcel(options = {}) {
           if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
           resolve(data)
         }
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+/**
+ * 用户获取当前公告
+ * GET /api/user/announcements/current
+ * @param {Object} options { token?: string }
+ * @returns {Promise<any>}
+ */
+export function getCurrentAnnouncement(options = {}) {
+  const { token } = options
+  const url = `${BASE_URL}/api/user/announcements/current`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
       },
       fail: (err) => reject(err)
     })

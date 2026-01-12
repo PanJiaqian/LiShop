@@ -8,6 +8,7 @@ const _sfc_main = {
   data() {
     return {
       keyword: "",
+      category_name: "",
       items: [],
       page: 1,
       page_size: 20,
@@ -29,7 +30,9 @@ const _sfc_main = {
   },
   onLoad(query) {
     const q = decodeURIComponent((query == null ? void 0 : query.q) || "");
+    const cname = decodeURIComponent((query == null ? void 0 : query.category_name) || "");
     this.keyword = q;
+    this.category_name = cname;
     this.fetchPage(1, false);
   },
   // 小程序端下拉到底部加载更多
@@ -59,7 +62,7 @@ const _sfc_main = {
       if (!q)
         return;
       this.loading = true;
-      api_index.searchProducts({ user_input: q, page: nextPage, page_size: this.page_size, sort_by: "id" }).then((res) => {
+      api_index.searchProducts({ user_input: q, page: nextPage, page_size: this.page_size, sort_by: "id", category_name: this.category_name }).then((res) => {
         var _a, _b;
         const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
         const total = Number(((_b = res == null ? void 0 : res.data) == null ? void 0 : _b.total) ?? items.length);

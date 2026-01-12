@@ -1,6 +1,6 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
-const BASE_URL = "http://182.61.54.90:6149";
+const BASE_URL = "https://www.nuomi-light.com:6149";
 function getBearer(token) {
   if (token)
     return token.startsWith("Bearer ") ? token : `Bearer ${token}`;
@@ -182,9 +182,10 @@ function searchProducts(options = {}) {
     length,
     quantity,
     color_temperature,
-    token
+    token,
+    category_name
   } = options;
-  const query = toQuery({ user_input, page, page_size, sort_by, sort_order, available_product_id, length, quantity, color_temperature });
+  const query = toQuery({ user_input, page, page_size, sort_by, sort_order, available_product_id, length, quantity, color_temperature, category_name });
   const url = `${BASE_URL}/api/products/search${query ? `?${query}` : ""}`;
   return new Promise((resolve, reject) => {
     const auth = getBearer(token);
@@ -1214,6 +1215,33 @@ function exportOrderExcel(options = {}) {
     });
   });
 }
+function getCurrentAnnouncement(options = {}) {
+  const { token } = options;
+  const url = `${BASE_URL}/api/user/announcements/current`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = auth ? { "Authorization": auth } : {};
+    common_vendor.index.request({
+      url,
+      method: "GET",
+      header,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
 exports.addAddress = addAddress;
 exports.addCartItem = addCartItem;
 exports.addFavorite = addFavorite;
@@ -1231,6 +1259,7 @@ exports.getAddresses = getAddresses;
 exports.getCarousel = getCarousel;
 exports.getCartItems = getCartItems;
 exports.getCartItemsByIDs = getCartItemsByIDs;
+exports.getCurrentAnnouncement = getCurrentAnnouncement;
 exports.getFavorites = getFavorites;
 exports.getHistoryOrders = getHistoryOrders;
 exports.getOrderDetail = getOrderDetail;

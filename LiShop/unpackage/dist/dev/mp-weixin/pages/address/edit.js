@@ -192,19 +192,27 @@ const _sfc_main = {
     deleteAddressHandler() {
       if (!this.id)
         return;
-      const u = common_vendor.index.getStorageSync("user");
-      const token = u && (u.token || u.data && u.data.token) || "";
-      api_index.deleteAddress({ addresses_id: this.id, token }).then((res) => {
-        if (res && res.success) {
-          common_vendor.index.showToast({ title: "删除成功", icon: "success" });
-          setTimeout(() => {
-            common_vendor.index.navigateBack();
-          }, 1200);
-        } else {
-          common_vendor.index.showToast({ title: (res == null ? void 0 : res.message) || "删除失败", icon: "none" });
+      common_vendor.index.showModal({
+        title: "提示",
+        content: "确定要删除该收货地址吗？",
+        success: (res) => {
+          if (res.confirm) {
+            const u = common_vendor.index.getStorageSync("user");
+            const token = u && (u.token || u.data && u.data.token) || "";
+            api_index.deleteAddress({ addresses_id: this.id, token }).then((res2) => {
+              if (res2 && res2.success) {
+                common_vendor.index.showToast({ title: "删除成功", icon: "success" });
+                setTimeout(() => {
+                  common_vendor.index.navigateBack();
+                }, 1200);
+              } else {
+                common_vendor.index.showToast({ title: (res2 == null ? void 0 : res2.message) || "删除失败", icon: "none" });
+              }
+            }).catch(() => {
+              common_vendor.index.showToast({ title: "删除失败", icon: "none" });
+            });
+          }
         }
-      }).catch(() => {
-        common_vendor.index.showToast({ title: "删除失败", icon: "none" });
       });
     }
   }

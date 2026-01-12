@@ -15,7 +15,7 @@
                 <video id="pd-video" v-if="isVideo(currentImage)" class="pd-main" :src="videoSrc" :poster="currentImage"
                   :controls="true" :autoplay="false" playsinline webkit-playsinline crossorigin="anonymous"
                   object-fit="contain" />
-                <image v-else class="pd-main" :src="currentImage" mode="aspectFit" />
+                <image v-else class="pd-main" :src="currentImage" mode="aspectFit" @click="previewCurrentImage" />
                 <view class="pd-thumbs">
                   <view v-for="(src, i) in images" :key="i" class="pd-thumb" :class="{ active: i === current }"
                     @click="current = i" style="position: relative; overflow: hidden;">
@@ -52,7 +52,7 @@
               <view class="pd-card pd-detail">
                 <text class="pd-section-title" selectable="true">图文详情</text>
                 <image v-for="(src, i) in product.details_images" :key="'d' + i" class="pd-detail-img" :src="src"
-                  mode="widthFix" />
+                  mode="widthFix" @click="previewDetailImage(src)" />
               </view>
             </view>
 
@@ -79,7 +79,7 @@
                   <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
                   <view v-else-if="specs && specs.length" class="specs-list">
                     <view class="spec-item" v-for="(it, i) in specs" :key="'h5sp' + i"
-                      :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
+                      :class="{ active: selectedSpecIndex === i, disabled: isSpecDisabled(it) }" @click="onClickSpec(it, i)">
                       <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
                       <view class="spec-info">
                         <text class="spec-name" selectable="true">{{ it.name }}</text>
@@ -89,6 +89,9 @@
                             Number(it.original_price).toFixed(2) }}</text>
                         </view>
                         <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
+                      </view>
+                      <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
+                        <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
                       </view>
                     </view>
                   </view>
@@ -157,7 +160,7 @@
         <swiper-item v-for="(item, index) in images" :key="index">
           <video v-if="isVideo(item)" :src="item" controls style="width: 100%; height: 100%;"
             object-fit="contain"></video>
-          <image v-else :src="item" mode="aspectFill" style="width: 100%; height: 100%;" />
+          <image v-else :src="item" mode="aspectFill" style="width: 100%; height: 100%;" @click="previewMpImage(item)" />
         </swiper-item>
       </swiper>
       <view class="info mp-info-spacing">
@@ -229,7 +232,7 @@
             </view>
             <view v-else-if="specs && specs.length" class="specs-list">
               <view class="spec-item" v-for="(it, i) in (isSpecsCollapsed ? specs.slice(0, 2) : specs)"
-                :key="'mpsp' + i" :class="{ active: selectedSpecIndex === i }" @click="selectSpec(i)">
+                :key="'mpsp' + i" :class="{ active: selectedSpecIndex === i, disabled: isSpecDisabled(it) }" @click="onClickSpec(it, i)">
                 <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
                 <view class="spec-info">
                   <text class="spec-name" selectable="true">{{ it.name }}</text>
@@ -239,6 +242,9 @@
                       Number(it.original_price).toFixed(2) }}</text>
                   </view>
                   <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
+                </view>
+                <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
+                  <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
                 </view>
               </view>
               <!-- 展开/收起按钮 -->
@@ -315,6 +321,8 @@ export default {
           title: d.name || ('商品 ' + id),
           price,
           sales: 0,
+          type: d.type || d.product_type || '',
+          comment: d.comment || '',
           shipping_origin: clean(d.shipping_origin) || '',
           main_media: [...main, ...videos].length ? [...main, ...videos] : ['/static/logo.png'],
           details_images: detailImgs,
@@ -338,6 +346,14 @@ export default {
     selectorType() {
       return this.roomSelectorMode === 'addr' ? 'addr' : 'room'
     },
+    isStagnantProduct() {
+      const t = String(this.product?.type || this.product?.product_type || this.product?.category || '').toLowerCase()
+      if (!t) {
+        const c = String((this.product && this.product.comment) || '').toLowerCase()
+        return c.includes('stagnant') || c.includes('呆滞')
+      }
+      return t.includes('stagnant') || t.includes('呆滞')
+    },
     images() {
       const imgs = (this.product && this.product.main_media) || []
       return imgs.length ? imgs : [this.product?.image || '/static/logo.png']
@@ -349,7 +365,10 @@ export default {
     videoSrc() {
       const src = this.currentImage
       if (!this.isVideo(src)) return ''
-      return src && !src.includes('.m3u8') ? src : ''
+      if (src.includes('.m3u8')) return ''
+      const hasQuery = src.includes('?')
+      const t = Date.now()
+      return hasQuery ? (src + '&t=' + t) : (src + '?t=' + t)
     },
     selectedSpec() {
       return (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
@@ -433,7 +452,9 @@ export default {
 
         if (window.Hls && Hls.isSupported()) {
           this.hls = new Hls()
-          this.hls.loadSource(src)
+          const hasQuery = src.includes('?')
+          const bust = hasQuery ? (src + '&t=' + Date.now()) : (src + '?t=' + Date.now())
+          this.hls.loadSource(bust)
           this.hls.attachMedia(el)
           this.hls.on(Hls.Events.ERROR, (event, data) => {
             if (data && data.fatal) {
@@ -450,7 +471,8 @@ export default {
             }
           })
         } else if (el && el.canPlayType && el.canPlayType('application/vnd.apple.mpegurl')) {
-          el.src = src
+          const hasQuery = src.includes('?')
+          el.src = hasQuery ? (src + '&t=' + Date.now()) : (src + '?t=' + Date.now())
         }
       })
       // #endif
@@ -478,15 +500,67 @@ export default {
             image_url: clean(it.image_url) || '',
             inventory: it.inventory || 0,
             has_length: it.has_length || 0,
-            specification: it.specification || ''
+            specification: it.specification || '',
+            product_type: it.product_type || it.type || ''
           }))
         })
         .catch(() => { this.specs = [] })
-        .finally(() => { this.specsLoading = false; this.selectedSpecIndex = (Array.isArray(this.specs) && this.specs.length > 0) ? 0 : -1 })
+        .finally(() => {
+          this.specsLoading = false
+          const idx = this.firstSelectableSpecIndex()
+          this.selectedSpecIndex = idx
+        })
     },
     selectSpec(index) {
       if (this.selectedSpecIndex === index) return
       this.selectedSpecIndex = index
+    },
+    isSpecDisabled(it) {
+      try {
+        const t = String(it?.product_type || '').toLowerCase()
+        if (t === 'stagnant' && Number(it?.inventory) === 0) return true
+        return false
+      } catch (e) { return false }
+    },
+    onClickSpec(it, i) {
+      if (this.isSpecDisabled(it)) return
+      this.selectSpec(i)
+    },
+    firstSelectableSpecIndex() {
+      try {
+        const arr = Array.isArray(this.specs) ? this.specs : []
+        for (let i = 0; i < arr.length; i++) {
+          if (!this.isSpecDisabled(arr[i])) return i
+        }
+        return -1
+      } catch (e) { return -1 }
+    },
+    previewCurrentImage() {
+      try {
+        const arr = (this.images || []).filter(u => !this.isVideo(u))
+        const cur = this.currentImage
+        const idx = arr.findIndex(u => u === cur)
+        const current = idx >= 0 ? arr[idx] : (arr[0] || '')
+        if (!current) return
+        uni.previewImage({ urls: arr.length ? arr : [current], current })
+      } catch (e) {}
+    },
+    previewDetailImage(src) {
+      try {
+        const arr = (this.product?.details_images || []).filter(u => typeof u === 'string')
+        const current = arr.includes(src) ? src : (arr[0] || '')
+        if (!current) return
+        uni.previewImage({ urls: arr.length ? arr : [current], current })
+      } catch (e) {}
+    },
+    previewMpImage(item) {
+      try {
+        if (this.isVideo(item)) return
+        const arr = (this.images || []).filter(u => !this.isVideo(u))
+        const current = arr.includes(item) ? item : (arr[0] || '')
+        if (!current) return
+        uni.previewImage({ urls: arr.length ? arr : [current], current })
+      } catch (e) {}
     },
     addToCart() {
       const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
@@ -931,6 +1005,8 @@ export default {
   border-radius: 12rpx;
   /* background: #fafafa; */
   transition: all .2s;
+  position: relative;
+  overflow: hidden;
 }
 
 .spec-item.active {
@@ -938,6 +1014,28 @@ export default {
   /* background: #fff5f0; */
 }
 
+.spec-item.disabled {
+  cursor: not-allowed;
+}
+
+.spec-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.15);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 12rpx;
+  border-radius: 12rpx;
+}
+
+.spec-mask-ico {
+  width: 140rpx;
+  height: 140rpx;
+}
 .spec-thumb {
   width: 120rpx;
   height: 120rpx;

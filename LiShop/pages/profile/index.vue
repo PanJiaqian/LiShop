@@ -118,6 +118,10 @@
                 <text>设置</text>
                 <text class="arrow">›</text>
               </navigator>
+              <navigator url="/pages/announcement/index" class="menu-row">
+                <text>公告</text>
+                <text class="arrow">›</text>
+              </navigator>
               <navigator url="/pages/messages/index" class="menu-row">
                 <text>消息</text>
                 <text class="arrow">›</text>

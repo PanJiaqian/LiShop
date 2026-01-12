@@ -10,6 +10,15 @@
 			}
 		},
 		{
+			"path": "pages/announcement/index",
+			"style": {
+				"navigationBarTitleText": "公告",
+				"h5": {
+					"navigationStyle": "custom"
+				}
+			}
+		},
+		{
 			"path": "pages/favorites/index",
 			"style": {
 				"navigationBarTitleText": "我的收藏",

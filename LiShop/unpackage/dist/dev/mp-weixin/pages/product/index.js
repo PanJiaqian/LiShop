@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const common_assets = require("../../common/assets.js");
 const RoomSelector = () => "../../components/RoomSelector.js";
 const FloatingNav = () => "../../components/FloatingNav.js";
 const Skeleton = () => "../../components/Skeleton.js";
@@ -28,6 +29,8 @@ const _sfc_main = {
         title: d.name || "商品 " + id,
         price,
         sales: 0,
+        type: d.type || d.product_type || "",
+        comment: d.comment || "",
         shipping_origin: clean(d.shipping_origin) || "",
         main_media: [...main, ...videos].length ? [...main, ...videos] : ["/static/logo.png"],
         details_images: detailImgs,
@@ -49,6 +52,15 @@ const _sfc_main = {
     selectorType() {
       return this.roomSelectorMode === "addr" ? "addr" : "room";
     },
+    isStagnantProduct() {
+      var _a, _b, _c;
+      const t = String(((_a = this.product) == null ? void 0 : _a.type) || ((_b = this.product) == null ? void 0 : _b.product_type) || ((_c = this.product) == null ? void 0 : _c.category) || "").toLowerCase();
+      if (!t) {
+        const c = String(this.product && this.product.comment || "").toLowerCase();
+        return c.includes("stagnant") || c.includes("呆滞");
+      }
+      return t.includes("stagnant") || t.includes("呆滞");
+    },
     images() {
       var _a;
       const imgs = this.product && this.product.main_media || [];
@@ -62,7 +74,11 @@ const _sfc_main = {
       const src = this.currentImage;
       if (!this.isVideo(src))
         return "";
-      return src && !src.includes(".m3u8") ? src : "";
+      if (src.includes(".m3u8"))
+        return "";
+      const hasQuery = src.includes("?");
+      const t = Date.now();
+      return hasQuery ? src + "&t=" + t : src + "?t=" + t;
     },
     selectedSpec() {
       return this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex] ? this.specs[this.selectedSpecIndex] : null;
@@ -177,19 +193,83 @@ const _sfc_main = {
           image_url: clean(it.image_url) || "",
           inventory: it.inventory || 0,
           has_length: it.has_length || 0,
-          specification: it.specification || ""
+          specification: it.specification || "",
+          product_type: it.product_type || it.type || ""
         }));
       }).catch(() => {
         this.specs = [];
       }).finally(() => {
         this.specsLoading = false;
-        this.selectedSpecIndex = Array.isArray(this.specs) && this.specs.length > 0 ? 0 : -1;
+        const idx = this.firstSelectableSpecIndex();
+        this.selectedSpecIndex = idx;
       });
     },
     selectSpec(index) {
       if (this.selectedSpecIndex === index)
         return;
       this.selectedSpecIndex = index;
+    },
+    isSpecDisabled(it) {
+      try {
+        const t = String((it == null ? void 0 : it.product_type) || "").toLowerCase();
+        if (t === "stagnant" && Number(it == null ? void 0 : it.inventory) === 0)
+          return true;
+        return false;
+      } catch (e) {
+        return false;
+      }
+    },
+    onClickSpec(it, i) {
+      if (this.isSpecDisabled(it))
+        return;
+      this.selectSpec(i);
+    },
+    firstSelectableSpecIndex() {
+      try {
+        const arr = Array.isArray(this.specs) ? this.specs : [];
+        for (let i = 0; i < arr.length; i++) {
+          if (!this.isSpecDisabled(arr[i]))
+            return i;
+        }
+        return -1;
+      } catch (e) {
+        return -1;
+      }
+    },
+    previewCurrentImage() {
+      try {
+        const arr = (this.images || []).filter((u) => !this.isVideo(u));
+        const cur = this.currentImage;
+        const idx = arr.findIndex((u) => u === cur);
+        const current = idx >= 0 ? arr[idx] : arr[0] || "";
+        if (!current)
+          return;
+        common_vendor.index.previewImage({ urls: arr.length ? arr : [current], current });
+      } catch (e) {
+      }
+    },
+    previewDetailImage(src) {
+      var _a;
+      try {
+        const arr = (((_a = this.product) == null ? void 0 : _a.details_images) || []).filter((u) => typeof u === "string");
+        const current = arr.includes(src) ? src : arr[0] || "";
+        if (!current)
+          return;
+        common_vendor.index.previewImage({ urls: arr.length ? arr : [current], current });
+      } catch (e) {
+      }
+    },
+    previewMpImage(item) {
+      try {
+        if (this.isVideo(item))
+          return;
+        const arr = (this.images || []).filter((u) => !this.isVideo(u));
+        const current = arr.includes(item) ? item : arr[0] || "";
+        if (!current)
+          return;
+        common_vendor.index.previewImage({ urls: arr.length ? arr : [current], current });
+      } catch (e) {
+      }
     },
     addToCart() {
       var _a;
@@ -606,9 +686,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       }, $options.isVideo(item) ? {
         b: item
       } : {
-        c: item
+        c: item,
+        d: common_vendor.o(($event) => $options.previewMpImage(item), index)
       }, {
-        d: index
+        e: index
       });
     }),
     d: common_vendor.t($data.product.title),
@@ -655,9 +736,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.t(Number(it.original_price).toFixed(2))
       } : {}, {
         f: common_vendor.t(it.unit || "—"),
-        g: "mpsp" + i,
-        h: $data.selectedSpecIndex === i ? 1 : "",
-        i: common_vendor.o(($event) => $options.selectSpec(i), "mpsp" + i)
+        g: String(it.product_type || "").toLowerCase() === "stagnant" && Number(it.inventory) === 0
+      }, String(it.product_type || "").toLowerCase() === "stagnant" && Number(it.inventory) === 0 ? {
+        h: common_assets._imports_0$1
+      } : {}, {
+        i: "mpsp" + i,
+        j: $data.selectedSpecIndex === i ? 1 : "",
+        k: $options.isSpecDisabled(it) ? 1 : "",
+        l: common_vendor.o(($event) => $options.onClickSpec(it, i), "mpsp" + i)
       });
     }),
     D: $data.specs.length > 3

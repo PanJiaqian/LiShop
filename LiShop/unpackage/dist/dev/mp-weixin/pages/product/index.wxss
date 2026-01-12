@@ -94,10 +94,32 @@
   border-radius: 12rpx;
   /* background: #fafafa; */
   transition: all .2s;
+  position: relative;
+  overflow: hidden;
 }
 .spec-item.active.data-v-a911e391 {
   border-color: #8d8a8a;
   /* background: #fff5f0; */
+}
+.spec-item.disabled.data-v-a911e391 {
+  cursor: not-allowed;
+}
+.spec-mask.data-v-a911e391 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.15);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 12rpx;
+  border-radius: 12rpx;
+}
+.spec-mask-ico.data-v-a911e391 {
+  width: 140rpx;
+  height: 140rpx;
 }
 .spec-thumb.data-v-a911e391 {
   width: 120rpx;

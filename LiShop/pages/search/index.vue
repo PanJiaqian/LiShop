@@ -31,6 +31,7 @@ export default {
   data() {
     return {
       keyword: '',
+      category_name: '',
       items: [],
       page: 1,
       page_size: 20,
@@ -52,7 +53,9 @@ export default {
   },
   onLoad(query) {
     const q = decodeURIComponent(query?.q || '')
+    const cname = decodeURIComponent(query?.category_name || '')
     this.keyword = q
+    this.category_name = cname
     this.fetchPage(1, false)
   },
   // 小程序端下拉到底部加载更多
@@ -79,7 +82,7 @@ export default {
       const q = (this.keyword || '').trim()
       if (!q) return
       this.loading = true
-      searchProducts({ user_input: q, page: nextPage, page_size: this.page_size, sort_by: 'id' })
+      searchProducts({ user_input: q, page: nextPage, page_size: this.page_size, sort_by: 'id', category_name: this.category_name })
         .then((res) => {
           const items = Array.isArray(res?.data?.items) ? res.data.items : []
           const total = Number(res?.data?.total ?? items.length)
