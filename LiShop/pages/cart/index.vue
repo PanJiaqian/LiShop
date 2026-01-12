@@ -1624,8 +1624,10 @@ export default {
   cursor: pointer;
   width: 80rpx;
   text-align: center;
-  flex-shrink: 0;
-  align-self: center;
+  position: absolute;
+  top: 12rpx;
+  right: 20rpx;
+  z-index: 7;
 }
 .h5-row .del-btn:hover {
   color: #e1251b;

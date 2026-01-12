@@ -12,10 +12,27 @@
             <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
             <view class="pd-left">
               <view class="pd-gallery">
-                <video id="pd-video" v-if="isVideo(currentImage)" class="pd-main" :src="videoSrc" :poster="currentImage"
-                  :controls="true" :autoplay="false" playsinline webkit-playsinline crossorigin="anonymous"
-                  object-fit="contain" />
-                <image v-else class="pd-main" :src="currentImage" mode="aspectFit" @click="previewCurrentImage" />
+                <swiper class="pd-main" :current="current" :autoplay="false" circular interval="3000" @change="onSwiperChange">
+                  <swiper-item v-for="(src, i) in images" :key="i">
+                    <video
+                      v-if="isVideo(src)"
+                      :id="i === current ? 'pd-video' : ('pd-video-' + i)"
+                      class="pd-main"
+                      :src="i === current ? videoSrc : src"
+                      :poster="product.image || '/static/logo.png'"
+                      :controls="true"
+                      :autoplay="false"
+                      playsinline
+                      webkit-playsinline
+                      crossorigin="anonymous"
+                      object-fit="contain"
+                      :muted="true"
+                      @play="pauseCarousel"
+                      @ended="onVideoEnded"
+                    />
+                    <image v-else class="pd-main" :src="src" mode="aspectFit" @click="previewCurrentImage" />
+                  </swiper-item>
+                </swiper>
                 <view class="pd-thumbs">
                   <view v-for="(src, i) in images" :key="i" class="pd-thumb" :class="{ active: i === current }"
                     @click="current = i" style="position: relative; overflow: hidden;">
@@ -156,10 +173,19 @@
       <!-- #endif -->
 
       <!-- #ifndef H5 -->
-      <swiper class="cover" indicator-dots autoplay circular interval="3000">
+      <swiper class="cover" indicator-dots :current="current" :autoplay="false" circular interval="3000" @change="onSwiperChange">
         <swiper-item v-for="(item, index) in images" :key="index">
-          <video v-if="isVideo(item)" :src="item" controls style="width: 100%; height: 100%;"
-            object-fit="contain"></video>
+          <video
+            v-if="isVideo(item)"
+            :id="index === current ? 'mp-video' : ('mp-video-' + index)"
+            :src="item"
+            controls
+            style="width: 100%; height: 100%;"
+            object-fit="contain"
+            :autoplay="false"
+            @play="pauseCarousel"
+            @ended="onVideoEnded"
+          ></video>
           <image v-else :src="item" mode="aspectFill" style="width: 100%; height: 100%;" @click="previewMpImage(item)" />
         </swiper-item>
       </swiper>
@@ -195,7 +221,7 @@
       <view class="mp-section">
         <text class="mp-title" selectable="true">图文详情</text>
         <image v-for="(src, i) in product.details_images" :key="'md' + i" class="mp-detail-img" :src="src"
-          mode="widthFix" />
+          mode="widthFix" @click="previewDetailImage(src)" />
       </view>
       <view class="footer">
         <!-- #ifdef MP-WEIXIN -->
@@ -303,7 +329,7 @@ import Skeleton from '@/components/Skeleton.vue'
 
 export default {
   components: { RoomSelector, FloatingNav, Skeleton },
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false } },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -335,11 +361,39 @@ export default {
         this.product = base
         this.isFavorite = (String(d.is_favorite) === '1') || (d.is_favorite === 1) || (d.is_favorite === true)
         this.fetchSpecs(base.id)
+        this.resetCarouselTimer()
+        this.$nextTick(() => {
+          const src = this.currentImage
+          if (this.isVideo(src)) {
+            this.lockCarousel = true
+            this.stopCarousel()
+            try {
+              const ctx1 = uni.createVideoContext('pd-video', this)
+              const ctx2 = uni.createVideoContext('mp-video', this)
+              if (ctx1 && typeof ctx1.play === 'function') ctx1.play()
+              else if (ctx2 && typeof ctx2.play === 'function') ctx2.play()
+            } catch (e) {}
+          }
+        })
       })
       .catch(() => {
         // 接口失败时保底展示
         this.product = { id, title: '商品 ' + id, price: 0, sales: 0, shipping_origin: '', image: '/static/logo.png', images: ['/static/logo.png'] }
         this.fetchSpecs(id)
+        this.resetCarouselTimer()
+        this.$nextTick(() => {
+          const src = this.currentImage
+          if (this.isVideo(src)) {
+            this.lockCarousel = true
+            this.stopCarousel()
+            try {
+              const ctx1 = uni.createVideoContext('pd-video', this)
+              const ctx2 = uni.createVideoContext('mp-video', this)
+              if (ctx1 && typeof ctx1.play === 'function') ctx1.play()
+              else if (ctx2 && typeof ctx2.play === 'function') ctx2.play()
+            } catch (e) {}
+          }
+        })
       })
   },
   computed: {
@@ -419,12 +473,31 @@ export default {
       handler(val) { this.initHls(val) },
       immediate: true
     }
+    ,
+    current(val) {
+      const src = (this.images || [])[val]
+      if (this.isVideo(src)) {
+        this.$nextTick(() => {
+          try {
+            const ctx1 = uni.createVideoContext('pd-video', this)
+            const ctx2 = uni.createVideoContext('mp-video', this)
+            if (ctx1 && typeof ctx1.play === 'function') ctx1.play()
+            else if (ctx2 && typeof ctx2.play === 'function') ctx2.play()
+          } catch (e) { }
+        })
+        this.lockCarousel = true
+      } else {
+        this.lockCarousel = false
+        this.resetCarouselTimer()
+      }
+    }
   },
   beforeDestroy() {
     if (this.hls) {
       this.hls.destroy()
       this.hls = null
     }
+    this.stopCarousel()
   },
   onShow() {
     this.loadAddresses()
@@ -480,6 +553,60 @@ export default {
     isVideo(src) {
       if (!src) return false
       return src.includes('.mp4') || src.includes('.m3u8')
+    },
+    onSwiperChange(e) {
+      try {
+        const idx = (e && e.detail && typeof e.detail.current === 'number') ? e.detail.current : 0
+        this.current = idx
+        const src = (this.images || [])[idx]
+        if (this.isVideo(src)) {
+          this.lockCarousel = true
+          this.stopCarousel()
+          this.$nextTick(() => {
+            try {
+              const ctx1 = uni.createVideoContext('pd-video', this)
+              const ctx2 = uni.createVideoContext('mp-video', this)
+              if (ctx1 && typeof ctx1.play === 'function') ctx1.play()
+              else if (ctx2 && typeof ctx2.play === 'function') ctx2.play()
+            } catch (e) { }
+          })
+        } else {
+          this.lockCarousel = false
+          this.resetCarouselTimer()
+        }
+      } catch (e) {}
+    },
+    pauseCarousel() {
+      this.lockCarousel = true
+      this.stopCarousel()
+    },
+    onVideoEnded() {
+      this.lockCarousel = false
+      const n = (this.images || []).length || 1
+      setTimeout(() => {
+        this.current = (this.current + 1) % n
+        this.resetCarouselTimer()
+      }, 1000)
+    },
+    startCarousel() {
+      if (this.swiperTimer) return
+      const interval = Number(this.carouselInterval) || 3000
+      this.swiperTimer = setInterval(() => {
+        try {
+          if (this.lockCarousel) return
+          const n = (this.images || []).length || 1
+          this.current = (this.current + 1) % n
+        } catch (e) {}
+      }, interval)
+    },
+    stopCarousel() {
+      try {
+        if (this.swiperTimer) { clearInterval(this.swiperTimer); this.swiperTimer = null }
+      } catch (e) {}
+    },
+    resetCarouselTimer() {
+      this.stopCarousel()
+      this.startCarousel()
     },
     // 获取规格明细（按产品ID），适配返回 data.children
     fetchSpecs(availId) {

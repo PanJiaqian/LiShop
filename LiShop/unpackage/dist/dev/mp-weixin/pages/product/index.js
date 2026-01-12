@@ -8,7 +8,7 @@ const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
   components: { RoomSelector, FloatingNav, Skeleton },
   data() {
-    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false };
+    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
@@ -43,9 +43,43 @@ const _sfc_main = {
       this.product = base;
       this.isFavorite = String(d.is_favorite) === "1" || d.is_favorite === 1 || d.is_favorite === true;
       this.fetchSpecs(base.id);
+      this.resetCarouselTimer();
+      this.$nextTick(() => {
+        const src = this.currentImage;
+        if (this.isVideo(src)) {
+          this.lockCarousel = true;
+          this.stopCarousel();
+          try {
+            const ctx1 = common_vendor.index.createVideoContext("pd-video", this);
+            const ctx2 = common_vendor.index.createVideoContext("mp-video", this);
+            if (ctx1 && typeof ctx1.play === "function")
+              ctx1.play();
+            else if (ctx2 && typeof ctx2.play === "function")
+              ctx2.play();
+          } catch (e) {
+          }
+        }
+      });
     }).catch(() => {
       this.product = { id, title: "商品 " + id, price: 0, sales: 0, shipping_origin: "", image: "/static/logo.png", images: ["/static/logo.png"] };
       this.fetchSpecs(id);
+      this.resetCarouselTimer();
+      this.$nextTick(() => {
+        const src = this.currentImage;
+        if (this.isVideo(src)) {
+          this.lockCarousel = true;
+          this.stopCarousel();
+          try {
+            const ctx1 = common_vendor.index.createVideoContext("pd-video", this);
+            const ctx2 = common_vendor.index.createVideoContext("mp-video", this);
+            if (ctx1 && typeof ctx1.play === "function")
+              ctx1.play();
+            else if (ctx2 && typeof ctx2.play === "function")
+              ctx2.play();
+          } catch (e) {
+          }
+        }
+      });
     });
   },
   computed: {
@@ -140,6 +174,26 @@ const _sfc_main = {
         this.initHls(val);
       },
       immediate: true
+    },
+    current(val) {
+      const src = (this.images || [])[val];
+      if (this.isVideo(src)) {
+        this.$nextTick(() => {
+          try {
+            const ctx1 = common_vendor.index.createVideoContext("pd-video", this);
+            const ctx2 = common_vendor.index.createVideoContext("mp-video", this);
+            if (ctx1 && typeof ctx1.play === "function")
+              ctx1.play();
+            else if (ctx2 && typeof ctx2.play === "function")
+              ctx2.play();
+          } catch (e) {
+          }
+        });
+        this.lockCarousel = true;
+      } else {
+        this.lockCarousel = false;
+        this.resetCarouselTimer();
+      }
     }
   },
   beforeDestroy() {
@@ -147,6 +201,7 @@ const _sfc_main = {
       this.hls.destroy();
       this.hls = null;
     }
+    this.stopCarousel();
   },
   onShow() {
     this.loadAddresses();
@@ -172,6 +227,71 @@ const _sfc_main = {
       if (!src)
         return false;
       return src.includes(".mp4") || src.includes(".m3u8");
+    },
+    onSwiperChange(e) {
+      try {
+        const idx = e && e.detail && typeof e.detail.current === "number" ? e.detail.current : 0;
+        this.current = idx;
+        const src = (this.images || [])[idx];
+        if (this.isVideo(src)) {
+          this.lockCarousel = true;
+          this.stopCarousel();
+          this.$nextTick(() => {
+            try {
+              const ctx1 = common_vendor.index.createVideoContext("pd-video", this);
+              const ctx2 = common_vendor.index.createVideoContext("mp-video", this);
+              if (ctx1 && typeof ctx1.play === "function")
+                ctx1.play();
+              else if (ctx2 && typeof ctx2.play === "function")
+                ctx2.play();
+            } catch (e2) {
+            }
+          });
+        } else {
+          this.lockCarousel = false;
+          this.resetCarouselTimer();
+        }
+      } catch (e2) {
+      }
+    },
+    pauseCarousel() {
+      this.lockCarousel = true;
+      this.stopCarousel();
+    },
+    onVideoEnded() {
+      this.lockCarousel = false;
+      const n = (this.images || []).length || 1;
+      setTimeout(() => {
+        this.current = (this.current + 1) % n;
+        this.resetCarouselTimer();
+      }, 1e3);
+    },
+    startCarousel() {
+      if (this.swiperTimer)
+        return;
+      const interval = Number(this.carouselInterval) || 3e3;
+      this.swiperTimer = setInterval(() => {
+        try {
+          if (this.lockCarousel)
+            return;
+          const n = (this.images || []).length || 1;
+          this.current = (this.current + 1) % n;
+        } catch (e) {
+        }
+      }, interval);
+    },
+    stopCarousel() {
+      try {
+        if (this.swiperTimer) {
+          clearInterval(this.swiperTimer);
+          this.swiperTimer = null;
+        }
+      } catch (e) {
+      }
+    },
+    resetCarouselTimer() {
+      this.stopCarousel();
+      this.startCarousel();
     },
     // 获取规格明细（按产品ID），适配返回 data.children
     fetchSpecs(availId) {
@@ -684,49 +804,55 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return common_vendor.e({
         a: $options.isVideo(item)
       }, $options.isVideo(item) ? {
-        b: item
-      } : {
+        b: index === $data.current ? "mp-video" : "mp-video-" + index,
         c: item,
-        d: common_vendor.o(($event) => $options.previewMpImage(item), index)
+        d: common_vendor.o((...args) => $options.pauseCarousel && $options.pauseCarousel(...args), index),
+        e: common_vendor.o((...args) => $options.onVideoEnded && $options.onVideoEnded(...args), index)
+      } : {
+        f: item,
+        g: common_vendor.o(($event) => $options.previewMpImage(item), index)
       }, {
-        e: index
+        h: index
       });
     }),
-    d: common_vendor.t($data.product.title),
-    e: common_vendor.t($data.isFavorite ? "★" : "☆"),
-    f: $data.isFavorite ? 1 : "",
-    g: common_vendor.o((...args) => $options.favProduct && $options.favProduct(...args)),
-    h: common_vendor.t($data.product.price.toFixed(2)),
-    i: common_vendor.t($data.product.sales),
-    j: common_vendor.t($data.product.id || "默认款"),
-    k: common_vendor.t($data.product.title),
-    l: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
-    m: common_vendor.t($data.product.price.toFixed(2)),
-    n: common_vendor.f($data.product.details_images, (src, i, i0) => {
+    d: $data.current,
+    e: common_vendor.o((...args) => $options.onSwiperChange && $options.onSwiperChange(...args)),
+    f: common_vendor.t($data.product.title),
+    g: common_vendor.t($data.isFavorite ? "★" : "☆"),
+    h: $data.isFavorite ? 1 : "",
+    i: common_vendor.o((...args) => $options.favProduct && $options.favProduct(...args)),
+    j: common_vendor.t($data.product.price.toFixed(2)),
+    k: common_vendor.t($data.product.sales),
+    l: common_vendor.t($data.product.id || "默认款"),
+    m: common_vendor.t($data.product.title),
+    n: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
+    o: common_vendor.t($data.product.price.toFixed(2)),
+    p: common_vendor.f($data.product.details_images, (src, i, i0) => {
       return {
         a: "md" + i,
-        b: src
+        b: src,
+        c: common_vendor.o(($event) => $options.previewDetailImage(src), "md" + i)
       };
     }),
-    o: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
-    p: $data.mpSheet
+    q: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
+    r: $data.mpSheet
   }, $data.mpSheet ? common_vendor.e({
-    q: $data.selectedAddress
+    s: $data.selectedAddress
   }, $data.selectedAddress ? {
-    r: common_vendor.t($data.selectedAddress.receiver),
-    s: common_vendor.t($data.selectedAddress.phone)
+    t: common_vendor.t($data.selectedAddress.receiver),
+    v: common_vendor.t($data.selectedAddress.phone)
   } : {}, {
-    t: $data.selectedAddress
+    w: $data.selectedAddress
   }, $data.selectedAddress ? {
-    v: common_vendor.t($data.selectedAddress.province),
-    w: common_vendor.t($data.selectedAddress.city),
-    x: common_vendor.t($data.selectedAddress.district),
-    y: common_vendor.t($data.selectedAddress.detail_address)
+    x: common_vendor.t($data.selectedAddress.province),
+    y: common_vendor.t($data.selectedAddress.city),
+    z: common_vendor.t($data.selectedAddress.district),
+    A: common_vendor.t($data.selectedAddress.detail_address)
   } : {}, {
-    z: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
-    A: $data.specsLoading
+    B: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
+    C: $data.specsLoading
   }, $data.specsLoading ? {} : $data.specs && $data.specs.length ? common_vendor.e({
-    C: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
+    E: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
       return common_vendor.e({
         a: it.image_url || "/static/logo.png",
         b: common_vendor.t(it.name),
@@ -746,49 +872,49 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         l: common_vendor.o(($event) => $options.onClickSpec(it, i), "mpsp" + i)
       });
     }),
-    D: $data.specs.length > 3
+    F: $data.specs.length > 3
   }, $data.specs.length > 3 ? {
-    E: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
-    F: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
-    G: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
+    G: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
+    H: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
+    I: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
   } : {}) : {}, {
-    B: $data.specs && $data.specs.length,
-    H: common_vendor.t($data.mpRoom || "请选择房间"),
-    I: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
-    J: $options.selectedSpec && $options.selectedSpec.has_length === 1
+    D: $data.specs && $data.specs.length,
+    J: common_vendor.t($data.mpRoom || "请选择房间"),
+    K: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
+    L: $options.selectedSpec && $options.selectedSpec.has_length === 1
   }, $options.selectedSpec && $options.selectedSpec.has_length === 1 ? common_vendor.e({
-    K: $data.mpLength,
-    L: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
-    M: $options.selectedSpec.length_unit
+    M: $data.mpLength,
+    N: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
+    O: $options.selectedSpec.length_unit
   }, $options.selectedSpec.length_unit ? {
-    N: common_vendor.t($options.selectedSpec.length_unit)
+    P: common_vendor.t($options.selectedSpec.length_unit)
   } : {}) : {}, {
-    O: $data.mpOrderNote,
-    P: common_vendor.o(($event) => $data.mpOrderNote = $event.detail.value),
-    Q: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
-    R: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
-    S: $data.mpQty,
-    T: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
-    U: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
-    V: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    W: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
-    X: common_vendor.o(() => {
-    }),
-    Y: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    Q: $data.mpOrderNote,
+    R: common_vendor.o(($event) => $data.mpOrderNote = $event.detail.value),
+    S: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
+    T: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
+    U: $data.mpQty,
+    V: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
+    W: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
+    X: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    Y: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
     Z: common_vendor.o(() => {
+    }),
+    aa: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    ab: common_vendor.o(() => {
     })
   }) : {}) : {}, {
-    aa: common_vendor.o($options.closeRoomSheet),
-    ab: common_vendor.o($options.onRoomSelect),
-    ac: common_vendor.o($options.onRoomCreate),
-    ad: common_vendor.o($options.onCreateAddress),
-    ae: common_vendor.p({
+    ac: common_vendor.o($options.closeRoomSheet),
+    ad: common_vendor.o($options.onRoomSelect),
+    ae: common_vendor.o($options.onRoomCreate),
+    af: common_vendor.o($options.onCreateAddress),
+    ag: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    af: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
+    ah: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);
