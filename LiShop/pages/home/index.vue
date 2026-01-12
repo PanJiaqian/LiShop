@@ -77,8 +77,8 @@
                   <text>我的订单</text>
                </navigator>
                <navigator class="uc-link-item" url="/pages/favorites/index">
-                  <text class="uc-icon">★</text>
-                  <text>我的收藏</text>
+                  <text class="uc-icon" style="margin-left: 5px;">★</text>
+                  <text style="margin-left: 1px;">我的收藏</text>
                </navigator>
                <navigator class="uc-link-item" url="/pages/announcement/index">
                   <text class="uc-icon">📣</text>
