@@ -120,9 +120,20 @@
           <view class="modal-close" @click="closeAnnouncementModal">✕</view>
         </view>
         <view v-if="announcement" class="modal-body">
-          <text class="a-title">{{ announcement.title }}</text>
-          <text class="a-time">{{ (announcement.created_at || '') }}</text>
-          <view class="a-content">{{ announcement.content }}</view>
+          <view class="modal-body-two">
+            <view class="two-left" @click="showAnnContent = true">
+              <text class="two-label">公告标题</text>
+              <view class="two-title">{{ announcement.title }}</view>
+            </view>
+            <view class="two-right">
+              <view v-if="showAnnContent">
+                <text class="a-title">{{ announcement.title }}</text>
+                <text class="a-time">{{ displayTime }}</text>
+                <view class="a-content">{{ announcement.content }}</view>
+              </view>
+              <view v-else class="two-hint">点击右侧显示公告内容</view>
+            </view>
+          </view>
         </view>
         <view v-else class="modal-body">
           <text>暂无公告</text>
@@ -209,6 +220,23 @@ export default {
       , showAnnouncementModal: false
       , announcementLoading: false
       , announcement: null
+      , showAnnContent: false
+    }
+  },
+  computed: {
+    displayTime() {
+      try {
+        const t = this.announcement?.created_at || this.announcement?.timestamp || ''
+        if (!t) return ''
+        const d = new Date(t)
+        if (isNaN(d.getTime())) return String(t)
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        const h = String(d.getHours()).padStart(2, '0')
+        const mm = String(d.getMinutes()).padStart(2, '0')
+        return `${y}-${m}-${day} ${h}:${mm}`
+      } catch (e) { return '' }
     }
   },
   onShow() {
@@ -347,15 +375,18 @@ export default {
         .finally(() => {
           this.announcementLoading = false
           this.showAnnouncementModal = true
+          this.showAnnContent = true
         })
       } catch (e) {
         this.announcement = null
         this.announcementLoading = false
         this.showAnnouncementModal = true
+        this.showAnnContent = true
       }
     },
     closeAnnouncementModal() {
       this.showAnnouncementModal = false
+      this.showAnnContent = false
     },
     openCategory(cat) {
       // #ifdef H5
@@ -893,12 +924,19 @@ export default {
 }
 
 .h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.h5-modal { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); }
+.h5-modal { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; height: 60vh; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #f0f0f0; margin-bottom: 16rpx; }
 .modal-title { font-size: 32rpx; font-weight: 700; color: #333; }
 .modal-close { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #999; cursor: pointer; }
 .modal-close:active { color: #333; }
-.modal-body { max-height: 70vh; overflow-y: auto; }
+.modal-body { flex: 1; min-height: 0; overflow-y: auto; }
+.modal-body-two { display: flex; gap: 16rpx; height: 100%; }
+.two-left { width: 280rpx; flex-shrink: 0; padding-right: 16rpx; border-right: 1rpx solid #f0f0f0; display: flex; flex-direction: column; gap: 12rpx; }
+.two-left { cursor: pointer; }
+.two-label { font-size: 24rpx; color: #999; }
+.two-title { font-size: 30rpx; color: #333; font-weight: 600; }
+.two-right { flex: 1; min-height: 0; overflow-y: auto; padding-left: 16rpx; }
+.two-hint { height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 26rpx; }
 .a-title { font-size: 34rpx; font-weight: 600; color: #333; display: block; }
 .a-time { font-size: 24rpx; color: #999; display: block; margin-top: 8rpx; margin-bottom: 16rpx; }
 .a-content { font-size: 28rpx; color: #333; line-height: 1.6; white-space: pre-wrap; }
