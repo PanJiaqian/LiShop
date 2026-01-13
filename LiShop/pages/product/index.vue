@@ -97,7 +97,7 @@
                   <view v-else-if="specs && specs.length" class="specs-list">
                     <view class="spec-item" v-for="(it, i) in specs" :key="'h5sp' + i"
                       :class="{ active: selectedSpecIndex === i, disabled: isSpecDisabled(it) }" @click="onClickSpec(it, i)">
-                      <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
+                      <!-- <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" /> -->
                       <view class="spec-info">
                         <text class="spec-name" selectable="true">{{ it.name }}</text>
                         <view class="spec-price-row">
