@@ -274,7 +274,7 @@
                 </view>
               </view>
               <!-- 展开/收起按钮 -->
-              <view v-if="specs.length > 3" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
+              <view v-if="specs.length >= 3" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
                 <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
                 <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
               </view>

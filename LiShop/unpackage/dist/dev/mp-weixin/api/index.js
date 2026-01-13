@@ -342,6 +342,35 @@ function createRoom(options = {}) {
     });
   });
 }
+function deleteRoom(options = {}) {
+  const { room_id, name, body = name ? { name } : {}, token } = options;
+  const query = toQuery({ room_id });
+  const url = `${BASE_URL}/api/rooms/delete${query ? `?${query}` : ""}`;
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token);
+    const header = { "Content-Type": "application/json", ...auth ? { "Authorization": auth } : {} };
+    common_vendor.index.request({
+      url,
+      method: "POST",
+      header,
+      data: body,
+      success: (res) => {
+        let data = res == null ? void 0 : res.data;
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch (e) {
+          }
+        }
+        if (res && res.statusCode >= 200 && res.statusCode < 300)
+          resolve(data);
+        else
+          reject(res);
+      },
+      fail: (err) => reject(err)
+    });
+  });
+}
 function getRooms(options = {}) {
   const { token } = options;
   const url = `${BASE_URL}/api/rooms`;
@@ -1254,6 +1283,7 @@ exports.createRoom = createRoom;
 exports.deleteAddress = deleteAddress;
 exports.deleteCartItem = deleteCartItem;
 exports.deleteFavorite = deleteFavorite;
+exports.deleteRoom = deleteRoom;
 exports.exportOrderExcel = exportOrderExcel;
 exports.getAddresses = getAddresses;
 exports.getCarousel = getCarousel;

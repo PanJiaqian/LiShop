@@ -13,7 +13,7 @@ const _sfc_main = {
       page: 1,
       page_size: 20,
       total: 0,
-      loading: false,
+      loading: true,
       finished: false
     };
   },

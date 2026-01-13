@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
+const api_index = require("../api/index.js");
 const common_assets = require("../common/assets.js");
 const _sfc_main = {
   name: "RoomSelector",
@@ -22,6 +23,13 @@ const _sfc_main = {
         detail_address: "",
         is_default: 0
       },
+      swipeIndex: -1,
+      touchStartX: 0,
+      touchStartY: 0,
+      isSwiping: false,
+      deleteWidth: 160,
+      deletedIds: [],
+      localRooms: [],
       addrRegionRange: [[], [], []],
       addrRegionIndex: [0, 0, 0],
       addrAreaTree: {
@@ -75,6 +83,16 @@ const _sfc_main = {
       }
       return false;
     },
+    displayRooms() {
+      if (this.isAddressMode)
+        return this.rooms || [];
+      const ids = this.deletedIds || [];
+      const list = this.rooms && Array.isArray(this.rooms) ? this.rooms : [];
+      return list.filter((r) => {
+        const rid = (r == null ? void 0 : r.id) || (r == null ? void 0 : r.room_id) || (r == null ? void 0 : r.name) || "";
+        return rid && !ids.includes(rid);
+      });
+    },
     addrRegionDisplay() {
       const { province, city, district } = this.addrForm;
       const arr = [province, city, district].filter(Boolean);
@@ -88,6 +106,8 @@ const _sfc_main = {
         this.createAddressMode = false;
         this.addrForm = { receiver: "", phone: "", province: "", city: "", district: "", detail_address: "", is_default: 0 };
         this.initH5AddrRegion();
+        this.swipeIndex = -1;
+        this.deletedIds = [];
       }
     }
   },
@@ -141,6 +161,106 @@ const _sfc_main = {
     },
     select(room) {
       this.$emit("select", room);
+    },
+    onItemTouchStart(e, index) {
+      try {
+        const t = e && e.touches && e.touches[0] ? e.touches[0] : {};
+        this.touchStartX = Number(t.clientX ?? t.pageX ?? 0) || 0;
+        this.touchStartY = Number(t.clientY ?? t.pageY ?? 0) || 0;
+        this.isSwiping = true;
+      } catch (err) {
+        this.isSwiping = false;
+      }
+    },
+    onItemTouchMove(e, index) {
+      if (!this.isSwiping)
+        return;
+      try {
+        const t = e && e.touches && e.touches[0] ? e.touches[0] : {};
+        const x = Number(t.clientX ?? t.pageX ?? 0) || 0;
+        const y = Number(t.clientY ?? t.pageY ?? 0) || 0;
+        const dx = x - this.touchStartX;
+        const dy = y - this.touchStartY;
+        if (Math.abs(dy) > 20)
+          return;
+        if (dx < -30) {
+          this.swipeIndex = index;
+        } else if (dx > 30) {
+          this.swipeIndex = -1;
+        }
+      } catch (err) {
+      }
+    },
+    onItemTouchEnd() {
+      this.isSwiping = false;
+    },
+    onItemMouseDown(e, index) {
+      try {
+        const isH5 = typeof window !== "undefined";
+        if (!isH5)
+          return;
+        this.touchStartX = Number((e == null ? void 0 : e.clientX) ?? 0) || 0;
+        this.touchStartY = Number((e == null ? void 0 : e.clientY) ?? 0) || 0;
+        this.isSwiping = true;
+      } catch (err) {
+        this.isSwiping = false;
+      }
+    },
+    onItemMouseMove(e, index) {
+      const isH5 = typeof window !== "undefined";
+      if (!isH5 || !this.isSwiping)
+        return;
+      try {
+        const x = Number((e == null ? void 0 : e.clientX) ?? 0) || 0;
+        const y = Number((e == null ? void 0 : e.clientY) ?? 0) || 0;
+        const dx = x - this.touchStartX;
+        const dy = y - this.touchStartY;
+        if (Math.abs(dy) > 20)
+          return;
+        if (dx < -30)
+          this.swipeIndex = index;
+        else if (dx > 30)
+          this.swipeIndex = -1;
+      } catch (err) {
+      }
+    },
+    onItemMouseUp() {
+      const isH5 = typeof window !== "undefined";
+      if (!isH5)
+        return;
+      this.isSwiping = false;
+    },
+    onItemClick(room, index) {
+      const isH5 = typeof window !== "undefined";
+      if (isH5 && this.swipeIndex === index)
+        return;
+      this.select(room);
+    },
+    onDelete(room, index) {
+      try {
+        const rid = (room == null ? void 0 : room.id) || (room == null ? void 0 : room.room_id) || "";
+        if (!rid) {
+          common_vendor.index.showToast({ title: "房间ID缺失", icon: "none" });
+          return;
+        }
+        api_index.deleteRoom({ room_id: rid, name: "葱测试" }).then((data) => {
+          const ok = !!(data && data.success === true);
+          if (ok) {
+            common_vendor.index.showToast({ title: data && data.message || "删除房间成功", icon: "success" });
+            const key = rid || (room == null ? void 0 : room.name) || "";
+            if (key)
+              this.deletedIds = Array.from(/* @__PURE__ */ new Set([key, ...this.deletedIds]));
+            this.swipeIndex = -1;
+          } else {
+            const msg = data && (data.message || (data == null ? void 0 : data.data) && data.data.reason) || "删除失败";
+            common_vendor.index.showToast({ title: msg, icon: "none" });
+          }
+        }).catch(() => {
+          common_vendor.index.showToast({ title: "网络请求失败", icon: "none" });
+        });
+      } catch (e) {
+        common_vendor.index.showToast({ title: "删除失败", icon: "none" });
+      }
     },
     confirmSelect() {
       const list = this.rooms || [];
@@ -253,31 +373,45 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     q: $data.addrForm.is_default === 1,
     r: common_vendor.o((...args) => $options.onAddrSwitchChange && $options.onAddrSwitchChange(...args))
   } : {}, {
-    s: common_vendor.f($props.rooms, (room, index, i0) => {
-      return {
+    s: common_vendor.f($options.displayRooms, (room, index, i0) => {
+      return common_vendor.e({
         a: common_vendor.t(room.name),
-        b: index,
-        c: $props.selectedName === room.name ? 1 : "",
-        d: common_vendor.o(($event) => $options.select(room), index)
-      };
+        b: $props.selectedName === room.name ? 1 : "",
+        c: $data.swipeIndex === index ? 1 : "",
+        d: common_vendor.o(($event) => $options.onItemClick(room, index), index)
+      }, !$options.isAddressMode ? {
+        e: $data.swipeIndex === index ? 1 : "",
+        f: common_vendor.o(($event) => $options.onDelete(room, index), index)
+      } : {}, {
+        g: index,
+        h: common_vendor.o(($event) => $options.onItemTouchStart($event, index), index),
+        i: common_vendor.o(($event) => $options.onItemTouchMove($event, index), index),
+        j: common_vendor.o((...args) => $options.onItemTouchEnd && $options.onItemTouchEnd(...args), index),
+        k: common_vendor.o((...args) => $options.onItemTouchEnd && $options.onItemTouchEnd(...args), index),
+        l: common_vendor.o(($event) => $options.onItemMouseDown($event, index), index),
+        m: common_vendor.o(($event) => $options.onItemMouseMove($event, index), index),
+        n: common_vendor.o((...args) => $options.onItemMouseUp && $options.onItemMouseUp(...args), index),
+        o: common_vendor.o((...args) => $options.onItemMouseUp && $options.onItemMouseUp(...args), index)
+      });
     }),
     t: common_assets._imports_0$2,
-    v: common_vendor.o((...args) => $options.close && $options.close(...args)),
-    w: !$options.isAddressMode
+    v: !$options.isAddressMode,
+    w: common_vendor.o((...args) => $options.close && $options.close(...args)),
+    x: !$options.isAddressMode
   }, !$options.isAddressMode ? {
-    x: common_vendor.o((...args) => $options.confirmCreate && $options.confirmCreate(...args))
+    y: common_vendor.o((...args) => $options.confirmCreate && $options.confirmCreate(...args))
   } : {}, {
-    y: $options.isAddressMode && !$data.createAddressMode
+    z: $options.isAddressMode && !$data.createAddressMode
   }, $options.isAddressMode && !$data.createAddressMode ? {
-    z: common_vendor.o((...args) => $options.toggleCreateAddress && $options.toggleCreateAddress(...args))
+    A: common_vendor.o((...args) => $options.toggleCreateAddress && $options.toggleCreateAddress(...args))
   } : {}, {
-    A: $options.isAddressMode && $data.createAddressMode
+    B: $options.isAddressMode && $data.createAddressMode
   }, $options.isAddressMode && $data.createAddressMode ? {
-    B: common_vendor.o((...args) => $options.saveAddress && $options.saveAddress(...args))
+    C: common_vendor.o((...args) => $options.saveAddress && $options.saveAddress(...args))
   } : {}, {
-    C: common_vendor.o(() => {
+    D: common_vendor.o(() => {
     }),
-    D: common_vendor.o((...args) => $options.close && $options.close(...args))
+    E: common_vendor.o((...args) => $options.close && $options.close(...args))
   }) : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-9c17e027"]]);

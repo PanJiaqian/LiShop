@@ -4,9 +4,10 @@ const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
   components: { Skeleton },
   data() {
-    return { loading: false };
+    return { loading: true };
   },
   onShow() {
+    this.loading = false;
   }
 };
 if (!Array) {

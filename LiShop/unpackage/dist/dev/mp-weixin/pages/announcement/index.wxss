@@ -5,48 +5,33 @@
   position: fixed; left: 0; right: 0; top: 0; bottom: 0;
   width: 100vw; height: 100vh; z-index: -1;
 }
-.h5-announcement-bg.data-v-da6a9367 {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: url('../../static/product_detail_background.jpg');
-  background-size: cover;
-  background-position: center;
-  z-index: 0;
-  overflow-y: auto;
-  padding: 40rpx;
+.h5-mask.data-v-da6a9367 { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999;
 }
-.h5-topbar.data-v-da6a9367 {
-  position: fixed;
-  top: 0; left: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  height: 100rpx;
-  padding: 20rpx;
+.h5-modal.data-v-da6a9367 { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; height: 60vh;
 }
-.back-btn.data-v-da6a9367 {
-  height: 60rpx;
-  width: 60rpx;
-  line-height: 60rpx;
-  padding: 0;
-  border: none !important;
-  border-radius: 0;
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none;
-  color: #000;
-  font-size: 44rpx;
+.modal-header.data-v-da6a9367 { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #f0f0f0; margin-bottom: 16rpx;
 }
-.back-btn.data-v-da6a9367::after { border: none !important;
+.modal-title.data-v-da6a9367 { font-size: 32rpx; font-weight: 700; color: #333;
 }
-.h5-announcement-card.data-v-da6a9367 {
-  max-width: 1000px;
-  margin: 0 auto;
-  border-radius: 24rpx;
-  position: relative;
-  z-index: 1;
-  background: rgba(255,255,255,0.92);
-  padding: 24rpx;
+.modal-close.data-v-da6a9367 { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #999; cursor: pointer;
+}
+.modal-close.data-v-da6a9367:active { color: #333;
+}
+.modal-body.data-v-da6a9367 { flex: 1; min-height: 0; overflow-y: auto;
+}
+.modal-body-two.data-v-da6a9367 { display: flex; gap: 16rpx; height: 100%;
+}
+.two-left.data-v-da6a9367 { width: 280rpx; flex-shrink: 0; padding-right: 16rpx; border-right: 1rpx solid #f0f0f0; display: flex; flex-direction: column; gap: 12rpx;
+}
+.two-left.data-v-da6a9367 { cursor: pointer;
+}
+.two-label.data-v-da6a9367 { font-size: 24rpx; color: #999;
+}
+.two-title.data-v-da6a9367 { font-size: 30rpx; color: #333; font-weight: 600;
+}
+.two-right.data-v-da6a9367 { flex: 1; min-height: 0; overflow-y: auto; padding-left: 16rpx;
+}
+.two-hint.data-v-da6a9367 { height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 26rpx;
 }
 .container.data-v-da6a9367 {
   max-width: 1200px;

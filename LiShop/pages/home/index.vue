@@ -3,6 +3,7 @@
     <Skeleton :loading="loading" :showTitle="true" :showGrid="true" />
     <!-- H5 三栏布局（包含分类、我的、商品） -->
     <!-- #ifdef H5 -->
+    <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
     <view class="h5-container">
       <!-- 顶部 Header -->
       <view class="h5-header">
@@ -252,7 +253,9 @@ export default {
           const items = Array.isArray(res?.data?.items) ? res.data.items : []
           const mapped = items.map((it, i) => ({
             name: it?.name || ('分类' + (i + 1)),
-            icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : ''),
+            icon: (typeof it?.image_url === 'string' ? it.image_url.replace(/`/g, '').trim() : '') 
+              || (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') 
+              || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : ''),
             categories_id: it?.categories_id || it?.id || ''
           }))
           this.topCategories = mapped

@@ -80,7 +80,11 @@ const _sfc_main = {
         api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id", categories_id: id }).then((res) => {
           var _a;
           const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
-          const children = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), icon: "", categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "" }));
+          const children = items.map((it, i) => ({
+            name: (it == null ? void 0 : it.name) || "子分类" + (i + 1),
+            icon: (typeof (it == null ? void 0 : it.image_url) === "string" ? it.image_url.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : ""),
+            categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || ""
+          }));
           const idx = this.activeIndex;
           const cat = this.categories[idx];
           if (cat)

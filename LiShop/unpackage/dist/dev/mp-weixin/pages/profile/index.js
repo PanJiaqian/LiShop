@@ -20,7 +20,11 @@ const _sfc_main = {
       countdown: 0,
       timer: null,
       addresses: [],
-      avatarError: false
+      avatarError: false,
+      showAnnouncementModal: false,
+      announcementLoading: false,
+      announcement: null,
+      showAnnContent: false
     };
   },
   computed: {
@@ -38,6 +42,25 @@ const _sfc_main = {
         };
       } catch (e) {
         return { username: "未设置", phone: "未设置", email: "未设置", companyName: "未设置", contactName: "未设置", region: "未设置", avatarUrl: "" };
+      }
+    },
+    displayTime() {
+      var _a, _b;
+      try {
+        const t = ((_a = this.announcement) == null ? void 0 : _a.created_at) || ((_b = this.announcement) == null ? void 0 : _b.timestamp) || "";
+        if (!t)
+          return "";
+        const d = new Date(t);
+        if (isNaN(d.getTime()))
+          return String(t);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const h = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        return `${y}-${m}-${day} ${h}:${mm}`;
+      } catch (e) {
+        return "";
       }
     },
     securityTitle() {
@@ -83,6 +106,42 @@ const _sfc_main = {
         common_vendor.index.navigateTo({ url: "/pages/home/index" });
         return;
       }
+    },
+    openAnnouncementModalH5() {
+      this.announcementLoading = true;
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const token = u && (u.token || u.data && u.data.token) || "";
+        api_index.getCurrentAnnouncement({ token }).then((res) => {
+          const ok = !!(res && res.success);
+          const data = (res == null ? void 0 : res.data) || null;
+          if (ok && data) {
+            this.announcement = {
+              id: data.announcement_id || data.id || "",
+              title: data.title || "",
+              content: data.content || "",
+              created_at: data.created_at || res.timestamp || ""
+            };
+          } else {
+            this.announcement = null;
+          }
+        }).catch(() => {
+          this.announcement = null;
+        }).finally(() => {
+          this.announcementLoading = false;
+          this.showAnnouncementModal = true;
+          this.showAnnContent = true;
+        });
+      } catch (e) {
+        this.announcement = null;
+        this.announcementLoading = false;
+        this.showAnnouncementModal = true;
+        this.showAnnContent = true;
+      }
+    },
+    closeAnnouncementModal() {
+      this.showAnnouncementModal = false;
+      this.showAnnContent = false;
     },
     goBack() {
       this.goHome();

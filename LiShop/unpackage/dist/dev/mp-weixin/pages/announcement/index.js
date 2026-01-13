@@ -9,7 +9,8 @@ const _sfc_main = {
   data() {
     return {
       loading: true,
-      announcement: null
+      announcement: null,
+      showAnnContent: true
     };
   },
   computed: {

@@ -6,7 +6,7 @@ const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
   components: { Skeleton },
   data() {
-    return { username: "", password: "", loading: false };
+    return { username: "", password: "", loading: true };
   },
   onShow() {
     try {
@@ -25,6 +25,7 @@ const _sfc_main = {
       }
     } catch (e) {
     }
+    this.loading = false;
   },
   methods: {
     login() {

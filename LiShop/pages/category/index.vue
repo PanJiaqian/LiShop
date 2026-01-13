@@ -105,7 +105,13 @@ export default {
         getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
           .then((res) => {
             const items = Array.isArray(res?.data?.items) ? res.data.items : []
-            const children = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), icon: '', categories_id: it?.categories_id || it?.id || '' }))
+            const children = items.map((it, i) => ({
+              name: it?.name || ('子分类' + (i + 1)),
+              icon: (typeof it?.image_url === 'string' ? it.image_url.replace(/`/g, '').trim() : '')
+                || (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '')
+                || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : ''),
+              categories_id: it?.categories_id || it?.id || ''
+            }))
             const idx = this.activeIndex
             const cat = this.categories[idx]
             if (cat) this.$set(this.categories, idx, { ...cat, children })

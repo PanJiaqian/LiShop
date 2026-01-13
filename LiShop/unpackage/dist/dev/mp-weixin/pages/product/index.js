@@ -872,8 +872,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         l: common_vendor.o(($event) => $options.onClickSpec(it, i), "mpsp" + i)
       });
     }),
-    F: $data.specs.length > 3
-  }, $data.specs.length > 3 ? {
+    F: $data.specs.length >= 3
+  }, $data.specs.length >= 3 ? {
     G: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
     H: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
     I: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)

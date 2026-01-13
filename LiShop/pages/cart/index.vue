@@ -175,7 +175,7 @@
       </view>
       <text>合计：<text class="sum">¥{{ selectedTotal.toFixed(2) }}</text></text>
       <view class="actions">
-        <view class="footer-btn" @click="clear">清空</view>
+        <view class="footer-btn" @click="clearRemote">清空</view>
         <!-- <view class="footer-btn" @click="handleExportExcel">导出Excel</view> -->
         <view class="footer-btn" :class="{ disabled: selectedCount === 0 }" @click="checkout">去结算({{ selectedCount }})</view>
       </view>
@@ -562,7 +562,12 @@ export default {
       })
     },
     clearRemote() {
-      clearCart()
+      let token = ''
+      try {
+        const u = uni.getStorageSync('user') || null
+        token = (u && (u.token || (u.data && u.data.token))) || ''
+      } catch (e) {}
+      clearCart({ token })
         .then((res) => {
           if (res && res.success) {
             this.cart = []

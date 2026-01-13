@@ -32,8 +32,33 @@ const _sfc_main = {
       panelLeft: 0,
       panelRight: 0,
       hoveringPanel: false,
-      leaveTimer: null
+      leaveTimer: null,
+      showAnnouncementModal: false,
+      announcementLoading: false,
+      announcement: null,
+      showAnnContent: false
     };
+  },
+  computed: {
+    displayTime() {
+      var _a, _b;
+      try {
+        const t = ((_a = this.announcement) == null ? void 0 : _a.created_at) || ((_b = this.announcement) == null ? void 0 : _b.timestamp) || "";
+        if (!t)
+          return "";
+        const d = new Date(t);
+        if (isNaN(d.getTime()))
+          return String(t);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const h = String(d.getHours()).padStart(2, "0");
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        return `${y}-${m}-${day} ${h}:${mm}`;
+      } catch (e) {
+        return "";
+      }
+    }
   },
   onShow() {
     try {
@@ -42,7 +67,7 @@ const _sfc_main = {
         const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
         const mapped = items.map((it, i) => ({
           name: (it == null ? void 0 : it.name) || "分类" + (i + 1),
-          icon: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : ""),
+          icon: (typeof (it == null ? void 0 : it.image_url) === "string" ? it.image_url.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : ""),
           categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || ""
         }));
         this.topCategories = mapped;
@@ -144,6 +169,42 @@ const _sfc_main = {
         return;
       }
       common_vendor.index.navigateTo({ url: "/pages/search/index?q=" + encodeURIComponent(q) });
+    },
+    openAnnouncementModalH5() {
+      this.announcementLoading = true;
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const token = u && (u.token || u.data && u.data.token) || "";
+        api_index.getCurrentAnnouncement({ token }).then((res) => {
+          const ok = !!(res && res.success);
+          const data = (res == null ? void 0 : res.data) || null;
+          if (ok && data) {
+            this.announcement = {
+              id: data.announcement_id || data.id || "",
+              title: data.title || "",
+              content: data.content || "",
+              created_at: data.created_at || res.timestamp || ""
+            };
+          } else {
+            this.announcement = null;
+          }
+        }).catch(() => {
+          this.announcement = null;
+        }).finally(() => {
+          this.announcementLoading = false;
+          this.showAnnouncementModal = true;
+          this.showAnnContent = true;
+        });
+      } catch (e) {
+        this.announcement = null;
+        this.announcementLoading = false;
+        this.showAnnouncementModal = true;
+        this.showAnnContent = true;
+      }
+    },
+    closeAnnouncementModal() {
+      this.showAnnouncementModal = false;
+      this.showAnnContent = false;
     },
     openCategory(cat) {
       const aid = encodeURIComponent((cat == null ? void 0 : cat.categories_id) || "");

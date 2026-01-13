@@ -18,7 +18,7 @@ const _sfc_main = {
       page: 1,
       page_size: 32,
       total: 0,
-      loading: false
+      loading: true
     };
   },
   computed: {

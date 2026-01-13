@@ -54,20 +54,40 @@
         </view>
 
         <view class="rs-list">
-          <view 
-            class="rs-item" 
-            v-for="(room, index) in rooms" 
+          <view
+            class="rs-swipe"
+            v-for="(room, index) in displayRooms"
             :key="index"
-            :class="{ active: selectedName === room.name }"
-            @click="select(room)"
+            @touchstart="onItemTouchStart($event, index)"
+            @touchmove="onItemTouchMove($event, index)"
+            @touchend="onItemTouchEnd"
+            @touchcancel="onItemTouchEnd"
+            @mousedown="onItemMouseDown($event, index)"
+            @mousemove="onItemMouseMove($event, index)"
+            @mouseup="onItemMouseUp"
+            @mouseleave="onItemMouseUp"
           >
-            <view class="rs-item-left">
-              <view class="rs-icon-wrap">
-                <image src="/static/room.png" class="rs-icon-inner" mode="aspectFit" />
+            <view 
+              class="rs-item" 
+              :class="{ active: selectedName === room.name, swiped: swipeIndex === index }"
+              @click="onItemClick(room, index)"
+            >
+              <view class="rs-item-left">
+                <view class="rs-icon-wrap">
+                  <image src="/static/room.png" class="rs-icon-inner" mode="aspectFit" />
+                </view>
+                <text class="rs-name">{{ room.name }}</text>
               </view>
-              <text class="rs-name">{{ room.name }}</text>
+              <text class="rs-arrow">›</text>
             </view>
-            <text class="rs-arrow">›</text>
+            <view 
+              v-if="!isAddressMode"
+              class="rs-delete" 
+              :class="{ visible: swipeIndex === index }"
+              @click.stop="onDelete(room, index)"
+            >
+              <text class="rs-del-icon">🗑</text>
+            </view>
           </view>
         </view>
       </scroll-view>
@@ -83,6 +103,7 @@
 </template>
 
 <script>
+import { deleteRoom as apiDeleteRoom } from '../api/index.js'
 export default {
   name: 'RoomSelector',
   props: {
@@ -104,6 +125,13 @@ export default {
         detail_address: '',
         is_default: 0
       },
+      swipeIndex: -1,
+      touchStartX: 0,
+      touchStartY: 0,
+      isSwiping: false,
+      deleteWidth: 160,
+      deletedIds: [],
+      localRooms: [],
       addrRegionRange: [[], [], []],
       addrRegionIndex: [0, 0, 0],
       addrAreaTree: {
@@ -155,6 +183,15 @@ export default {
       }
       return false
     },
+    displayRooms() {
+      if (this.isAddressMode) return this.rooms || []
+      const ids = this.deletedIds || []
+      const list = (this.rooms && Array.isArray(this.rooms)) ? this.rooms : []
+      return list.filter(r => {
+        const rid = r?.id || r?.room_id || r?.name || ''
+        return rid && !ids.includes(rid)
+      })
+    },
     addrRegionDisplay() {
       const { province, city, district } = this.addrForm
       const arr = [province, city, district].filter(Boolean)
@@ -168,6 +205,8 @@ export default {
         this.createAddressMode = false
         this.addrForm = { receiver: '', phone: '', province: '', city: '', district: '', detail_address: '', is_default: 0 }
         this.initH5AddrRegion()
+        this.swipeIndex = -1
+        this.deletedIds = []
       }
     }
   },
@@ -210,6 +249,89 @@ export default {
     },
     select(room) {
       this.$emit('select', room)
+    },
+    onItemTouchStart(e, index) {
+      try {
+        const t = (e && e.touches && e.touches[0]) ? e.touches[0] : {}
+        this.touchStartX = Number(t.clientX ?? t.pageX ?? 0) || 0
+        this.touchStartY = Number(t.clientY ?? t.pageY ?? 0) || 0
+        this.isSwiping = true
+      } catch (err) { this.isSwiping = false }
+    },
+    onItemTouchMove(e, index) {
+      if (!this.isSwiping) return
+      try {
+        const t = (e && e.touches && e.touches[0]) ? e.touches[0] : {}
+        const x = Number(t.clientX ?? t.pageX ?? 0) || 0
+        const y = Number(t.clientY ?? t.pageY ?? 0) || 0
+        const dx = x - this.touchStartX
+        const dy = y - this.touchStartY
+        if (Math.abs(dy) > 20) return
+        if (dx < -30) {
+          this.swipeIndex = index
+        } else if (dx > 30) {
+          this.swipeIndex = -1
+        }
+      } catch (err) {}
+    },
+    onItemTouchEnd() {
+      this.isSwiping = false
+    },
+    onItemMouseDown(e, index) {
+      try {
+        const isH5 = typeof window !== 'undefined'
+        if (!isH5) return
+        this.touchStartX = Number(e?.clientX ?? 0) || 0
+        this.touchStartY = Number(e?.clientY ?? 0) || 0
+        this.isSwiping = true
+      } catch (err) { this.isSwiping = false }
+    },
+    onItemMouseMove(e, index) {
+      const isH5 = typeof window !== 'undefined'
+      if (!isH5 || !this.isSwiping) return
+      try {
+        const x = Number(e?.clientX ?? 0) || 0
+        const y = Number(e?.clientY ?? 0) || 0
+        const dx = x - this.touchStartX
+        const dy = y - this.touchStartY
+        if (Math.abs(dy) > 20) return
+        if (dx < -30) this.swipeIndex = index
+        else if (dx > 30) this.swipeIndex = -1
+      } catch (err) {}
+    },
+    onItemMouseUp() {
+      const isH5 = typeof window !== 'undefined'
+      if (!isH5) return
+      this.isSwiping = false
+    },
+    onItemClick(room, index) {
+      const isH5 = typeof window !== 'undefined'
+      if (isH5 && this.swipeIndex === index) return
+      this.select(room)
+    },
+    onDelete(room, index) {
+      try {
+        const rid = room?.id || room?.room_id || ''
+        if (!rid) { uni.showToast({ title: '房间ID缺失', icon: 'none' }); return }
+        apiDeleteRoom({ room_id: rid, name: '葱测试' })
+          .then((data) => {
+            const ok = !!(data && data.success === true)
+            if (ok) {
+              uni.showToast({ title: (data && data.message) || '删除房间成功', icon: 'success' })
+              const key = rid || room?.name || ''
+              if (key) this.deletedIds = Array.from(new Set([key, ...this.deletedIds]))
+              this.swipeIndex = -1
+            } else {
+              const msg = (data && (data.message || (data?.data && data.data.reason))) || '删除失败'
+              uni.showToast({ title: msg, icon: 'none' })
+            }
+          })
+          .catch(() => {
+            uni.showToast({ title: '网络请求失败', icon: 'none' })
+          })
+      } catch (e) {
+        uni.showToast({ title: '删除失败', icon: 'none' })
+      }
     },
     confirmSelect() {
       const list = this.rooms || []
@@ -354,6 +476,11 @@ export default {
   margin-bottom: 30rpx;
 }
 
+.rs-swipe {
+  position: relative;
+  overflow: visible;
+}
+
 .rs-item {
   display: flex;
   align-items: center;
@@ -365,11 +492,23 @@ export default {
   border: 1rpx solid #f0f0f0;
   width: 600rpx;
   /* margin: 0 auto; */
+  transition: transform 0.2s ease;
+  transform: translateX(0);
+  touch-action: pan-y;
+  -ms-touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+  z-index: 1;
 }
 
 .rs-item.active {
   background: #f0f0f0;
   border-color: #e0e0e0;
+}
+
+.rs-item.swiped {
+  transform: translateX(-200rpx);
 }
 
 .rs-item-left {
@@ -404,6 +543,37 @@ export default {
 .rs-arrow {
   font-size: 30rpx;
   color: #000;
+}
+
+.rs-delete {
+  position: absolute;
+  top: 50%;
+  right: 80rpx;
+  width: 80rpx;
+  height: 80rpx;
+  background: linear-gradient(135deg, #ff6b5b, #ff2d55);
+  box-shadow: 0 8rpx 16rpx rgba(255, 45, 85, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.rs-delete.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rs-del-icon {
+  font-size: 40rpx;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 2rpx;
 }
 
 .rs-check-wrapper {

@@ -358,7 +358,13 @@ const _sfc_main = {
       });
     },
     clearRemote() {
-      api_index.clearCart().then((res) => {
+      let token = "";
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        token = u && (u.token || u.data && u.data.token) || "";
+      } catch (e) {
+      }
+      api_index.clearCart({ token }).then((res) => {
         if (res && res.success) {
           this.cart = [];
           this.sync();
@@ -584,7 +590,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     m: $options.isAllSelected ? 1 : "",
     n: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
     o: common_vendor.t($options.selectedTotal.toFixed(2)),
-    p: common_vendor.o((...args) => $options.clear && $options.clear(...args)),
+    p: common_vendor.o((...args) => $options.clearRemote && $options.clearRemote(...args)),
     q: common_vendor.t($options.selectedCount),
     r: $options.selectedCount === 0 ? 1 : "",
     s: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
