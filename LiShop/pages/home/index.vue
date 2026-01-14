@@ -150,7 +150,7 @@
     <BannerSwiper :images="banners" />
     <scroll-view class="mp-cate-nav" scroll-x>
       <view class="mp-cate-item" v-for="(c,i) in subCategoryList" :key="'mc'+i" @click="openCategory(c)">
-        <image class="mp-cate-thumb" :src="c.icon || '/static/logo.png'" mode="aspectFit" />
+        <image class="mp-cate-thumb" :src="c.icon || '/static/logo.png'" mode="aspectFill" />
         <text class="mp-cate-name">{{ c.name }}</text>
       </view>
     </scroll-view>
