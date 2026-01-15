@@ -5,7 +5,7 @@
     <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
     <!-- #endif -->
     <!-- 顶部导航 -->
-    <view class="nav" v-if="!order">
+    <view id="og-order-tabs" class="nav" v-if="!order">
       <view class="nav-item" :class="{ active: activeTab === 'all' }" @click="switchTab('all')">全部订单</view>
       <view class="nav-item" :class="{ active: activeTab === 'pending_payment' }" @click="switchTab('pending_payment')">
         待付款</view>
@@ -114,7 +114,7 @@
 
     <!-- 订单列表 -->
     <view class="orders" v-else>
-      <view v-if="orders.length" class="orders-list">
+      <view v-if="orders.length" id="og-order-list" class="orders-list">
         <view class="order-card" v-for="o in orders" :key="o.id">
           <view class="card-hd">
             <text class="id">订单号：{{ o.orderNo || o.id }}</text>
@@ -141,6 +141,15 @@
     <FloatingNav />
     <view class="floating-back" @click="goBack">←</view>
     <!-- #endif -->
+    <OnboardingGuide
+      v-if="showOnboarding"
+      :steps="onboardingSteps"
+      :targets="onboardingRects"
+      :initialIndex="onboardingIndex"
+      @advance="handleOnboardingNext"
+      @back="handleOnboardingPrev"
+      @close="closeOnboarding"
+    />
   </view>
 </template>
 
@@ -148,10 +157,11 @@
 import { getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, cancelOrder, exportOrderExcel } from '../../api/index.js'
 import FloatingNav from '../../components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import OnboardingGuide from '@/components/OnboardingGuide.vue'
 
 export default {
-  components: { FloatingNav, Skeleton },
-  data() { return { order: null, orders: [], activeTab: 'all', loading: true, logisticsCollapsed: true, isH5: false, mapError: false, detailStatusHint: '' } },
+  components: { FloatingNav, Skeleton, OnboardingGuide },
+  data() { return { order: null, orders: [], activeTab: 'all', loading: true, logisticsCollapsed: true, isH5: false, mapError: false, detailStatusHint: '', showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0 } },
   onLoad(query) {
     const id = query?.id
     try { this.isH5 = typeof window !== 'undefined' } catch (e) { this.isH5 = false }
@@ -173,8 +183,231 @@ export default {
         }
       }
     } catch (e) { }
+    try {
+      const cont = !!uni.getStorageSync('onboarding_continue')
+      const sel = uni.getStorageSync('onboarding_target_selector') || ''
+      const idx = Number(uni.getStorageSync('onboarding_index') || 0)
+      const stepsStored = uni.getStorageSync('onboarding_steps') || []
+      if (cont && sel) {
+        if (Array.isArray(stepsStored) && stepsStored.length) this.onboardingSteps = stepsStored
+        const safeIdx = Math.max(0, Math.min(idx, this.onboardingSteps.length - 1))
+        this.onboardingIndex = safeIdx
+        this.$nextTick(() => {
+          this.refreshOnboardingRect(sel)
+        })
+      }
+    } catch (e) {}
   },
   methods: {
+    refreshOnboardingRect(sel) {
+      const total = this.onboardingSteps.length || 0
+      const arr = new Array(total).fill(null)
+      if (this.isH5) {
+        const el = typeof document !== 'undefined' ? document.querySelector(sel) : null
+        if (el) {
+          const r = el.getBoundingClientRect()
+          arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height }
+          this.onboardingRects = arr
+          this.showOnboarding = true
+        }
+      } else {
+        const tryMp = (attempt = 0) => {
+          const q = uni.createSelectorQuery().in(this)
+          q.select(sel).boundingClientRect()
+          q.exec(res => {
+            const r = (res || [])[0]
+            if (r) {
+              arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height }
+              this.onboardingRects = arr
+              this.showOnboarding = true
+            } else if (attempt < 3) {
+              setTimeout(() => tryMp(attempt + 1), 140)
+            }
+          })
+        }
+        tryMp(0)
+      }
+    },
+    handleOnboardingNext(nextIndex) {
+      const idx = Number(nextIndex || 0)
+      this.onboardingIndex = idx
+      try {
+        uni.setStorageSync('onboarding_index', idx)
+        if (Array.isArray(this.onboardingSteps) && this.onboardingSteps.length) {
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        }
+        uni.setStorageSync('onboarding_continue', true)
+      } catch (e) {}
+      const isH5 = typeof window !== 'undefined'
+      if (isH5) {
+        if (idx <= 4) {
+          const map = ['#og-search', '#og-cate', '#og-banner', '#og-guess', '#og-quick']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 5) {
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 7) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-order-tabs') })
+          return
+        }
+        if (idx === 8) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 9) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 10) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+      } else {
+        if (idx <= 3) {
+          const map = ['#og-search', '#og-mp-cate', '#og-banner', '#og-mp-guess']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 4) {
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 5) {
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 7) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 8) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+      }
+    },
+    handleOnboardingPrev(prevIndex) {
+      const idx = Number(prevIndex || 0)
+      if (idx < 0) return
+      this.onboardingIndex = idx
+      try {
+        uni.setStorageSync('onboarding_index', idx)
+        uni.setStorageSync('onboarding_continue', true)
+      } catch (e) {}
+      const isH5 = typeof window !== 'undefined'
+      if (isH5) {
+        if (idx <= 4) {
+          const map = ['#og-search', '#og-cate', '#og-banner', '#og-guess', '#og-quick']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 5) {
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 7) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-order-tabs') })
+          return
+        }
+        if (idx === 8) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 9) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 10) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+      } else {
+        if (idx <= 3) {
+          const map = ['#og-search', '#og-mp-cate', '#og-banner', '#og-mp-guess']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 4) {
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 5) {
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 7) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 8) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+      }
+    },
     isImageLink(url) {
       try { return /\.(png|jpg|jpeg|gif|bmp|webp)(\?.*)?$/i.test(String(url || '')) } catch (e) { return false }
     },
@@ -485,6 +718,17 @@ export default {
           }
         }
       })
+    },
+    closeOnboarding() {
+      this.showOnboarding = false
+      try {
+        uni.removeStorageSync('onboarding_continue')
+        uni.removeStorageSync('onboarding_target_selector')
+        uni.removeStorageSync('onboarding_step_text')
+        uni.removeStorageSync('onboarding_steps')
+        uni.removeStorageSync('onboarding_index')
+        uni.reLaunch({ url: '/pages/home/index' })
+      } catch (e) {}
     }
   }
 }

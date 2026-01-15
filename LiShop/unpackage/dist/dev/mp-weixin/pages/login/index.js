@@ -47,10 +47,29 @@ const _sfc_main = {
         try {
           common_vendor.index.setStorageSync("user", user);
           common_vendor.index.setStorageSync("token_expiration", Date.now() + 4 * 24 * 60 * 60 * 1e3);
+          common_vendor.index.setStorageSync("just_logged_in", true);
         } catch (e) {
         }
         setTimeout(() => {
-          common_vendor.index.switchTab({ url: "/pages/home/index" });
+          try {
+            if (common_vendor.index && common_vendor.index.switchTab) {
+              common_vendor.index.switchTab({ url: "/pages/home/index" });
+              return;
+            }
+            if (common_vendor.index && common_vendor.index.reLaunch) {
+              common_vendor.index.reLaunch({ url: "/pages/home/index" });
+              return;
+            }
+            if (common_vendor.index && common_vendor.index.navigateTo) {
+              common_vendor.index.navigateTo({ url: "/pages/home/index" });
+              return;
+            }
+          } catch (e) {
+            try {
+              common_vendor.index.navigateTo({ url: "/pages/home/index" });
+            } catch (e2) {
+            }
+          }
         }, 300);
       }).catch((err) => {
         console.error("login error", err);

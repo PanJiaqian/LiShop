@@ -12,10 +12,10 @@
           <!-- <text class="logo-text">SHOP</text> -->
         </view>
         <view class="h5-search-wrapper">
-           <view class="search-bar-box">
+          <view class="search-bar-box">
               <view class="search-type">宝贝<text class="arrow-down">∨</text></view>
               <view class="divider-v"></view>
-              <input class="search-input-field" v-model="keyword" confirm-type="search" @confirm="onSearch(null)" />
+              <input id="og-search" class="search-input-field" v-model="keyword" confirm-type="search" @confirm="onSearch(null)" />
               <button class="search-btn-black" @click="onSearch(null)">搜索</button>
            </view>
         </view>
@@ -27,7 +27,7 @@
           <view class="cate-title">
              <text style="color:#000;margin-right:8rpx;font-weight:900;">☰</text>分类
           </view>
-          <view class="cate-list" @mouseleave="onCateListLeave">
+          <view id="og-cate" class="cate-list" @mouseleave="onCateListLeave">
             <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
               <text class="cate-dot">●</text>
               <text class="cate-name">{{ c.name }}</text>
@@ -39,7 +39,7 @@
 
 
         <view class="center-content">
-          <BannerSwiper :images="banners" class="full-height-banner" />
+          <view id="og-banner"><BannerSwiper :images="banners" class="full-height-banner" /></view>
           
           <view v-if="activeCateId" class="sub-panel" :style="{ top: panelTop + 'px', left: panelLeft + 'px', right: panelRight + 'px' }" @mouseenter="onPanelEnter" @mouseleave="onPanelLeave">
             <view class="panel-title">
@@ -64,7 +64,7 @@
                </view>
             </view>
             
-            <view class="uc-links">
+            <view id="og-quick" class="uc-links">
                <navigator class="uc-link-item" url="/pages/profile/index" open-type="switchTab">
                   <text class="uc-icon">👤</text>
                   <text>我的</text>
@@ -102,7 +102,7 @@
       </view>
 
       <view class="h5-bottom-section">
-          <view class="guess-header">
+          <view id="og-guess" class="guess-header">
              <view class="guess-icon">❤</view>
              <text class="guess-title">猜你喜欢</text>
           </view>
@@ -146,9 +146,9 @@
     <!-- 其他平台保持原布局 -->
     <!-- #ifndef H5 -->
     <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
-    <SearchBar v-model="keyword" @search="onSearch" />
-    <BannerSwiper :images="banners" />
-    <scroll-view class="mp-cate-nav" scroll-x>
+    <view id="og-search"><SearchBar v-model="keyword" @search="onSearch" /></view>
+    <view id="og-banner"><BannerSwiper :images="banners" /></view>
+    <scroll-view id="og-mp-cate" class="mp-cate-nav" scroll-x>
       <view class="mp-cate-item" v-for="(c,i) in subCategoryList" :key="'mc'+i" @click="openCategory(c)">
         <image class="mp-cate-thumb" :src="c.icon || '/static/logo.png'" mode="aspectFill" />
         <text class="mp-cate-name">{{ c.name }}</text>
@@ -171,7 +171,7 @@
     -->
 
     <view class="block">
-      <view class="block-title">
+      <view id="og-mp-guess" class="block-title">
         <text>猜你喜欢</text>
       </view>
       <view class="grid2">
@@ -181,6 +181,15 @@
       </view>
     </view>
     <!-- #endif -->
+    <OnboardingGuide
+      v-if="showOnboarding"
+      :steps="onboardingSteps"
+      :targets="onboardingRects"
+      :initialIndex="onboardingStepIndex"
+      @advance="handleOnboardingNext"
+      @back="handleOnboardingPrev"
+      @close="handleOnboardingClose"
+    />
   </view>
 </template>
 
@@ -191,10 +200,11 @@ import CategoryGrid from '@/components/CategoryGrid.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import OnboardingGuide from '@/components/OnboardingGuide.vue'
 import { getRecommendedProducts, getVisibleCategories, searchProducts, getCarousel, getCurrentAnnouncement } from '../../api/index.js'
 
 export default {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton },
+  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide },
   data() {
     return {
       loading: true,
@@ -222,7 +232,48 @@ export default {
       , announcementLoading: false
       , announcement: null
       , showAnnContent: false
+      , showOnboarding: false
+      , onboardingStepIndex: 0
+      , onboardingRects: []
+      , onboardingSteps: [
+        '顶部搜索可快速查找商品与店铺',
+        '左侧分类导航支持展开子分类',
+        '轮播图可直达热门商品',
+        '猜你喜欢展示为你推荐的商品',
+        '我的与购物车提供快捷入口',
+        '商品详情页查看规格与加入购物车',
+        '房间选择，购物车根据房间名进行分组',
+        '订单页面查看物流与支付进度',
+        '个人信息管理',
+        '功能区',
+        '收货地址管理'
+      ]
+      , onboardingStepsMp: [
+        '顶部搜索定位商品',
+        '横向分类导航查看子分类',
+        '轮播图快捷入口',
+        '猜你喜欢推荐区',
+        '商品详情页查看规格与加入购物车',
+        '房间选择，购物车根据房间名进行分组',
+        '订单页面查看物流与支付进度',
+        '个人信息管理',
+        '功能区',
+        '收货地址管理'
+      ]
     }
+  },
+  onLoad() {
+    try {
+      const isH5 = typeof window !== 'undefined'
+      if (!isH5) {
+        this.onboardingSteps = this.onboardingStepsMp
+      }
+      const jl = !!uni.getStorageSync('just_logged_in')
+      if (jl) {
+        this.triggerOnboarding()
+        uni.removeStorageSync('just_logged_in')
+      }
+    } catch (e) {}
   },
   computed: {
     displayTime() {
@@ -242,10 +293,28 @@ export default {
   },
   onShow() {
     // #ifdef H5
-    try { uni.hideTabBar({ animation: false }) } catch (e) { }
+    try {
+      const p = uni.hideTabBar({ animation: false })
+      if (p && typeof p.then === 'function') { p.catch(() => {}) }
+    } catch (e) { }
     try { this.user = uni.getStorageSync('user') || null } catch (e) { }
     try { this.roomName = uni.getStorageSync('currentRoom') || '' } catch (e) { }
     // #endif
+    try {
+      const cont = !!uni.getStorageSync('onboarding_continue')
+      const idx = Number(uni.getStorageSync('onboarding_index') || 0)
+      const stepsStored = uni.getStorageSync('onboarding_steps') || []
+      const jl = !!uni.getStorageSync('just_logged_in')
+      if (cont && Array.isArray(stepsStored) && stepsStored.length && idx <= 4) {
+        this.onboardingSteps = stepsStored
+        this.onboardingStepIndex = idx
+        this.showOnboarding = true
+        this.$nextTick(() => { this.refreshOnboardingTargets() })
+      } else if (jl) {
+        this.triggerOnboarding()
+        uni.removeStorageSync('just_logged_in')
+      }
+    } catch (e) {}
     // 拉取分类与推荐商品（最小接入，不影响现有交互）
     try {
       const p1 = getVisibleCategories({ page: 1, page_size: 20, sort_by: 'id' })
@@ -297,7 +366,200 @@ export default {
   onPullDownRefresh() {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
   },
+  onHide() {
+    this.showOnboarding = false
+  },
     methods: {
+      triggerOnboarding() {
+        this.showOnboarding = true
+        this.onboardingStepIndex = 0
+        try {
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+          uni.setStorageSync('onboarding_index', 0)
+        } catch (e) {}
+        this.$nextTick(() => {
+          this.refreshOnboardingTargets()
+          setTimeout(() => { this.refreshOnboardingTargets() }, 120)
+        })
+      },
+      refreshOnboardingTargets() {
+        try {
+          let isH5 = false
+          try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+          if (isH5) {
+            const sel = s => typeof document !== 'undefined' ? document.querySelector(s) : null
+            const baseEl = (typeof document !== 'undefined' ? (document.getElementById('app') || document.querySelector('.uni-app') || document.body) : null)
+            const baseRect = baseEl && baseEl.getBoundingClientRect ? baseEl.getBoundingClientRect() : { left: 0, top: 0 }
+            const ox = baseRect.left || 0
+            const oy = baseRect.top || 0
+            const rectOf = el => {
+              if (!el) return null
+              const r = el.getBoundingClientRect()
+              return { left: r.left - ox, top: r.top - oy, width: r.width, height: r.height }
+            }
+            const rects = [
+              rectOf(sel('.search-input-field')) || rectOf(sel('#og-search')),
+              rectOf(sel('#og-cate')),
+              rectOf(sel('.center-content')),
+              rectOf(sel('#og-guess .guess-title')) || rectOf(sel('#og-guess')),
+              rectOf(sel('#og-quick'))
+            ].filter(Boolean)
+            this.onboardingRects = rects
+          } else {
+            const q = uni.createSelectorQuery().in(this)
+            q.select('#og-search').boundingClientRect()
+            q.select('#og-mp-cate').boundingClientRect()
+            q.select('#og-banner').boundingClientRect()
+            q.select('#og-mp-guess').boundingClientRect()
+            q.exec(res => {
+              const rects = (res || []).filter(Boolean).map(r => ({ left: r.left, top: r.top, width: r.width, height: r.height }))
+              this.onboardingRects = rects
+            })
+          }
+        } catch (e) { this.onboardingRects = [] }
+      },
+      handleOnboardingNext(nextIndex) {
+        const idx = Number(nextIndex || 0)
+        this.onboardingStepIndex = idx
+        try {
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+          uni.setStorageSync('onboarding_index', idx)
+        } catch (e) {}
+        const isH5 = typeof window !== 'undefined'
+        if (!isH5) {
+          if (idx === 4) {
+            this.openFirstProductFromOnboarding()
+          } else if (idx === 5) {
+            this.goRoomSelectFromOnboarding()
+          } else if (idx === 6) {
+            this.goOrderFromOnboarding()
+          } else if (idx === 7) {
+            this.goProfileInfoFromOnboarding()
+          } else if (idx === 8) {
+            this.goProfileFeatureFromOnboarding()
+          } else if (idx === 9) {
+            this.goProfileAddressFromOnboarding()
+          } else {
+            this.$nextTick(() => { this.refreshOnboardingTargets() })
+          }
+        } else {
+          if (idx === 5) {
+            this.openFirstProductFromOnboarding()
+          } else if (idx === 6) {
+            this.goRoomSelectFromOnboarding()
+          } else if (idx === 7) {
+            this.goOrderFromOnboarding()
+          } else if (idx === 8) {
+            this.goProfileInfoFromOnboarding()
+          } else if (idx === 9) {
+            this.goProfileFeatureFromOnboarding()
+          } else if (idx === 10) {
+            this.goProfileAddressFromOnboarding()
+          } else {
+            this.$nextTick(() => { this.refreshOnboardingTargets() })
+          }
+        }
+      },
+      handleOnboardingPrev(prevIndex) {
+        const idx = Number(prevIndex || 0)
+        if (idx < 0) return
+        this.onboardingStepIndex = idx
+        try { uni.setStorageSync('onboarding_index', idx) } catch (e) {}
+        this.$nextTick(() => { this.refreshOnboardingTargets() })
+      },
+      handleOnboardingClose() {
+        this.showOnboarding = false
+        try {
+          uni.removeStorageSync('onboarding_continue')
+          uni.removeStorageSync('onboarding_target_selector')
+          uni.removeStorageSync('onboarding_step_text')
+          uni.removeStorageSync('onboarding_steps')
+          uni.removeStorageSync('onboarding_index')
+        } catch (e) {}
+        try {
+          if (uni && uni.reLaunch) { uni.reLaunch({ url: '/pages/home/index' }); return }
+          if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+          if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+        } catch (e) {}
+      },
+      goHomeFromOnboarding() {
+        try { if (uni && uni.switchTab) uni.switchTab({ url: '/pages/home/index' }) } catch (e) {}
+        this.$nextTick(() => { this.refreshOnboardingTargets() })
+      },
+      openFirstProductFromOnboarding() {
+        try {
+          this.showOnboarding = false
+          const first = (this.recommendList && this.recommendList[0]) || null
+          if (!first) return
+          const id = encodeURIComponent(first.id || '')
+          try {
+            uni.setStorageSync('onboarding_continue', true)
+            uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+            uni.setStorageSync('onboarding_step_text', '商品详情页查看规格与加入购物车')
+            uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+            uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+          } catch (e) {}
+          if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/product/index?id=' + id })
+        } catch (e) {}
+      },
+      goRoomSelectFromOnboarding() {
+        try {
+          this.showOnboarding = false
+          uni.setStorageSync('onboarding_continue', true)
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.setStorageSync('onboarding_step_text', '房间选择，购物车根据房间名进行分组')
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+        } catch (e) {}
+        try { if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/product/index' }) } catch (e) {}
+      },
+      goOrderFromOnboarding() {
+        try {
+          this.showOnboarding = false
+          uni.setStorageSync('onboarding_continue', true)
+          uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+          uni.setStorageSync('onboarding_step_text', '订单标签切换与查看')
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+        } catch (e) {}
+        try { if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/order/index' }) } catch (e) {}
+      },
+      goProfileInfoFromOnboarding() {
+        try {
+          this.showOnboarding = false
+          uni.setStorageSync('onboarding_continue', true)
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+          uni.setStorageSync('onboarding_step_text', '个人信息管理')
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+          if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
+        } catch (e) {}
+      },
+      goProfileFeatureFromOnboarding() {
+        try {
+          this.showOnboarding = false
+          uni.setStorageSync('onboarding_continue', true)
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+          uni.setStorageSync('onboarding_step_text', '功能区')
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+          if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
+        } catch (e) {}
+      },
+      goProfileAddressFromOnboarding() {
+        try {
+          this.showOnboarding = false
+          uni.setStorageSync('onboarding_continue', true)
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+          uni.setStorageSync('onboarding_step_text', '收货地址管理')
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+          if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
+        } catch (e) {}
+      },
       hoverCategory(cat, e) {
       const id = cat?.categories_id || ''
       if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }

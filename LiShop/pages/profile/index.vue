@@ -6,7 +6,7 @@
     <!-- #endif -->
     <view class="profile-grid">
       <view class="profile-main">
-        <view class="info-card">
+        <view id="og-profile-info" class="info-card">
           <view class="card-header-row">
             <text class="card-title">个人信息</text>
           </view>
@@ -101,7 +101,7 @@
             <view class="card-header">
               <text class="card-title">功能</text>
             </view>
-            <view class="menu-list">
+            <view id="og-profile-menu" class="menu-list">
               <navigator url="/pages/order/index" class="menu-row">
                 <text>我的订单</text>
                 <text class="arrow">›</text>
@@ -142,7 +142,7 @@
               <text class="card-title">收货地址</text>
               <button size="mini" class="btn-add-addr" @click="goCreateAddress">添加地址</button>
             </view>
-            <view class="addr-list">
+            <view id="og-profile-addr" class="addr-list">
                <view class="addr-item" v-for="addr in addresses" :key="addr.id" @click="editAddress(addr)">
                  <view class="addr-info">
                    <text class="addr-txt">{{ addr.full }}</text>
@@ -158,6 +158,15 @@
     </view>
     <!-- #ifdef H5 -->
     <FloatingNav />
+    <OnboardingGuide
+      v-if="showOnboarding"
+      :steps="onboardingSteps"
+      :targets="onboardingRects"
+      :initialIndex="onboardingIndex"
+      @advance="handleOnboardingNext"
+      @back="handleOnboardingPrev"
+      @close="closeOnboarding"
+    />
     <!-- 公告弹窗（H5） -->
     <view v-if="showAnnouncementModal" class="h5-mask" @click="closeAnnouncementModal">
       <view class="h5-modal" @click.stop>
@@ -188,6 +197,17 @@
     </view>
     <view class="floating-back" @click="goBack">←</view>
     <!-- #endif -->
+    <!-- #ifndef H5 -->
+    <OnboardingGuide
+      v-if="showOnboarding"
+      :steps="onboardingSteps"
+      :targets="onboardingRects"
+      :initialIndex="onboardingIndex"
+      @advance="handleOnboardingNext"
+      @back="handleOnboardingPrev"
+      @close="closeOnboarding"
+    />
+    <!-- #endif -->
 
     <!-- 安全验证弹窗 -->
     <view v-if="showSecurityModal" class="modal-mask" @click="closeSecurityModal">
@@ -216,9 +236,10 @@
 <script>
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import OnboardingGuide from '@/components/OnboardingGuide.vue'
 import { getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, updateUserAvatar, getCurrentAnnouncement } from '../../api/index.js'
 export default {
-  components: { FloatingNav, Skeleton },
+  components: { FloatingNav, Skeleton, OnboardingGuide },
   data() { return { 
     loading: true,
     loggedIn: false, displayName: '', fetchedProfile: {}, isEditing: false, editForm: {},
@@ -228,7 +249,8 @@ export default {
     showAnnouncementModal: false,
     announcementLoading: false,
     announcement: null,
-    showAnnContent: false
+    showAnnContent: false,
+    showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0
   } },
   computed: {
     profile() {
@@ -287,6 +309,26 @@ export default {
     } catch (e) {}
     // #endif
     try {
+      const cont = !!uni.getStorageSync('onboarding_continue')
+      const sel = uni.getStorageSync('onboarding_target_selector') || ''
+      const idx = Number(uni.getStorageSync('onboarding_index') || 0)
+      const stepsStored = uni.getStorageSync('onboarding_steps') || []
+      if (cont && sel) {
+        if (Array.isArray(stepsStored) && stepsStored.length) this.onboardingSteps = stepsStored
+        const safeIdx = Math.max(0, Math.min(idx, this.onboardingSteps.length - 1))
+        this.onboardingIndex = safeIdx
+        this.$nextTick(() => {
+          let isH5 = false
+          try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+          const targetMapH5 = { 8: '#og-profile-info', 9: '#og-profile-menu', 10: '#og-profile-addr' }
+          const targetMapMp = { 7: '#og-profile-info', 8: '#og-profile-menu', 9: '#og-profile-addr' }
+          const tSel = isH5 ? (targetMapH5[safeIdx] || sel) : (targetMapMp[safeIdx] || sel)
+          try { uni.setStorageSync('onboarding_target_selector', tSel) } catch (e) {}
+          this.refreshOnboardingRect(tSel)
+        })
+      }
+    } catch (e) {}
+    try {
       const u = uni.getStorageSync('user') || null
       this.loggedIn = !!u
       this.displayName = u?.username || ''
@@ -299,9 +341,224 @@ export default {
     } catch (e) { this.loading = false }
   },
   methods: {
+    refreshOnboardingRect(sel) {
+      let isH5 = false
+      try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+      const total = this.onboardingSteps.length || 0
+      const arr = new Array(total).fill(null)
+      if (isH5) {
+        const el = typeof document !== 'undefined' ? document.querySelector(sel) : null
+        if (el) {
+          const r = el.getBoundingClientRect()
+          arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height }
+        }
+        this.onboardingRects = arr
+        this.showOnboarding = true
+      } else {
+        const tryMp = (attempt = 0) => {
+          const q = uni.createSelectorQuery().in(this)
+          try {
+            uni.pageScrollTo({ selector: sel, duration: 250 })
+          } catch (e) {}
+          setTimeout(() => {
+            q.select(sel).boundingClientRect()
+            q.exec(res => {
+              const r = (res || [])[0]
+              if (r) {
+                arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height }
+                this.onboardingRects = arr
+                this.showOnboarding = true
+              } else if (attempt < 3) {
+                setTimeout(() => tryMp(attempt + 1), 140)
+              }
+            })
+          }, 260)
+        }
+        tryMp(0)
+      }
+    },
+    handleOnboardingNext(nextIndex) {
+      const idx = Number(nextIndex || 0)
+      this.onboardingIndex = idx
+      try {
+        uni.setStorageSync('onboarding_index', idx)
+        if (Array.isArray(this.onboardingSteps) && this.onboardingSteps.length) {
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        }
+        uni.setStorageSync('onboarding_continue', true)
+      } catch (e) {}
+      const isH5 = typeof window !== 'undefined'
+      if (isH5) {
+        if (idx <= 4) {
+          const map = ['#og-search', '#og-cate', '#og-banner', '#og-guess', '#og-quick']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 5) {
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 7) {
+          uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+          uni.navigateTo({ url: '/pages/order/index' })
+          return
+        }
+        if (idx === 8) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-info') })
+          return
+        }
+        if (idx === 9) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-menu') })
+          return
+        }
+        if (idx === 10) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-addr') })
+          return
+        }
+      } else {
+        if (idx <= 3) {
+          const map = ['#og-search', '#og-mp-cate', '#og-banner', '#og-mp-guess']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 4) {
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 5) {
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+          uni.navigateTo({ url: '/pages/order/index' })
+          return
+        }
+        if (idx === 7) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-info') })
+          return
+        }
+        if (idx === 8) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-menu') })
+          return
+        }
+        if (idx === 9) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-addr') })
+          return
+        }
+      }
+    },
+    handleOnboardingPrev(prevIndex) {
+      const idx = Number(prevIndex || 0)
+      if (idx < 0) return
+      this.onboardingIndex = idx
+      try {
+        uni.setStorageSync('onboarding_index', idx)
+        uni.setStorageSync('onboarding_continue', true)
+      } catch (e) {}
+      const isH5 = typeof window !== 'undefined'
+      if (isH5) {
+        if (idx <= 4) {
+          const map = ['#og-search', '#og-cate', '#og-banner', '#og-guess', '#og-quick']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 5) {
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 7) {
+          uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+          uni.navigateTo({ url: '/pages/order/index' })
+          return
+        }
+        if (idx === 8) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-info') })
+          return
+        }
+        if (idx === 9) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-menu') })
+          return
+        }
+        if (idx === 10) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-addr') })
+          return
+        }
+      } else {
+        if (idx <= 3) {
+          const map = ['#og-search', '#og-mp-cate', '#og-banner', '#og-mp-guess']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 4) {
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 5) {
+          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+          uni.navigateTo({ url: '/pages/product/index' })
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+          uni.navigateTo({ url: '/pages/order/index' })
+          return
+        }
+        if (idx === 7) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-info') })
+          return
+        }
+        if (idx === 8) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-menu') })
+          return
+        }
+        if (idx === 9) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-profile-addr') })
+          return
+        }
+      }
+    },
     goHome() {
       if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
       if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+    },
+    closeOnboarding() {
+      this.showOnboarding = false
+      try {
+        uni.removeStorageSync('onboarding_continue')
+        uni.removeStorageSync('onboarding_target_selector')
+        uni.removeStorageSync('onboarding_step_text')
+        uni.removeStorageSync('onboarding_steps')
+        uni.removeStorageSync('onboarding_index')
+        uni.reLaunch({ url: '/pages/home/index' })
+      } catch (e) {}
     },
     openAnnouncementModalH5() {
       this.announcementLoading = true

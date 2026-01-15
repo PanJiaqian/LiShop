@@ -11,7 +11,12 @@
     
 
     <view class="login-card">
+      <!-- #ifdef MP-WEIXIN -->
+      <image src="/static/logo.png" style="width:200rpx;height:200rpx;display:block;margin:0 auto;" mode="aspectFit" />
+      <!-- #endif -->
+      <!-- #ifndef MP-WEIXIN -->
       <image src="/static/logo.png?v=20251211" style="width:200rpx;height:200rpx;display:block;margin:0 auto;" mode="aspectFit" />
+      <!-- #endif -->
       <view class="input-group">
         <input class="glass-input" type="text" v-model="username" placeholder="账号" placeholder-class="ph-style" />
       </view>
@@ -59,10 +64,17 @@ export default {
           try {
             uni.setStorageSync('user', user)
             uni.setStorageSync('token_expiration', Date.now() + 4 * 24 * 60 * 60 * 1000)
+            uni.setStorageSync('just_logged_in', true)
           } catch (e) { }
           // uni.showToast({ title: 'Login Success', icon: 'success' })
           setTimeout(() => {
-            uni.switchTab({ url: '/pages/home/index' })
+            try {
+              if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+              if (uni && uni.reLaunch) { uni.reLaunch({ url: '/pages/home/index' }); return }
+              if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+            } catch (e) {
+              try { uni.navigateTo({ url: '/pages/home/index' }) } catch (e2) {}
+            }
           }, 300)
         })
         .catch((err) => {

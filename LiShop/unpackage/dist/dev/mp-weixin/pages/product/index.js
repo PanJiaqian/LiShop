@@ -5,10 +5,11 @@ const common_assets = require("../../common/assets.js");
 const RoomSelector = () => "../../components/RoomSelector.js";
 const FloatingNav = () => "../../components/FloatingNav.js";
 const Skeleton = () => "../../components/Skeleton.js";
+const OnboardingGuide = () => "../../components/OnboardingGuide.js";
 const _sfc_main = {
-  components: { RoomSelector, FloatingNav, Skeleton },
+  components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide },
   data() {
-    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false };
+    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0 };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
@@ -205,8 +206,74 @@ const _sfc_main = {
   },
   onShow() {
     this.loadAddresses();
+    try {
+      const cont = !!common_vendor.index.getStorageSync("onboarding_continue");
+      const sel = common_vendor.index.getStorageSync("onboarding_target_selector") || "";
+      const idx = Number(common_vendor.index.getStorageSync("onboarding_index") || 0);
+      const stepsStored = common_vendor.index.getStorageSync("onboarding_steps") || [];
+      if (cont && sel) {
+        if (Array.isArray(stepsStored) && stepsStored.length)
+          this.onboardingSteps = stepsStored;
+        const safeIdx = Math.max(0, Math.min(idx, this.onboardingSteps.length - 1));
+        this.onboardingIndex = safeIdx;
+        this.$nextTick(() => {
+          let isH5 = false;
+          try {
+            isH5 = typeof window !== "undefined";
+          } catch (e) {
+            isH5 = false;
+          }
+          if (sel === "#og-room-modal" || sel === "#og-room-modal-list") {
+            if (isH5)
+              this.openRoomSheet();
+            else
+              this.openMpRoomSheet();
+            setTimeout(() => {
+              this.tryShowOnboarding("#og-room-modal-list", 10);
+            }, 220);
+          } else {
+            this.tryShowOnboarding(sel, 8);
+          }
+        });
+      }
+    } catch (e) {
+    }
   },
   methods: {
+    tryShowOnboarding(sel, tries) {
+      const max = Math.max(1, Number(tries || 6));
+      const attempt = (left) => {
+        let isH5 = false;
+        try {
+          isH5 = typeof window !== "undefined";
+        } catch (e) {
+          isH5 = false;
+        }
+        if (isH5) {
+          const el = typeof document !== "undefined" ? document.querySelector(sel) : null;
+          if (el) {
+            this.refreshOnboardingRect(sel);
+            return;
+          }
+        } else {
+          const q = common_vendor.index.createSelectorQuery().in(this);
+          q.select(sel).boundingClientRect();
+          q.exec((res) => {
+            const r = (res || [])[0];
+            if (r) {
+              this.refreshOnboardingRect(sel);
+              return;
+            }
+          });
+        }
+        if (!this.showOnboarding)
+          this.showOnboarding = true;
+        if (left > 0) {
+          setTimeout(() => attempt(left - 1), 160);
+        }
+      };
+      attempt(max);
+    },
     goBack() {
       if (typeof window !== "undefined" && window.history && window.history.length > 1) {
         window.history.back();
@@ -292,6 +359,272 @@ const _sfc_main = {
     resetCarouselTimer() {
       this.stopCarousel();
       this.startCarousel();
+    },
+    refreshOnboardingRect(sel) {
+      let isH5 = false;
+      try {
+        isH5 = typeof window !== "undefined";
+      } catch (e) {
+        isH5 = false;
+      }
+      const total = this.onboardingSteps.length || 0;
+      const arr = new Array(total).fill(null);
+      if (isH5) {
+        const el = typeof document !== "undefined" ? document.querySelector(sel) : null;
+        if (el) {
+          const r = el.getBoundingClientRect();
+          arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height };
+          this.onboardingRects = arr;
+          this.showOnboarding = true;
+        }
+      } else {
+        const q = common_vendor.index.createSelectorQuery().in(this);
+        q.select(sel).boundingClientRect();
+        q.exec((res) => {
+          const r = (res || [])[0];
+          if (r) {
+            arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height };
+            this.onboardingRects = arr;
+            this.showOnboarding = true;
+          }
+        });
+      }
+    },
+    handleOnboardingNext(nextIndex) {
+      const idx = Number(nextIndex || 0);
+      this.onboardingIndex = idx;
+      try {
+        common_vendor.index.setStorageSync("onboarding_index", idx);
+        if (Array.isArray(this.onboardingSteps) && this.onboardingSteps.length) {
+          common_vendor.index.setStorageSync("onboarding_steps", this.onboardingSteps);
+        }
+      } catch (e) {
+      }
+      try {
+        common_vendor.index.setStorageSync("onboarding_continue", true);
+        const isH5 = typeof window !== "undefined";
+        if (isH5) {
+          if (idx <= 4) {
+            const map = ["#og-search", "#og-cate", "#og-banner", "#og-guess", "#og-quick"];
+            const sel = map[idx] || "#og-search";
+            common_vendor.index.setStorageSync("onboarding_target_selector", sel);
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/home/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          } else if (idx === 5) {
+            this.$nextTick(() => {
+              this.refreshOnboardingRect("#og-product-add");
+            });
+          } else if (idx === 6) {
+            this.openRoomSheet();
+            setTimeout(() => {
+              this.refreshOnboardingRect("#og-room-modal-list");
+            }, 220);
+          } else if (idx === 7) {
+            common_vendor.index.setStorageSync("onboarding_target_selector", "#og-order-tabs");
+            common_vendor.index.setStorageSync("onboarding_step_text", "订单标签切换与查看");
+            common_vendor.index.navigateTo({ url: "/pages/order/index" });
+          } else if (idx === 8) {
+            common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-info");
+            common_vendor.index.setStorageSync("onboarding_step_text", "个人信息管理");
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/profile/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          } else if (idx === 9) {
+            common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-menu");
+            common_vendor.index.setStorageSync("onboarding_step_text", "功能区");
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/profile/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          } else if (idx === 10) {
+            common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-addr");
+            common_vendor.index.setStorageSync("onboarding_step_text", "收货地址管理");
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/profile/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          }
+        } else {
+          if (idx <= 3) {
+            const map = ["#og-search", "#og-mp-cate", "#og-banner", "#og-mp-guess"];
+            const sel = map[idx] || "#og-search";
+            common_vendor.index.setStorageSync("onboarding_target_selector", sel);
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/home/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          } else if (idx === 4) {
+            this.$nextTick(() => {
+              this.refreshOnboardingRect("#og-product-add");
+            });
+          } else if (idx === 5) {
+            this.openMpRoomSheet();
+            setTimeout(() => {
+              this.refreshOnboardingRect("#og-room-modal-list");
+            }, 220);
+          } else if (idx === 6) {
+            common_vendor.index.setStorageSync("onboarding_target_selector", "#og-order-tabs");
+            common_vendor.index.setStorageSync("onboarding_step_text", "订单标签切换与查看");
+            common_vendor.index.navigateTo({ url: "/pages/order/index" });
+          } else if (idx === 7) {
+            common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-info");
+            common_vendor.index.setStorageSync("onboarding_step_text", "个人信息管理");
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/profile/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          } else if (idx === 8) {
+            common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-menu");
+            common_vendor.index.setStorageSync("onboarding_step_text", "功能区");
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/profile/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          } else if (idx === 9) {
+            common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-addr");
+            common_vendor.index.setStorageSync("onboarding_step_text", "收货地址管理");
+            if (common_vendor.index.switchTab)
+              common_vendor.index.switchTab({ url: "/pages/profile/index" });
+            else
+              common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          }
+        }
+      } catch (e) {
+      }
+    },
+    handleOnboardingPrev(prevIndex) {
+      const idx = Number(prevIndex || 0);
+      if (idx < 0)
+        return;
+      this.onboardingIndex = idx;
+      try {
+        common_vendor.index.setStorageSync("onboarding_index", idx);
+        common_vendor.index.setStorageSync("onboarding_continue", true);
+      } catch (e) {
+      }
+      const isH5 = typeof window !== "undefined";
+      if (isH5) {
+        if (idx <= 4) {
+          const map = ["#og-search", "#og-cate", "#og-banner", "#og-guess", "#og-quick"];
+          const sel = map[idx] || "#og-search";
+          common_vendor.index.setStorageSync("onboarding_target_selector", sel);
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/home/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          return;
+        }
+        if (idx === 5) {
+          this.$nextTick(() => {
+            this.refreshOnboardingRect("#og-product-add");
+          });
+          return;
+        }
+        if (idx === 6) {
+          this.openRoomSheet();
+          setTimeout(() => {
+            this.refreshOnboardingRect("#og-room-modal-list");
+          }, 220);
+          return;
+        }
+        if (idx === 7) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-order-tabs");
+          common_vendor.index.navigateTo({ url: "/pages/order/index" });
+          return;
+        }
+        if (idx === 8) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-info");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 9) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-menu");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 10) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-addr");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+      } else {
+        if (idx <= 3) {
+          const map = ["#og-search", "#og-mp-cate", "#og-banner", "#og-mp-guess"];
+          const sel = map[idx] || "#og-search";
+          common_vendor.index.setStorageSync("onboarding_target_selector", sel);
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/home/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          return;
+        }
+        if (idx === 4) {
+          this.$nextTick(() => {
+            this.refreshOnboardingRect("#og-product-add");
+          });
+          return;
+        }
+        if (idx === 5) {
+          this.openMpRoomSheet();
+          setTimeout(() => {
+            this.refreshOnboardingRect("#og-room-modal-list");
+          }, 220);
+          return;
+        }
+        if (idx === 6) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-order-tabs");
+          common_vendor.index.navigateTo({ url: "/pages/order/index" });
+          return;
+        }
+        if (idx === 7) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-info");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 8) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-menu");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 9) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-addr");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+      }
+    },
+    closeOnboarding() {
+      this.showOnboarding = false;
+      try {
+        common_vendor.index.removeStorageSync("onboarding_continue");
+        common_vendor.index.removeStorageSync("onboarding_target_selector");
+        common_vendor.index.removeStorageSync("onboarding_step_text");
+        common_vendor.index.removeStorageSync("onboarding_steps");
+        common_vendor.index.removeStorageSync("onboarding_index");
+        common_vendor.index.reLaunch({ url: "/pages/home/index" });
+      } catch (e) {
+      }
     },
     // 获取规格明细（按产品ID），适配返回 data.children
     fetchSpecs(availId) {
@@ -790,7 +1123,8 @@ const _sfc_main = {
 if (!Array) {
   const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
   const _component_RoomSelector = common_vendor.resolveComponent("RoomSelector");
-  (_component_Skeleton + _component_RoomSelector)();
+  const _component_OnboardingGuide = common_vendor.resolveComponent("OnboardingGuide");
+  (_component_Skeleton + _component_RoomSelector + _component_OnboardingGuide)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
@@ -854,22 +1188,21 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $data.specsLoading ? {} : $data.specs && $data.specs.length ? common_vendor.e({
     E: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
       return common_vendor.e({
-        a: it.image_url || "/static/logo.png",
-        b: common_vendor.t(it.name),
-        c: common_vendor.t(Number(it.price || 0).toFixed(2)),
-        d: Number(it.original_price) > 0
+        a: common_vendor.t(it.name),
+        b: common_vendor.t(Number(it.price || 0).toFixed(2)),
+        c: Number(it.original_price) > 0
       }, Number(it.original_price) > 0 ? {
-        e: common_vendor.t(Number(it.original_price).toFixed(2))
+        d: common_vendor.t(Number(it.original_price).toFixed(2))
       } : {}, {
-        f: common_vendor.t(it.unit || "—"),
-        g: String(it.product_type || "").toLowerCase() === "stagnant" && Number(it.inventory) === 0
+        e: common_vendor.t(it.unit || "—"),
+        f: String(it.product_type || "").toLowerCase() === "stagnant" && Number(it.inventory) === 0
       }, String(it.product_type || "").toLowerCase() === "stagnant" && Number(it.inventory) === 0 ? {
-        h: common_assets._imports_0$1
+        g: common_assets._imports_0$1
       } : {}, {
-        i: "mpsp" + i,
-        j: $data.selectedSpecIndex === i ? 1 : "",
-        k: $options.isSpecDisabled(it) ? 1 : "",
-        l: common_vendor.o(($event) => $options.onClickSpec(it, i), "mpsp" + i)
+        h: "mpsp" + i,
+        i: $data.selectedSpecIndex === i ? 1 : "",
+        j: $options.isSpecDisabled(it) ? 1 : "",
+        k: common_vendor.o(($event) => $options.onClickSpec(it, i), "mpsp" + i)
       });
     }),
     F: $data.specs.length >= 3
@@ -914,8 +1247,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    ah: $data.mpSheet || $data.roomSelectorVisible ? 1 : ""
-  });
+    ah: $data.mpSheet || $data.roomSelectorVisible ? 1 : "",
+    ai: $data.showOnboarding
+  }, $data.showOnboarding ? {
+    aj: common_vendor.o($options.handleOnboardingNext),
+    ak: common_vendor.o($options.handleOnboardingPrev),
+    al: common_vendor.o($options.closeOnboarding),
+    am: common_vendor.p({
+      steps: $data.onboardingSteps,
+      targets: $data.onboardingRects,
+      initialIndex: $data.onboardingIndex
+    })
+  } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);
 wx.createPage(MiniProgramPage);

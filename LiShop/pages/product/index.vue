@@ -11,7 +11,7 @@
           <view class="pd-grid">
             <!-- 左侧：可滚动，包含画廊 + 参数 + 图文详情 -->
             <view class="pd-left">
-              <view class="pd-gallery">
+              <view id="og-product-gallery" class="pd-gallery">
                 <swiper class="pd-main" :current="current" :autoplay="false" circular interval="3000" @change="onSwiperChange">
                   <swiper-item v-for="(src, i) in images" :key="i">
                     <video
@@ -133,7 +133,7 @@
                 <view class="pd-form">
                   <view class="pd-field inline">
                     <text class="pd-section-title" selectable="true">房间</text>
-                    <view class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
+                    <view id="og-room-select" class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
                   </view>
                   <!-- <view class="pd-field inline">
               <text class="label">色温</text>
@@ -225,10 +225,10 @@
       </view>
       <view class="footer">
         <!-- #ifdef MP-WEIXIN -->
-        <button class="btn-cart" @click="openSpecSheet">加入购物车</button>
+        <button id="og-product-add" class="btn-cart" @click="openSpecSheet">加入购物车</button>
         <!-- #endif -->
         <!-- #ifndef MP-WEIXIN -->
-        <button class="btn-cart" @click="addToCart">加入购物车</button>
+        <button id="og-product-add" class="btn-cart" @click="addToCart">加入购物车</button>
         <!-- #endif -->
       </view>
 
@@ -259,7 +259,7 @@
             <view v-else-if="specs && specs.length" class="specs-list">
               <view class="spec-item" v-for="(it, i) in (isSpecsCollapsed ? specs.slice(0, 2) : specs)"
                 :key="'mpsp' + i" :class="{ active: selectedSpecIndex === i, disabled: isSpecDisabled(it) }" @click="onClickSpec(it, i)">
-                <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" />
+                <!-- <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" /> -->
                 <view class="spec-info">
                   <text class="spec-name" selectable="true">{{ it.name }}</text>
                   <view class="spec-price-row">
@@ -284,7 +284,7 @@
             </view>
 
             <view class="mp-field"><text class="label">房间</text>
-              <view class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
+              <view id="og-mp-room-select" class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
             </view>
             <!-- <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
               placeholder="如 3000K" /></view> -->
@@ -319,6 +319,15 @@
       :selectedName="selectorSelectedName" @close="closeRoomSheet" @select="onRoomSelect" @create="onRoomCreate"
       @createAddress="onCreateAddress" />
   </view>
+  <OnboardingGuide
+    v-if="showOnboarding"
+    :steps="onboardingSteps"
+    :targets="onboardingRects"
+    :initialIndex="onboardingIndex"
+    @advance="handleOnboardingNext"
+    @back="handleOnboardingPrev"
+    @close="closeOnboarding"
+  />
 </template>
 
 <script>
@@ -326,10 +335,11 @@ import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, g
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import OnboardingGuide from '@/components/OnboardingGuide.vue'
 
 export default {
-  components: { RoomSelector, FloatingNav, Skeleton },
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false } },
+  components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0 } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -501,8 +511,57 @@ export default {
   },
   onShow() {
     this.loadAddresses()
+    try {
+      const cont = !!uni.getStorageSync('onboarding_continue')
+      const sel = uni.getStorageSync('onboarding_target_selector') || ''
+      const idx = Number(uni.getStorageSync('onboarding_index') || 0)
+      const stepsStored = uni.getStorageSync('onboarding_steps') || []
+      if (cont && sel) {
+        if (Array.isArray(stepsStored) && stepsStored.length) this.onboardingSteps = stepsStored
+        const safeIdx = Math.max(0, Math.min(idx, this.onboardingSteps.length - 1))
+        this.onboardingIndex = safeIdx
+        this.$nextTick(() => {
+          let isH5 = false
+          try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+          if (sel === '#og-room-modal' || sel === '#og-room-modal-list') {
+            if (isH5) this.openRoomSheet()
+            else this.openMpRoomSheet()
+            setTimeout(() => { this.tryShowOnboarding('#og-room-modal-list', 10) }, 220)
+          } else {
+            this.tryShowOnboarding(sel, 8)
+          }
+        })
+      }
+    } catch (e) {}
   },
   methods: {
+    tryShowOnboarding(sel, tries) {
+      const max = Math.max(1, Number(tries || 6))
+      const attempt = (left) => {
+        let isH5 = false
+        try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+        if (isH5) {
+          const el = typeof document !== 'undefined' ? document.querySelector(sel) : null
+          if (el) {
+            this.refreshOnboardingRect(sel)
+            return
+          }
+        } else {
+          const q = uni.createSelectorQuery().in(this)
+          q.select(sel).boundingClientRect()
+          q.exec(res => {
+            const r = (res || [])[0]
+            if (r) {
+              this.refreshOnboardingRect(sel)
+              return
+            }
+          })
+        }
+        if (!this.showOnboarding) this.showOnboarding = true
+        if (left > 0) { setTimeout(() => attempt(left - 1), 160) }
+      }
+      attempt(max)
+    },
     goBack() {
       if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
       if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
@@ -607,6 +666,215 @@ export default {
     resetCarouselTimer() {
       this.stopCarousel()
       this.startCarousel()
+    },
+    refreshOnboardingRect(sel) {
+      let isH5 = false
+      try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+      const total = this.onboardingSteps.length || 0
+      const arr = new Array(total).fill(null)
+      if (isH5) {
+        const el = typeof document !== 'undefined' ? document.querySelector(sel) : null
+        if (el) {
+          const r = el.getBoundingClientRect()
+          arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height }
+          this.onboardingRects = arr
+          this.showOnboarding = true
+        }
+      } else {
+        const q = uni.createSelectorQuery().in(this)
+        q.select(sel).boundingClientRect()
+        q.exec(res => {
+          const r = (res || [])[0]
+          if (r) {
+            arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height }
+            this.onboardingRects = arr
+            this.showOnboarding = true
+          }
+        })
+      }
+    },
+    handleOnboardingNext(nextIndex) {
+      const idx = Number(nextIndex || 0)
+      this.onboardingIndex = idx
+      try {
+        uni.setStorageSync('onboarding_index', idx)
+        if (Array.isArray(this.onboardingSteps) && this.onboardingSteps.length) {
+          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        }
+      } catch (e) {}
+      try {
+        uni.setStorageSync('onboarding_continue', true)
+        const isH5 = typeof window !== 'undefined'
+        if (isH5) {
+          if (idx <= 4) {
+            const map = ['#og-search', '#og-cate', '#og-banner', '#og-guess', '#og-quick']
+            const sel = map[idx] || '#og-search'
+            uni.setStorageSync('onboarding_target_selector', sel)
+            if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+            else uni.navigateTo({ url: '/pages/home/index' })
+          } else if (idx === 5) {
+            this.$nextTick(() => { this.refreshOnboardingRect('#og-product-add') })
+          } else if (idx === 6) {
+            this.openRoomSheet()
+            setTimeout(() => { this.refreshOnboardingRect('#og-room-modal-list') }, 220)
+          } else if (idx === 7) {
+            uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+            uni.setStorageSync('onboarding_step_text', '订单标签切换与查看')
+            uni.navigateTo({ url: '/pages/order/index' })
+          } else if (idx === 8) {
+            uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+            uni.setStorageSync('onboarding_step_text', '个人信息管理')
+            if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+            else uni.navigateTo({ url: '/pages/profile/index' })
+          } else if (idx === 9) {
+            uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+            uni.setStorageSync('onboarding_step_text', '功能区')
+            if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+            else uni.navigateTo({ url: '/pages/profile/index' })
+          } else if (idx === 10) {
+            uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+            uni.setStorageSync('onboarding_step_text', '收货地址管理')
+            if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+            else uni.navigateTo({ url: '/pages/profile/index' })
+          }
+        } else {
+          if (idx <= 3) {
+            const map = ['#og-search', '#og-mp-cate', '#og-banner', '#og-mp-guess']
+            const sel = map[idx] || '#og-search'
+            uni.setStorageSync('onboarding_target_selector', sel)
+            if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+            else uni.navigateTo({ url: '/pages/home/index' })
+          } else if (idx === 4) {
+            this.$nextTick(() => { this.refreshOnboardingRect('#og-product-add') })
+          } else if (idx === 5) {
+            this.openMpRoomSheet()
+            setTimeout(() => { this.refreshOnboardingRect('#og-room-modal-list') }, 220)
+          } else if (idx === 6) {
+            uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+            uni.setStorageSync('onboarding_step_text', '订单标签切换与查看')
+            uni.navigateTo({ url: '/pages/order/index' })
+          } else if (idx === 7) {
+            uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+            uni.setStorageSync('onboarding_step_text', '个人信息管理')
+            if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+            else uni.navigateTo({ url: '/pages/profile/index' })
+          } else if (idx === 8) {
+            uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+            uni.setStorageSync('onboarding_step_text', '功能区')
+            if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+            else uni.navigateTo({ url: '/pages/profile/index' })
+          } else if (idx === 9) {
+            uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+            uni.setStorageSync('onboarding_step_text', '收货地址管理')
+            if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+            else uni.navigateTo({ url: '/pages/profile/index' })
+          }
+        }
+      } catch (e) {}
+    },
+    handleOnboardingPrev(prevIndex) {
+      const idx = Number(prevIndex || 0)
+      if (idx < 0) return
+      this.onboardingIndex = idx
+      try {
+        uni.setStorageSync('onboarding_index', idx)
+        uni.setStorageSync('onboarding_continue', true)
+      } catch (e) {}
+      const isH5 = typeof window !== 'undefined'
+      if (isH5) {
+        if (idx <= 4) {
+          const map = ['#og-search', '#og-cate', '#og-banner', '#og-guess', '#og-quick']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 5) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-product-add') })
+          return
+        }
+        if (idx === 6) {
+          this.openRoomSheet()
+          setTimeout(() => { this.refreshOnboardingRect('#og-room-modal-list') }, 220)
+          return
+        }
+        if (idx === 7) {
+          uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+          uni.navigateTo({ url: '/pages/order/index' })
+          return
+        }
+        if (idx === 8) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 9) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 10) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+      } else {
+        if (idx <= 3) {
+          const map = ['#og-search', '#og-mp-cate', '#og-banner', '#og-mp-guess']
+          const sel = map[idx] || '#og-search'
+          uni.setStorageSync('onboarding_target_selector', sel)
+          if (uni.switchTab) uni.switchTab({ url: '/pages/home/index' })
+          else uni.navigateTo({ url: '/pages/home/index' })
+          return
+        }
+        if (idx === 4) {
+          this.$nextTick(() => { this.refreshOnboardingRect('#og-product-add') })
+          return
+        }
+        if (idx === 5) {
+          this.openMpRoomSheet()
+          setTimeout(() => { this.refreshOnboardingRect('#og-room-modal-list') }, 220)
+          return
+        }
+        if (idx === 6) {
+          uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+          uni.navigateTo({ url: '/pages/order/index' })
+          return
+        }
+        if (idx === 7) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 8) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+        if (idx === 9) {
+          uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+          if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+          else uni.navigateTo({ url: '/pages/profile/index' })
+          return
+        }
+      }
+    },
+    closeOnboarding() {
+      this.showOnboarding = false
+      try {
+        uni.removeStorageSync('onboarding_continue')
+        uni.removeStorageSync('onboarding_target_selector')
+        uni.removeStorageSync('onboarding_step_text')
+        uni.removeStorageSync('onboarding_steps')
+        uni.removeStorageSync('onboarding_index')
+        uni.reLaunch({ url: '/pages/home/index' })
+      } catch (e) {}
     },
     // 获取规格明细（按产品ID），适配返回 data.children
     fetchSpecs(availId) {

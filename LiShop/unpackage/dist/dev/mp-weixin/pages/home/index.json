@@ -5,6 +5,7 @@
     "search-bar": "../../components/SearchBar",
     "banner-swiper": "../../components/BannerSwiper",
     "product-card": "../../components/ProductCard",
-    "skeleton": "../../components/Skeleton"
+    "skeleton": "../../components/Skeleton",
+    "onboarding-guide": "../../components/OnboardingGuide"
   }
 }

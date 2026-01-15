@@ -4,10 +4,11 @@ const api_index = require("../../api/index.js");
 const common_assets = require("../../common/assets.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
 const Skeleton = () => "../../components/Skeleton.js";
+const OnboardingGuide = () => "../../components/OnboardingGuide.js";
 const _sfc_main = {
-  components: { FloatingNav, Skeleton },
+  components: { FloatingNav, Skeleton, OnboardingGuide },
   data() {
-    return { order: null, orders: [], activeTab: "all", loading: true, logisticsCollapsed: true, isH5: false, mapError: false, detailStatusHint: "" };
+    return { order: null, orders: [], activeTab: "all", loading: true, logisticsCollapsed: true, isH5: false, mapError: false, detailStatusHint: "", showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0 };
   },
   onLoad(query) {
     const id = query == null ? void 0 : query.id;
@@ -40,8 +41,272 @@ const _sfc_main = {
       }
     } catch (e) {
     }
+    try {
+      const cont = !!common_vendor.index.getStorageSync("onboarding_continue");
+      const sel = common_vendor.index.getStorageSync("onboarding_target_selector") || "";
+      const idx = Number(common_vendor.index.getStorageSync("onboarding_index") || 0);
+      const stepsStored = common_vendor.index.getStorageSync("onboarding_steps") || [];
+      if (cont && sel) {
+        if (Array.isArray(stepsStored) && stepsStored.length)
+          this.onboardingSteps = stepsStored;
+        const safeIdx = Math.max(0, Math.min(idx, this.onboardingSteps.length - 1));
+        this.onboardingIndex = safeIdx;
+        this.$nextTick(() => {
+          this.refreshOnboardingRect(sel);
+        });
+      }
+    } catch (e) {
+    }
   },
   methods: {
+    refreshOnboardingRect(sel) {
+      const total = this.onboardingSteps.length || 0;
+      const arr = new Array(total).fill(null);
+      if (this.isH5) {
+        const el = typeof document !== "undefined" ? document.querySelector(sel) : null;
+        if (el) {
+          const r = el.getBoundingClientRect();
+          arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height };
+          this.onboardingRects = arr;
+          this.showOnboarding = true;
+        }
+      } else {
+        const tryMp = (attempt = 0) => {
+          const q = common_vendor.index.createSelectorQuery().in(this);
+          q.select(sel).boundingClientRect();
+          q.exec((res) => {
+            const r = (res || [])[0];
+            if (r) {
+              arr[this.onboardingIndex] = { left: r.left, top: r.top, width: r.width, height: r.height };
+              this.onboardingRects = arr;
+              this.showOnboarding = true;
+            } else if (attempt < 3) {
+              setTimeout(() => tryMp(attempt + 1), 140);
+            }
+          });
+        };
+        tryMp(0);
+      }
+    },
+    handleOnboardingNext(nextIndex) {
+      const idx = Number(nextIndex || 0);
+      this.onboardingIndex = idx;
+      try {
+        common_vendor.index.setStorageSync("onboarding_index", idx);
+        if (Array.isArray(this.onboardingSteps) && this.onboardingSteps.length) {
+          common_vendor.index.setStorageSync("onboarding_steps", this.onboardingSteps);
+        }
+        common_vendor.index.setStorageSync("onboarding_continue", true);
+      } catch (e) {
+      }
+      const isH5 = typeof window !== "undefined";
+      if (isH5) {
+        if (idx <= 4) {
+          const map = ["#og-search", "#og-cate", "#og-banner", "#og-guess", "#og-quick"];
+          const sel = map[idx] || "#og-search";
+          common_vendor.index.setStorageSync("onboarding_target_selector", sel);
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/home/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          return;
+        }
+        if (idx === 5) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-product-add");
+          common_vendor.index.navigateTo({ url: "/pages/product/index" });
+          return;
+        }
+        if (idx === 6) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-room-modal-list");
+          common_vendor.index.navigateTo({ url: "/pages/product/index" });
+          return;
+        }
+        if (idx === 7) {
+          this.$nextTick(() => {
+            this.refreshOnboardingRect("#og-order-tabs");
+          });
+          return;
+        }
+        if (idx === 8) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-info");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 9) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-menu");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 10) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-addr");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+      } else {
+        if (idx <= 3) {
+          const map = ["#og-search", "#og-mp-cate", "#og-banner", "#og-mp-guess"];
+          const sel = map[idx] || "#og-search";
+          common_vendor.index.setStorageSync("onboarding_target_selector", sel);
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/home/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          return;
+        }
+        if (idx === 4) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-product-add");
+          common_vendor.index.navigateTo({ url: "/pages/product/index" });
+          return;
+        }
+        if (idx === 5) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-room-modal-list");
+          common_vendor.index.navigateTo({ url: "/pages/product/index" });
+          return;
+        }
+        if (idx === 6) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-info");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 7) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-menu");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 8) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-addr");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+      }
+    },
+    handleOnboardingPrev(prevIndex) {
+      const idx = Number(prevIndex || 0);
+      if (idx < 0)
+        return;
+      this.onboardingIndex = idx;
+      try {
+        common_vendor.index.setStorageSync("onboarding_index", idx);
+        common_vendor.index.setStorageSync("onboarding_continue", true);
+      } catch (e) {
+      }
+      const isH5 = typeof window !== "undefined";
+      if (isH5) {
+        if (idx <= 4) {
+          const map = ["#og-search", "#og-cate", "#og-banner", "#og-guess", "#og-quick"];
+          const sel = map[idx] || "#og-search";
+          common_vendor.index.setStorageSync("onboarding_target_selector", sel);
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/home/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          return;
+        }
+        if (idx === 5) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-product-add");
+          common_vendor.index.navigateTo({ url: "/pages/product/index" });
+          return;
+        }
+        if (idx === 6) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-room-modal-list");
+          common_vendor.index.navigateTo({ url: "/pages/product/index" });
+          return;
+        }
+        if (idx === 7) {
+          this.$nextTick(() => {
+            this.refreshOnboardingRect("#og-order-tabs");
+          });
+          return;
+        }
+        if (idx === 8) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-info");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 9) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-menu");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 10) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-addr");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+      } else {
+        if (idx <= 3) {
+          const map = ["#og-search", "#og-mp-cate", "#og-banner", "#og-mp-guess"];
+          const sel = map[idx] || "#og-search";
+          common_vendor.index.setStorageSync("onboarding_target_selector", sel);
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/home/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          return;
+        }
+        if (idx === 4) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-product-add");
+          common_vendor.index.navigateTo({ url: "/pages/product/index" });
+          return;
+        }
+        if (idx === 5) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-room-modal-list");
+          common_vendor.index.navigateTo({ url: "/pages/product/index" });
+          return;
+        }
+        if (idx === 6) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-info");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 7) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-menu");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+        if (idx === 8) {
+          common_vendor.index.setStorageSync("onboarding_target_selector", "#og-profile-addr");
+          if (common_vendor.index.switchTab)
+            common_vendor.index.switchTab({ url: "/pages/profile/index" });
+          else
+            common_vendor.index.navigateTo({ url: "/pages/profile/index" });
+          return;
+        }
+      }
+    },
     isImageLink(url) {
       try {
         return /\.(png|jpg|jpeg|gif|bmp|webp)(\?.*)?$/i.test(String(url || ""));
@@ -387,12 +652,25 @@ const _sfc_main = {
           }
         }
       });
+    },
+    closeOnboarding() {
+      this.showOnboarding = false;
+      try {
+        common_vendor.index.removeStorageSync("onboarding_continue");
+        common_vendor.index.removeStorageSync("onboarding_target_selector");
+        common_vendor.index.removeStorageSync("onboarding_step_text");
+        common_vendor.index.removeStorageSync("onboarding_steps");
+        common_vendor.index.removeStorageSync("onboarding_index");
+        common_vendor.index.reLaunch({ url: "/pages/home/index" });
+      } catch (e) {
+      }
     }
   }
 };
 if (!Array) {
   const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
-  _component_Skeleton();
+  const _component_OnboardingGuide = common_vendor.resolveComponent("OnboardingGuide");
+  (_component_Skeleton + _component_OnboardingGuide)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
@@ -517,7 +795,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         k: o.id
       });
     })
-  } : {}));
+  } : {}), {
+    U: $data.showOnboarding
+  }, $data.showOnboarding ? {
+    V: common_vendor.o($options.handleOnboardingNext),
+    W: common_vendor.o($options.handleOnboardingPrev),
+    X: common_vendor.o($options.closeOnboarding),
+    Y: common_vendor.p({
+      steps: $data.onboardingSteps,
+      targets: $data.onboardingRects,
+      initialIndex: $data.onboardingIndex
+    })
+  } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-17a44f9d"]]);
 wx.createPage(MiniProgramPage);

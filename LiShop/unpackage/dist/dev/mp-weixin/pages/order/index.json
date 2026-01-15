@@ -2,6 +2,7 @@
   "navigationBarTitleText": "我的订单",
   "enablePullDownRefresh": true,
   "usingComponents": {
-    "skeleton": "../../components/Skeleton"
+    "skeleton": "../../components/Skeleton",
+    "onboarding-guide": "../../components/OnboardingGuide"
   }
 }
