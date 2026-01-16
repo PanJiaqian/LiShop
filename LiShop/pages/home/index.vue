@@ -85,6 +85,10 @@
                   <text class="uc-icon">📣</text>
                   <text>公告</text>
                </view>
+               <view class="uc-link-item" @click="triggerOnboarding">
+                  <text class="uc-icon">🎓</text>
+                  <text>新手教程</text>
+               </view>
                <!-- <navigator class="uc-link-item" url="/pages/messages/index">
                    <text class="uc-icon">💬</text>
                   <text>信息</text>

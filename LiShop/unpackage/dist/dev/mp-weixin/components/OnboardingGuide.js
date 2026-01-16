@@ -93,11 +93,17 @@ const _sfc_main = {
     panelHeight() {
       return 140;
     },
+    extraBottomMargin() {
+      const isMp = typeof window === "undefined";
+      const t = String(this.steps && this.steps[this.current] || "");
+      const hit = t.indexOf("个人信息") >= 0 || t.indexOf("房间选择") >= 0;
+      return isMp && hit ? 60 : 0;
+    },
     panelStyle() {
       const r = this.currentRect;
       if (!r) {
         const fallbackLeft = Math.max(12, (this.winW - this.panelWidth) / 2);
-        const fallbackTop = Math.max(12, this.winH - this.panelHeight - 20);
+        const fallbackTop = Math.max(12, this.winH - this.panelHeight - 20 - this.extraBottomMargin);
         return {
           position: "fixed",
           left: fallbackLeft + "px",
@@ -124,7 +130,7 @@ const _sfc_main = {
       }
       const clamp = (v, min, max) => Math.max(min, Math.min(v, max));
       left = clamp(left, 12, Math.max(12, this.winW - this.panelWidth - 12));
-      top = clamp(top, 12, Math.max(12, this.winH - this.panelHeight - 12));
+      top = clamp(top, 12, Math.max(12, this.winH - this.panelHeight - 12 - this.extraBottomMargin));
       return {
         position: "fixed",
         left: left + "px",
@@ -163,8 +169,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {
     j: common_vendor.o((...args) => $options.finish && $options.finish(...args))
   }, {
-    k: common_vendor.s($options.panelStyle),
-    l: common_vendor.n("orient-" + $options.orientation)
+    k: common_vendor.o((...args) => $options.finish && $options.finish(...args)),
+    l: common_vendor.s($options.panelStyle),
+    m: common_vendor.n("orient-" + $options.orientation)
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b416fa2a"]]);

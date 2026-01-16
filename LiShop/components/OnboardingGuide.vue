@@ -9,10 +9,12 @@
         </view>
       </view>
       <view class="og-actions">
-        <button class="og-btn" :disabled="current===0" @click="onPrev">上一步</button>
-        <view class="og-index">{{ current+1 }}/{{ steps.length }}</view>
-        <button v-if="current<steps.length-1" class="og-btn primary" @click="onNext">下一步</button>
+
+        <button class="og-btn" :disabled="current === 0" @click="onPrev">上一步</button>
+        <view class="og-index">{{ current + 1 }}/{{ steps.length }}</view>
+        <button v-if="current < steps.length - 1" class="og-btn primary" @click="onNext">下一步</button>
         <button v-else class="og-btn primary" @click="finish">我知道了</button>
+        <text class="og-skip" @click="finish">跳过</text>
       </view>
     </view>
   </view>
@@ -59,7 +61,7 @@ export default {
       const wh = (s && (s.windowHeight || s.screenHeight)) || (typeof window !== 'undefined' ? window.innerHeight : this.winH)
       this.winW = ww || this.winW
       this.winH = wh || this.winH
-    } catch (e) {}
+    } catch (e) { }
   },
   computed: {
     currentRect() {
@@ -103,11 +105,17 @@ export default {
     panelHeight() {
       return 140
     },
+    extraBottomMargin() {
+      const isMp = (typeof window === 'undefined')
+      const t = String((this.steps && this.steps[this.current]) || '')
+      const hit = t.indexOf('个人信息') >= 0 || t.indexOf('房间选择') >= 0
+      return isMp && hit ? 60 : 0
+    },
     panelStyle() {
       const r = this.currentRect
       if (!r) {
         const fallbackLeft = Math.max(12, (this.winW - this.panelWidth) / 2)
-        const fallbackTop = Math.max(12, this.winH - this.panelHeight - 20)
+        const fallbackTop = Math.max(12, this.winH - this.panelHeight - 20 - this.extraBottomMargin)
         return {
           position: 'fixed',
           left: fallbackLeft + 'px',
@@ -134,7 +142,7 @@ export default {
       }
       const clamp = (v, min, max) => Math.max(min, Math.min(v, max))
       left = clamp(left, 12, Math.max(12, this.winW - this.panelWidth - 12))
-      top = clamp(top, 12, Math.max(12, this.winH - this.panelHeight - 12))
+      top = clamp(top, 12, Math.max(12, this.winH - this.panelHeight - 12 - this.extraBottomMargin))
       return {
         position: 'fixed',
         left: left + 'px',
@@ -158,52 +166,68 @@ export default {
   right: 0;
   top: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   display: block;
   z-index: 9999;
 }
+
 .og-highlight {
   position: fixed;
   border: 3px solid #ff4d4f;
   border-radius: 16px;
-  box-shadow: 0 0 0 2000px rgba(0,0,0,0.35);
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.35);
   pointer-events: none;
 }
+
 .og-panel {
   position: fixed;
   background: #ffffff;
   border-radius: 20rpx;
-  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.18);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.18);
   padding: 16rpx 14rpx;
   border: 1px solid #f0f0f0;
 }
+
 .og-content {
   padding: 8rpx 6rpx 12rpx 6rpx;
 }
+
 .og-step-title {
   font-size: 28rpx;
   font-weight: 700;
   color: #111;
   margin-bottom: 8rpx;
 }
+
 .og-step-body {
   min-height: 120rpx;
 }
+
 .og-step-text {
   font-size: 26rpx;
   color: #333;
   line-height: 1.6;
 }
+
 .og-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-top: 10rpx;
 }
+
 .og-index {
   font-size: 24rpx;
   color: #666;
 }
+
+.og-skip {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: -55rpx;
+  margin-right: 30px;
+}
+
 .og-btn {
   height: 64rpx;
   line-height: 64rpx;
@@ -213,10 +237,12 @@ export default {
   background: #f7f7f7;
   color: #222;
 }
+
 .og-btn.primary {
   background: #000;
   color: #fff;
 }
+
 .og-panel::after {
   content: '';
   position: absolute;
@@ -224,9 +250,10 @@ export default {
   height: 16rpx;
   background: #ffffff;
   border: 1px solid #f0f0f0;
-  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.12);
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.12);
   transform: rotate(45deg);
 }
+
 .orient-bottom::after {
   top: -8rpx;
   left: 50%;
@@ -234,6 +261,7 @@ export default {
   border-right-color: transparent;
   border-top-color: transparent;
 }
+
 .orient-top::after {
   bottom: -8rpx;
   left: 50%;
@@ -241,6 +269,7 @@ export default {
   border-left-color: transparent;
   border-bottom-color: transparent;
 }
+
 .orient-right::after {
   left: -8rpx;
   top: 50%;
@@ -248,6 +277,7 @@ export default {
   border-left-color: transparent;
   border-top-color: transparent;
 }
+
 .orient-left::after {
   right: -8rpx;
   top: 50%;

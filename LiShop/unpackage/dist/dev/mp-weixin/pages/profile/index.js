@@ -29,7 +29,32 @@ const _sfc_main = {
       showOnboarding: false,
       onboardingRects: [],
       onboardingSteps: [],
-      onboardingIndex: 0
+      onboardingIndex: 0,
+      onboardingStepsH5: [
+        "顶部搜索可快速查找商品与店铺",
+        "左侧分类导航支持展开子分类",
+        "轮播图可直达热门商品",
+        "猜你喜欢展示为你推荐的商品",
+        "我的与购物车提供快捷入口",
+        "商品详情页查看规格与加入购物车",
+        "房间选择，购物车根据房间名进行分组",
+        "订单页面查看物流与支付进度",
+        "个人信息管理",
+        "功能区",
+        "收货地址管理"
+      ],
+      onboardingStepsMp: [
+        "顶部搜索定位商品",
+        "横向分类导航查看子分类",
+        "轮播图快捷入口",
+        "猜你喜欢推荐区",
+        "商品详情页查看规格与加入购物车",
+        "房间选择，购物车根据房间名进行分组",
+        "订单页面查看物流与支付进度",
+        "个人信息管理",
+        "功能区",
+        "收货地址管理"
+      ]
     };
   },
   computed: {
@@ -131,6 +156,34 @@ const _sfc_main = {
     }
   },
   methods: {
+    startOnboardingFromProfile() {
+      try {
+        let isH5 = false;
+        try {
+          isH5 = typeof window !== "undefined";
+        } catch (e) {
+          isH5 = false;
+        }
+        const steps = isH5 ? this.onboardingStepsH5 : this.onboardingStepsMp;
+        this.onboardingSteps = steps;
+        common_vendor.index.setStorageSync("onboarding_steps", steps);
+        common_vendor.index.setStorageSync("onboarding_index", 0);
+        common_vendor.index.setStorageSync("onboarding_continue", true);
+        common_vendor.index.setStorageSync("onboarding_target_selector", "#og-search");
+      } catch (e) {
+      }
+      try {
+        if (common_vendor.index && common_vendor.index.switchTab) {
+          common_vendor.index.switchTab({ url: "/pages/home/index" });
+          return;
+        }
+        if (common_vendor.index && common_vendor.index.navigateTo) {
+          common_vendor.index.navigateTo({ url: "/pages/home/index" });
+          return;
+        }
+      } catch (e) {
+      }
+    },
     refreshOnboardingRect(sel) {
       let isH5 = false;
       try {
@@ -832,8 +885,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {
     L: common_vendor.o((...args) => $options.login && $options.login(...args))
   }, {
-    M: common_vendor.o((...args) => $options.goCreateAddress && $options.goCreateAddress(...args)),
-    N: common_vendor.f($data.addresses, (addr, k0, i0) => {
+    M: common_vendor.o((...args) => $options.startOnboardingFromProfile && $options.startOnboardingFromProfile(...args)),
+    N: common_vendor.o((...args) => $options.goCreateAddress && $options.goCreateAddress(...args)),
+    O: common_vendor.f($data.addresses, (addr, k0, i0) => {
       return {
         a: common_vendor.t(addr.full),
         b: common_vendor.t(addr.receiver),
@@ -842,35 +896,35 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => $options.editAddress(addr), addr.id)
       };
     }),
-    O: $data.addresses.length === 0
+    P: $data.addresses.length === 0
   }, $data.addresses.length === 0 ? {} : {}, {
-    P: $data.showOnboarding
+    Q: $data.showOnboarding
   }, $data.showOnboarding ? {
-    Q: common_vendor.o($options.handleOnboardingNext),
-    R: common_vendor.o($options.handleOnboardingPrev),
-    S: common_vendor.o($options.closeOnboarding),
-    T: common_vendor.p({
+    R: common_vendor.o($options.handleOnboardingNext),
+    S: common_vendor.o($options.handleOnboardingPrev),
+    T: common_vendor.o($options.closeOnboarding),
+    U: common_vendor.p({
       steps: $data.onboardingSteps,
       targets: $data.onboardingRects,
       initialIndex: $data.onboardingIndex
     })
   } : {}, {
-    U: $data.showSecurityModal
+    V: $data.showSecurityModal
   }, $data.showSecurityModal ? {
-    V: common_vendor.t($options.securityTitle),
-    W: $options.securityPlaceholder,
-    X: $data.securityForm.value,
-    Y: common_vendor.o(($event) => $data.securityForm.value = $event.detail.value),
-    Z: $data.securityForm.code,
-    aa: common_vendor.o(($event) => $data.securityForm.code = $event.detail.value),
-    ab: common_vendor.t($data.countdown > 0 ? `${$data.countdown}s` : "获取验证码"),
-    ac: $data.countdown > 0,
-    ad: common_vendor.o((...args) => $options.sendCode && $options.sendCode(...args)),
-    ae: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args)),
-    af: common_vendor.o((...args) => $options.confirmSecurityEdit && $options.confirmSecurityEdit(...args)),
-    ag: common_vendor.o(() => {
+    W: common_vendor.t($options.securityTitle),
+    X: $options.securityPlaceholder,
+    Y: $data.securityForm.value,
+    Z: common_vendor.o(($event) => $data.securityForm.value = $event.detail.value),
+    aa: $data.securityForm.code,
+    ab: common_vendor.o(($event) => $data.securityForm.code = $event.detail.value),
+    ac: common_vendor.t($data.countdown > 0 ? `${$data.countdown}s` : "获取验证码"),
+    ad: $data.countdown > 0,
+    ae: common_vendor.o((...args) => $options.sendCode && $options.sendCode(...args)),
+    af: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args)),
+    ag: common_vendor.o((...args) => $options.confirmSecurityEdit && $options.confirmSecurityEdit(...args)),
+    ah: common_vendor.o(() => {
     }),
-    ah: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args))
+    ai: common_vendor.o((...args) => $options.closeSecurityModal && $options.closeSecurityModal(...args))
   } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-201c0da5"]]);

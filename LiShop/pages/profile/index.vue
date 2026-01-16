@@ -118,6 +118,12 @@
                 <text>设置</text>
                 <text class="arrow">›</text>
               </navigator>
+              <!-- #ifdef MP-WEIXIN -->
+              <view class="menu-row" @click="startOnboardingFromProfile">
+                <text>新手教程</text>
+                <text class="arrow">›</text>
+              </view>
+              <!-- #endif -->
               <!-- #ifdef H5 -->
               <view class="menu-row" @click="openAnnouncementModalH5">
                 <text>公告</text>
@@ -250,7 +256,32 @@ export default {
     announcementLoading: false,
     announcement: null,
     showAnnContent: false,
-    showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0
+    showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0,
+    onboardingStepsH5: [
+      '顶部搜索可快速查找商品与店铺',
+      '左侧分类导航支持展开子分类',
+      '轮播图可直达热门商品',
+      '猜你喜欢展示为你推荐的商品',
+      '我的与购物车提供快捷入口',
+      '商品详情页查看规格与加入购物车',
+      '房间选择，购物车根据房间名进行分组',
+      '订单页面查看物流与支付进度',
+      '个人信息管理',
+      '功能区',
+      '收货地址管理'
+    ],
+    onboardingStepsMp: [
+      '顶部搜索定位商品',
+      '横向分类导航查看子分类',
+      '轮播图快捷入口',
+      '猜你喜欢推荐区',
+      '商品详情页查看规格与加入购物车',
+      '房间选择，购物车根据房间名进行分组',
+      '订单页面查看物流与支付进度',
+      '个人信息管理',
+      '功能区',
+      '收货地址管理'
+    ]
   } },
   computed: {
     profile() {
@@ -341,6 +372,22 @@ export default {
     } catch (e) { this.loading = false }
   },
   methods: {
+    startOnboardingFromProfile() {
+      try {
+        let isH5 = false
+        try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+        const steps = isH5 ? this.onboardingStepsH5 : this.onboardingStepsMp
+        this.onboardingSteps = steps
+        uni.setStorageSync('onboarding_steps', steps)
+        uni.setStorageSync('onboarding_index', 0)
+        uni.setStorageSync('onboarding_continue', true)
+        uni.setStorageSync('onboarding_target_selector', '#og-search')
+      } catch (e) {}
+      try {
+        if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+        if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+      } catch (e) {}
+    },
     refreshOnboardingRect(sel) {
       let isH5 = false
       try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }

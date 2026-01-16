@@ -5,7 +5,7 @@
   right: 0;
   top: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   display: block;
   z-index: 9999;
 }
@@ -13,14 +13,14 @@
   position: fixed;
   border: 3px solid #ff4d4f;
   border-radius: 16px;
-  box-shadow: 0 0 0 2000px rgba(0,0,0,0.35);
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.35);
   pointer-events: none;
 }
 .og-panel.data-v-b416fa2a {
   position: fixed;
   background: #ffffff;
   border-radius: 20rpx;
-  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.18);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.18);
   padding: 16rpx 14rpx;
   border: 1px solid #f0f0f0;
 }
@@ -51,6 +51,12 @@
   font-size: 24rpx;
   color: #666;
 }
+.og-skip.data-v-b416fa2a {
+  font-size: 24rpx;
+  color: #999;
+  margin-left: -55rpx;
+  margin-right: 30px;
+}
 .og-btn.data-v-b416fa2a {
   height: 64rpx;
   line-height: 64rpx;
@@ -71,7 +77,7 @@
   height: 16rpx;
   background: #ffffff;
   border: 1px solid #f0f0f0;
-  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.12);
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.12);
   transform: rotate(45deg);
 }
 .orient-bottom.data-v-b416fa2a::after {
