@@ -1,7 +1,7 @@
 
 .page.data-v-4978fed5 {
   /* background: white; */
-  
+
 
 
 
@@ -9,7 +9,15 @@
   min-height: 100vh;
   padding-bottom: 20rpx;
 }
-.page-bg.data-v-4978fed5 { position: fixed; left: 0; right: 0; top: 0; bottom: 0; width: 100vw; height: 100vh; z-index: -1;
+.page-bg.data-v-4978fed5 {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
 }
 
 /* H5 New Layout Styles */
@@ -64,39 +72,118 @@
 .data-v-4978fed5 .actions,.data-v-4978fed5 .btn-cart {
   display: none !important;
 }
-.h5-mask.data-v-4978fed5 { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999;
+.h5-mask.data-v-4978fed5 {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
-.h5-modal.data-v-4978fed5 { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; height: 60vh;
+.h5-modal.data-v-4978fed5 {
+  width: 820rpx;
+  max-width: 90vw;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  height: 60vh;
 }
-.modal-header.data-v-4978fed5 { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #f0f0f0; margin-bottom: 16rpx;
+.modal-header.data-v-4978fed5 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 16rpx;
 }
-.modal-title.data-v-4978fed5 { font-size: 32rpx; font-weight: 700; color: #333;
+.modal-title.data-v-4978fed5 {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
 }
-.modal-close.data-v-4978fed5 { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #999; cursor: pointer;
+.modal-close.data-v-4978fed5 {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #999;
+  cursor: pointer;
 }
-.modal-close.data-v-4978fed5:active { color: #333;
+.modal-close.data-v-4978fed5:active {
+  color: #333;
 }
-.modal-body.data-v-4978fed5 { flex: 1; min-height: 0; overflow-y: auto;
+.modal-body.data-v-4978fed5 {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
-.modal-body-two.data-v-4978fed5 { display: flex; gap: 16rpx; height: 100%;
+.modal-body-two.data-v-4978fed5 {
+  display: flex;
+  gap: 16rpx;
+  height: 100%;
 }
-.two-left.data-v-4978fed5 { width: 280rpx; flex-shrink: 0; padding-right: 16rpx; border-right: 1rpx solid #f0f0f0; display: flex; flex-direction: column; gap: 12rpx;
+.two-left.data-v-4978fed5 {
+  width: 280rpx;
+  flex-shrink: 0;
+  padding-right: 16rpx;
+  border-right: 1rpx solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
 }
-.two-left.data-v-4978fed5 { cursor: pointer;
+.two-left.data-v-4978fed5 {
+  cursor: pointer;
 }
-.two-label.data-v-4978fed5 { font-size: 24rpx; color: #999;
+.two-label.data-v-4978fed5 {
+  font-size: 24rpx;
+  color: #999;
 }
-.two-title.data-v-4978fed5 { font-size: 30rpx; color: #333; font-weight: 600;
+.two-title.data-v-4978fed5 {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 600;
 }
-.two-right.data-v-4978fed5 { flex: 1; min-height: 0; overflow-y: auto; padding-left: 16rpx;
+.two-right.data-v-4978fed5 {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-left: 16rpx;
 }
-.two-hint.data-v-4978fed5 { height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 26rpx;
+.two-hint.data-v-4978fed5 {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 26rpx;
 }
-.a-title.data-v-4978fed5 { font-size: 34rpx; font-weight: 600; color: #333; display: block;
+.a-title.data-v-4978fed5 {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
 }
-.a-time.data-v-4978fed5 { font-size: 24rpx; color: #999; display: block; margin-top: 8rpx; margin-bottom: 16rpx;
+.a-time.data-v-4978fed5 {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-top: 8rpx;
+  margin-bottom: 16rpx;
 }
-.a-content.data-v-4978fed5 { font-size: 28rpx; color: #333; line-height: 1.6; white-space: pre-wrap;
+.a-content.data-v-4978fed5 {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 /* 房间名输入样式（H5和小程序通用） */
@@ -171,13 +258,38 @@
 }
 
 
-.mp-cate-nav.data-v-4978fed5 { white-space: nowrap; padding: 12rpx 20rpx; background: #fff; position: -webkit-sticky; position: sticky; top: 0; z-index: 50;
+.mp-cate-nav.data-v-4978fed5 {
+  white-space: nowrap;
+  padding: 12rpx 20rpx;
+  background: #fff;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
-.mp-cate-item.data-v-4978fed5 { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 14rpx 18rpx; margin-right: 12rpx; border-radius: 16rpx; background: #fff; color: #333; font-size: 26rpx; box-shadow: 0 4rpx 12rpx rgba(0,0,0,.04);
+.mp-cate-item.data-v-4978fed5 {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14rpx 18rpx;
+  margin-right: 12rpx;
+  border-radius: 16rpx;
+  background: #fff;
+  color: #333;
+  font-size: 26rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .04);
 }
-.mp-cate-thumb.data-v-4978fed5 { width: 96rpx; height: 96rpx; background: #f5f5f5; border-radius: 12rpx;
+.mp-cate-thumb.data-v-4978fed5 {
+  width: 96rpx;
+  height: 96rpx;
+  background: #f5f5f5;
+  border-radius: 12rpx;
 }
-.mp-cate-name.data-v-4978fed5 { margin-top: 8rpx;
+.mp-cate-name.data-v-4978fed5 {
+  margin-top: 8rpx;
 }
-.mp-cate-item.active.data-v-4978fed5 { background: #ffe9e3; color: #ff5000;
+.mp-cate-item.active.data-v-4978fed5 {
+  background: #ffe9e3;
+  color: #ff5000;
 }

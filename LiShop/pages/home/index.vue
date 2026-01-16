@@ -8,40 +8,46 @@
       <!-- 顶部 Header -->
       <view class="h5-header">
         <view class="h5-logo-area">
-          <image src="/static/logo.png?v=20251211" style="width:260rpx;height:100rpx;margin-right:20rpx;" mode="aspectFit" />
+          <image src="/static/logo.png?v=20251211" style="width:260rpx;height:100rpx;margin-right:20rpx;"
+            mode="aspectFit" />
           <!-- <text class="logo-text">SHOP</text> -->
         </view>
         <view class="h5-search-wrapper">
           <view class="search-bar-box">
-              <view class="search-type">宝贝<text class="arrow-down">∨</text></view>
-              <view class="divider-v"></view>
-              <input id="og-search" class="search-input-field" v-model="keyword" confirm-type="search" @confirm="onSearch(null)" />
-              <button class="search-btn-black" @click="onSearch(null)">搜索</button>
-           </view>
+            <view class="search-type">宝贝<text class="arrow-down">∨</text></view>
+            <view class="divider-v"></view>
+            <input id="og-search" class="search-input-field" v-model="keyword" confirm-type="search"
+              @confirm="onSearch(null)" />
+            <button class="search-btn-black" @click="onSearch(null)">搜索</button>
+          </view>
         </view>
       </view>
 
       <view class="h5-middle-layout">
         <view class="side-user">
-                  <view class="side-cate">
-          <view class="cate-title">
-             <text style="color:#000;margin-right:8rpx;font-weight:900;">☰</text>分类
-          </view>
-          <view id="og-cate" class="cate-list" @mouseleave="onCateListLeave">
-            <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
-              <text class="cate-dot">●</text>
-              <text class="cate-name">{{ c.name }}</text>
+          <view class="side-cate">
+            <view class="cate-title">
+              <text style="color:#000;margin-right:8rpx;font-weight:900;">☰</text>分类
+            </view>
+            <view id="og-cate" class="cate-list" @mouseleave="onCateListLeave">
+              <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
+                <text class="cate-dot">●</text>
+                <text class="cate-name">{{ c.name }}</text>
+              </view>
             </view>
           </view>
-        </view>
 
         </view>
 
 
         <view class="center-content">
-          <view id="og-banner"><BannerSwiper :images="banners" class="full-height-banner" /></view>
-          
-          <view v-if="activeCateId" class="sub-panel" :style="{ top: panelTop + 'px', left: panelLeft + 'px', right: panelRight + 'px' }" @mouseenter="onPanelEnter" @mouseleave="onPanelLeave">
+          <view id="og-banner" style="height:100%">
+            <BannerSwiper :images="banners" class="full-height-banner" />
+          </view>
+
+          <view v-if="activeCateId" class="sub-panel"
+            :style="{ top: panelTop + 'px', left: panelLeft + 'px', right: panelRight + 'px' }"
+            @mouseenter="onPanelEnter" @mouseleave="onPanelLeave">
             <view class="panel-title">
               <text>{{ activeCateName || '二级分类' }}</text>
             </view>
@@ -58,38 +64,38 @@
         <view class="side-user">
           <view class="user-card-new">
             <view class="uc-header">
-               <!-- <image class="uc-avatar" :src="user?.avatar || '/static/logo.png'" @click="onAvatarClick" /> -->
-               <view class="uc-info">
-                  <text class="uc-greet">下午好 {{ user?.username || 'XXX' }}</text>
-               </view>
+              <!-- <image class="uc-avatar" :src="user?.avatar || '/static/logo.png'" @click="onAvatarClick" /> -->
+              <view class="uc-info">
+                <text class="uc-greet">下午好 {{ user?.username || 'XXX' }}</text>
+              </view>
             </view>
-            
+
             <view id="og-quick" class="uc-links">
-               <navigator class="uc-link-item" url="/pages/profile/index" open-type="switchTab">
-                  <text class="uc-icon">👤</text>
-                  <text>我的</text>
-               </navigator>
-               <navigator class="uc-link-item" url="/pages/cart/index" open-type="switchTab">
-                  <text class="uc-icon">🛒</text>
-                  <text>我的购物车</text>
-               </navigator>
-               <navigator class="uc-link-item" url="/pages/order/index">
-                  <text class="uc-icon">📋</text>
-                  <text>我的订单</text>
-               </navigator>
-               <navigator class="uc-link-item" url="/pages/favorites/index">
-                  <text class="uc-icon" style="margin-left: 5px;">★</text>
-                  <text style="margin-left: 1px;">我的收藏</text>
-               </navigator>
-               <view class="uc-link-item" @click="openAnnouncementModalH5">
-                  <text class="uc-icon">📣</text>
-                  <text>公告</text>
-               </view>
-               <view class="uc-link-item" @click="triggerOnboarding">
-                  <text class="uc-icon">🎓</text>
-                  <text>新手教程</text>
-               </view>
-               <!-- <navigator class="uc-link-item" url="/pages/messages/index">
+              <navigator class="uc-link-item" url="/pages/profile/index" open-type="switchTab">
+                <text class="uc-icon">👤</text>
+                <text>我的</text>
+              </navigator>
+              <navigator class="uc-link-item" url="/pages/cart/index" open-type="switchTab">
+                <text class="uc-icon">🛒</text>
+                <text>我的购物车</text>
+              </navigator>
+              <navigator class="uc-link-item" url="/pages/order/index">
+                <text class="uc-icon">📋</text>
+                <text>我的订单</text>
+              </navigator>
+              <navigator class="uc-link-item" url="/pages/favorites/index">
+                <text class="uc-icon" style="margin-left: 5px;">★</text>
+                <text style="margin-left: 1px;">我的收藏</text>
+              </navigator>
+              <view class="uc-link-item" @click="openAnnouncementModalH5">
+                <text class="uc-icon">📣</text>
+                <text>公告</text>
+              </view>
+              <view class="uc-link-item" @click="triggerOnboarding">
+                <text class="uc-icon">🎓</text>
+                <text>新手教程</text>
+              </view>
+              <!-- <navigator class="uc-link-item" url="/pages/messages/index">
                    <text class="uc-icon">💬</text>
                   <text>信息</text>
                </navigator>
@@ -98,7 +104,7 @@
                   <text>设置</text>
                </navigator> -->
             </view>
-            
+
             <button v-if="!user" class="uc-login-btn" @click="goLogin">立即登录</button>
             <button v-else class="uc-login-btn" @click="logout">退出登录</button>
           </view>
@@ -106,15 +112,15 @@
       </view>
 
       <view class="h5-bottom-section">
-          <view id="og-guess" class="guess-header">
-             <view class="guess-icon">❤</view>
-             <text class="guess-title">猜你喜欢</text>
+        <view id="og-guess" class="guess-header">
+          <view class="guess-icon">❤</view>
+          <text class="guess-title">猜你喜欢</text>
+        </view>
+        <view class="grid2">
+          <view class="grid2-item" v-for="(p, idx) in recommendList" :key="idx">
+            <ProductCard :product="p" />
           </view>
-          <view class="grid2">
-            <view class="grid2-item" v-for="(p, idx) in recommendList" :key="idx">
-              <ProductCard :product="p" />
-            </view>
-          </view>
+        </view>
       </view>
     </view>
     <FloatingNav />
@@ -150,10 +156,14 @@
     <!-- 其他平台保持原布局 -->
     <!-- #ifndef H5 -->
     <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
-    <view id="og-search"><SearchBar v-model="keyword" @search="onSearch" /></view>
-    <view id="og-banner"><BannerSwiper :images="banners" /></view>
+    <view id="og-search">
+      <SearchBar v-model="keyword" @search="onSearch" />
+    </view>
+    <view id="og-banner">
+      <BannerSwiper :images="banners" />
+    </view>
     <scroll-view id="og-mp-cate" class="mp-cate-nav" scroll-x>
-      <view class="mp-cate-item" v-for="(c,i) in subCategoryList" :key="'mc'+i" @click="openCategory(c)">
+      <view class="mp-cate-item" v-for="(c, i) in subCategoryList" :key="'mc' + i" @click="openCategory(c)">
         <image class="mp-cate-thumb" :src="c.icon || '/static/logo.png'" mode="aspectFill" />
         <text class="mp-cate-name">{{ c.name }}</text>
       </view>
@@ -185,15 +195,9 @@
       </view>
     </view>
     <!-- #endif -->
-    <OnboardingGuide
-      v-if="showOnboarding"
-      :steps="onboardingSteps"
-      :targets="onboardingRects"
-      :initialIndex="onboardingStepIndex"
-      @advance="handleOnboardingNext"
-      @back="handleOnboardingPrev"
-      @close="handleOnboardingClose"
-    />
+    <OnboardingGuide v-if="showOnboarding" :steps="onboardingSteps" :targets="onboardingRects"
+      :initialIndex="onboardingStepIndex" @advance="handleOnboardingNext" @back="handleOnboardingPrev"
+      @close="handleOnboardingClose" />
   </view>
 </template>
 
@@ -277,7 +281,7 @@ export default {
         this.triggerOnboarding()
         uni.removeStorageSync('just_logged_in')
       }
-    } catch (e) {}
+    } catch (e) { }
   },
   computed: {
     displayTime() {
@@ -299,7 +303,7 @@ export default {
     // #ifdef H5
     try {
       const p = uni.hideTabBar({ animation: false })
-      if (p && typeof p.then === 'function') { p.catch(() => {}) }
+      if (p && typeof p.then === 'function') { p.catch(() => { }) }
     } catch (e) { }
     try { this.user = uni.getStorageSync('user') || null } catch (e) { }
     try { this.roomName = uni.getStorageSync('currentRoom') || '' } catch (e) { }
@@ -318,7 +322,7 @@ export default {
         this.triggerOnboarding()
         uni.removeStorageSync('just_logged_in')
       }
-    } catch (e) {}
+    } catch (e) { }
     // 拉取分类与推荐商品（最小接入，不影响现有交互）
     try {
       const p1 = getVisibleCategories({ page: 1, page_size: 20, sort_by: 'id' })
@@ -326,8 +330,8 @@ export default {
           const items = Array.isArray(res?.data?.items) ? res.data.items : []
           const mapped = items.map((it, i) => ({
             name: it?.name || ('分类' + (i + 1)),
-            icon: (typeof it?.image_url === 'string' ? it.image_url.replace(/`/g, '').trim() : '') 
-              || (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') 
+            icon: (typeof it?.image_url === 'string' ? it.image_url.replace(/`/g, '').trim() : '')
+              || (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '')
               || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : ''),
             categories_id: it?.categories_id || it?.id || ''
           }))
@@ -335,7 +339,7 @@ export default {
           this.subCategoryList = mapped
         })
         .catch(() => { })
-      
+
       const p2 = getCarousel()
         .then((res) => {
           const items = Array.isArray(res?.data?.items) ? res.data.items : []
@@ -373,198 +377,198 @@ export default {
   onHide() {
     this.showOnboarding = false
   },
-    methods: {
-      triggerOnboarding() {
-        this.showOnboarding = true
-        this.onboardingStepIndex = 0
-        try {
-          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
-          uni.setStorageSync('onboarding_index', 0)
-        } catch (e) {}
-        this.$nextTick(() => {
-          this.refreshOnboardingTargets()
-          setTimeout(() => { this.refreshOnboardingTargets() }, 120)
-        })
-      },
-      refreshOnboardingTargets() {
-        try {
-          let isH5 = false
-          try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
-          if (isH5) {
-            const sel = s => typeof document !== 'undefined' ? document.querySelector(s) : null
-            const baseEl = (typeof document !== 'undefined' ? (document.getElementById('app') || document.querySelector('.uni-app') || document.body) : null)
-            const baseRect = baseEl && baseEl.getBoundingClientRect ? baseEl.getBoundingClientRect() : { left: 0, top: 0 }
-            const ox = baseRect.left || 0
-            const oy = baseRect.top || 0
-            const rectOf = el => {
-              if (!el) return null
-              const r = el.getBoundingClientRect()
-              return { left: r.left - ox, top: r.top - oy, width: r.width, height: r.height }
-            }
-            const rects = [
-              rectOf(sel('.search-input-field')) || rectOf(sel('#og-search')),
-              rectOf(sel('#og-cate')),
-              rectOf(sel('.center-content')),
-              rectOf(sel('#og-guess .guess-title')) || rectOf(sel('#og-guess')),
-              rectOf(sel('#og-quick'))
-            ].filter(Boolean)
-            this.onboardingRects = rects
-          } else {
-            const q = uni.createSelectorQuery().in(this)
-            q.select('#og-search').boundingClientRect()
-            q.select('#og-mp-cate').boundingClientRect()
-            q.select('#og-banner').boundingClientRect()
-            q.select('#og-mp-guess').boundingClientRect()
-            q.exec(res => {
-              const rects = (res || []).filter(Boolean).map(r => ({ left: r.left, top: r.top, width: r.width, height: r.height }))
-              this.onboardingRects = rects
-            })
+  methods: {
+    triggerOnboarding() {
+      this.showOnboarding = true
+      this.onboardingStepIndex = 0
+      try {
+        uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        uni.setStorageSync('onboarding_index', 0)
+      } catch (e) { }
+      this.$nextTick(() => {
+        this.refreshOnboardingTargets()
+        setTimeout(() => { this.refreshOnboardingTargets() }, 120)
+      })
+    },
+    refreshOnboardingTargets() {
+      try {
+        let isH5 = false
+        try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+        if (isH5) {
+          const sel = s => typeof document !== 'undefined' ? document.querySelector(s) : null
+          const baseEl = (typeof document !== 'undefined' ? (document.getElementById('app') || document.querySelector('.uni-app') || document.body) : null)
+          const baseRect = baseEl && baseEl.getBoundingClientRect ? baseEl.getBoundingClientRect() : { left: 0, top: 0 }
+          const ox = baseRect.left || 0
+          const oy = baseRect.top || 0
+          const rectOf = el => {
+            if (!el) return null
+            const r = el.getBoundingClientRect()
+            return { left: r.left - ox, top: r.top - oy, width: r.width, height: r.height }
           }
-        } catch (e) { this.onboardingRects = [] }
-      },
-      handleOnboardingNext(nextIndex) {
-        const idx = Number(nextIndex || 0)
-        this.onboardingStepIndex = idx
-        try {
-          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
-          uni.setStorageSync('onboarding_index', idx)
-        } catch (e) {}
-        const isH5 = typeof window !== 'undefined'
-        if (!isH5) {
-          if (idx === 4) {
-            this.openFirstProductFromOnboarding()
-          } else if (idx === 5) {
-            this.goRoomSelectFromOnboarding()
-          } else if (idx === 6) {
-            this.goOrderFromOnboarding()
-          } else if (idx === 7) {
-            this.goProfileInfoFromOnboarding()
-          } else if (idx === 8) {
-            this.goProfileFeatureFromOnboarding()
-          } else if (idx === 9) {
-            this.goProfileAddressFromOnboarding()
-          } else {
-            this.$nextTick(() => { this.refreshOnboardingTargets() })
-          }
+          const rects = [
+            rectOf(sel('.search-input-field')) || rectOf(sel('#og-search')),
+            rectOf(sel('#og-cate')),
+            rectOf(sel('.center-content')),
+            rectOf(sel('#og-guess .guess-title')) || rectOf(sel('#og-guess')),
+            rectOf(sel('#og-quick'))
+          ].filter(Boolean)
+          this.onboardingRects = rects
         } else {
-          if (idx === 5) {
-            this.openFirstProductFromOnboarding()
-          } else if (idx === 6) {
-            this.goRoomSelectFromOnboarding()
-          } else if (idx === 7) {
-            this.goOrderFromOnboarding()
-          } else if (idx === 8) {
-            this.goProfileInfoFromOnboarding()
-          } else if (idx === 9) {
-            this.goProfileFeatureFromOnboarding()
-          } else if (idx === 10) {
-            this.goProfileAddressFromOnboarding()
-          } else {
-            this.$nextTick(() => { this.refreshOnboardingTargets() })
-          }
+          const q = uni.createSelectorQuery().in(this)
+          q.select('#og-search').boundingClientRect()
+          q.select('#og-mp-cate').boundingClientRect()
+          q.select('#og-banner').boundingClientRect()
+          q.select('#og-mp-guess').boundingClientRect()
+          q.exec(res => {
+            const rects = (res || []).filter(Boolean).map(r => ({ left: r.left, top: r.top, width: r.width, height: r.height }))
+            this.onboardingRects = rects
+          })
         }
-      },
-      handleOnboardingPrev(prevIndex) {
-        const idx = Number(prevIndex || 0)
-        if (idx < 0) return
-        this.onboardingStepIndex = idx
-        try { uni.setStorageSync('onboarding_index', idx) } catch (e) {}
-        this.$nextTick(() => { this.refreshOnboardingTargets() })
-      },
-      handleOnboardingClose() {
+      } catch (e) { this.onboardingRects = [] }
+    },
+    handleOnboardingNext(nextIndex) {
+      const idx = Number(nextIndex || 0)
+      this.onboardingStepIndex = idx
+      try {
+        uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        uni.setStorageSync('onboarding_index', idx)
+      } catch (e) { }
+      const isH5 = typeof window !== 'undefined'
+      if (!isH5) {
+        if (idx === 4) {
+          this.openFirstProductFromOnboarding()
+        } else if (idx === 5) {
+          this.goRoomSelectFromOnboarding()
+        } else if (idx === 6) {
+          this.goOrderFromOnboarding()
+        } else if (idx === 7) {
+          this.goProfileInfoFromOnboarding()
+        } else if (idx === 8) {
+          this.goProfileFeatureFromOnboarding()
+        } else if (idx === 9) {
+          this.goProfileAddressFromOnboarding()
+        } else {
+          this.$nextTick(() => { this.refreshOnboardingTargets() })
+        }
+      } else {
+        if (idx === 5) {
+          this.openFirstProductFromOnboarding()
+        } else if (idx === 6) {
+          this.goRoomSelectFromOnboarding()
+        } else if (idx === 7) {
+          this.goOrderFromOnboarding()
+        } else if (idx === 8) {
+          this.goProfileInfoFromOnboarding()
+        } else if (idx === 9) {
+          this.goProfileFeatureFromOnboarding()
+        } else if (idx === 10) {
+          this.goProfileAddressFromOnboarding()
+        } else {
+          this.$nextTick(() => { this.refreshOnboardingTargets() })
+        }
+      }
+    },
+    handleOnboardingPrev(prevIndex) {
+      const idx = Number(prevIndex || 0)
+      if (idx < 0) return
+      this.onboardingStepIndex = idx
+      try { uni.setStorageSync('onboarding_index', idx) } catch (e) { }
+      this.$nextTick(() => { this.refreshOnboardingTargets() })
+    },
+    handleOnboardingClose() {
+      this.showOnboarding = false
+      try {
+        uni.removeStorageSync('onboarding_continue')
+        uni.removeStorageSync('onboarding_target_selector')
+        uni.removeStorageSync('onboarding_step_text')
+        uni.removeStorageSync('onboarding_steps')
+        uni.removeStorageSync('onboarding_index')
+      } catch (e) { }
+      try {
+        if (uni && uni.reLaunch) { uni.reLaunch({ url: '/pages/home/index' }); return }
+        if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+        if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+      } catch (e) { }
+    },
+    goHomeFromOnboarding() {
+      try { if (uni && uni.switchTab) uni.switchTab({ url: '/pages/home/index' }) } catch (e) { }
+      this.$nextTick(() => { this.refreshOnboardingTargets() })
+    },
+    openFirstProductFromOnboarding() {
+      try {
         this.showOnboarding = false
+        const first = (this.recommendList && this.recommendList[0]) || null
+        if (!first) return
+        const id = encodeURIComponent(first.id || '')
         try {
-          uni.removeStorageSync('onboarding_continue')
-          uni.removeStorageSync('onboarding_target_selector')
-          uni.removeStorageSync('onboarding_step_text')
-          uni.removeStorageSync('onboarding_steps')
-          uni.removeStorageSync('onboarding_index')
-        } catch (e) {}
-        try {
-          if (uni && uni.reLaunch) { uni.reLaunch({ url: '/pages/home/index' }); return }
-          if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
-          if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
-        } catch (e) {}
-      },
-      goHomeFromOnboarding() {
-        try { if (uni && uni.switchTab) uni.switchTab({ url: '/pages/home/index' }) } catch (e) {}
-        this.$nextTick(() => { this.refreshOnboardingTargets() })
-      },
-      openFirstProductFromOnboarding() {
-        try {
-          this.showOnboarding = false
-          const first = (this.recommendList && this.recommendList[0]) || null
-          if (!first) return
-          const id = encodeURIComponent(first.id || '')
-          try {
-            uni.setStorageSync('onboarding_continue', true)
-            uni.setStorageSync('onboarding_target_selector', '#og-product-add')
-            uni.setStorageSync('onboarding_step_text', '商品详情页查看规格与加入购物车')
-            uni.setStorageSync('onboarding_steps', this.onboardingSteps)
-            uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
-          } catch (e) {}
-          if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/product/index?id=' + id })
-        } catch (e) {}
-      },
-      goRoomSelectFromOnboarding() {
-        try {
-          this.showOnboarding = false
           uni.setStorageSync('onboarding_continue', true)
-          uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
-          uni.setStorageSync('onboarding_step_text', '房间选择，购物车根据房间名进行分组')
+          uni.setStorageSync('onboarding_target_selector', '#og-product-add')
+          uni.setStorageSync('onboarding_step_text', '商品详情页查看规格与加入购物车')
           uni.setStorageSync('onboarding_steps', this.onboardingSteps)
           uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
-        } catch (e) {}
-        try { if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/product/index' }) } catch (e) {}
-      },
-      goOrderFromOnboarding() {
-        try {
-          this.showOnboarding = false
-          uni.setStorageSync('onboarding_continue', true)
-          uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
-          uni.setStorageSync('onboarding_step_text', '订单标签切换与查看')
-          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
-          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
-        } catch (e) {}
-        try { if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/order/index' }) } catch (e) {}
-      },
-      goProfileInfoFromOnboarding() {
-        try {
-          this.showOnboarding = false
-          uni.setStorageSync('onboarding_continue', true)
-          uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
-          uni.setStorageSync('onboarding_step_text', '个人信息管理')
-          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
-          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
-          if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
-          else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
-        } catch (e) {}
-      },
-      goProfileFeatureFromOnboarding() {
-        try {
-          this.showOnboarding = false
-          uni.setStorageSync('onboarding_continue', true)
-          uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
-          uni.setStorageSync('onboarding_step_text', '功能区')
-          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
-          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
-          if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
-          else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
-        } catch (e) {}
-      },
-      goProfileAddressFromOnboarding() {
-        try {
-          this.showOnboarding = false
-          uni.setStorageSync('onboarding_continue', true)
-          uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
-          uni.setStorageSync('onboarding_step_text', '收货地址管理')
-          uni.setStorageSync('onboarding_steps', this.onboardingSteps)
-          uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
-          if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
-          else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
-        } catch (e) {}
-      },
-      hoverCategory(cat, e) {
+        } catch (e) { }
+        if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/product/index?id=' + id })
+      } catch (e) { }
+    },
+    goRoomSelectFromOnboarding() {
+      try {
+        this.showOnboarding = false
+        uni.setStorageSync('onboarding_continue', true)
+        uni.setStorageSync('onboarding_target_selector', '#og-room-modal-list')
+        uni.setStorageSync('onboarding_step_text', '房间选择，购物车根据房间名进行分组')
+        uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+      } catch (e) { }
+      try { if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/product/index' }) } catch (e) { }
+    },
+    goOrderFromOnboarding() {
+      try {
+        this.showOnboarding = false
+        uni.setStorageSync('onboarding_continue', true)
+        uni.setStorageSync('onboarding_target_selector', '#og-order-tabs')
+        uni.setStorageSync('onboarding_step_text', '订单标签切换与查看')
+        uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+      } catch (e) { }
+      try { if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/order/index' }) } catch (e) { }
+    },
+    goProfileInfoFromOnboarding() {
+      try {
+        this.showOnboarding = false
+        uni.setStorageSync('onboarding_continue', true)
+        uni.setStorageSync('onboarding_target_selector', '#og-profile-info')
+        uni.setStorageSync('onboarding_step_text', '个人信息管理')
+        uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+        if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+        else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
+      } catch (e) { }
+    },
+    goProfileFeatureFromOnboarding() {
+      try {
+        this.showOnboarding = false
+        uni.setStorageSync('onboarding_continue', true)
+        uni.setStorageSync('onboarding_target_selector', '#og-profile-menu')
+        uni.setStorageSync('onboarding_step_text', '功能区')
+        uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+        if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+        else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
+      } catch (e) { }
+    },
+    goProfileAddressFromOnboarding() {
+      try {
+        this.showOnboarding = false
+        uni.setStorageSync('onboarding_continue', true)
+        uni.setStorageSync('onboarding_target_selector', '#og-profile-addr')
+        uni.setStorageSync('onboarding_step_text', '收货地址管理')
+        uni.setStorageSync('onboarding_steps', this.onboardingSteps)
+        uni.setStorageSync('onboarding_index', this.onboardingStepIndex)
+        if (uni && uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
+        else if (uni && uni.navigateTo) uni.navigateTo({ url: '/pages/profile/index' })
+      } catch (e) { }
+    },
+    hoverCategory(cat, e) {
       const id = cat?.categories_id || ''
       if (!id) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
       if (this.activeCateId === id && (this.leftChildren && this.leftChildren.length)) return
@@ -584,34 +588,34 @@ export default {
           this.panelLeft = Math.max(0, rect.left - 20)
           this.panelRight = Math.max(0, document.documentElement.clientWidth - (this.panelLeft + w))
         }
-      } catch (err) {}
+      } catch (err) { }
       // #endif
       try {
         getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
           .then((res) => {
             const items = Array.isArray(res?.data?.items) ? res.data.items : []
-            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '', icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : '' ) }))
+            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '', icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : '') }))
           })
           .catch(() => { this.leftChildren = [] })
       } catch (e) { this.leftChildren = [] }
-      },
-      onCateListLeave() {
-        try { if (this.leaveTimer) { clearTimeout(this.leaveTimer) } } catch (e) {}
-        this.leaveTimer = setTimeout(() => { if (!this.hoveringPanel) this.closeCategory() }, 120)
-      },
-      onPanelEnter() {
-        this.hoveringPanel = true
-        try { if (this.leaveTimer) { clearTimeout(this.leaveTimer) } } catch (e) {}
-      },
-      onPanelLeave() {
-        this.hoveringPanel = false
-        this.closeCategory()
-      },
-      closeCategory() {
-        this.activeCateId = ''
-        this.activeCateName = ''
-        this.leftChildren = []
-      },
+    },
+    onCateListLeave() {
+      try { if (this.leaveTimer) { clearTimeout(this.leaveTimer) } } catch (e) { }
+      this.leaveTimer = setTimeout(() => { if (!this.hoveringPanel) this.closeCategory() }, 120)
+    },
+    onPanelEnter() {
+      this.hoveringPanel = true
+      try { if (this.leaveTimer) { clearTimeout(this.leaveTimer) } } catch (e) { }
+    },
+    onPanelLeave() {
+      this.hoveringPanel = false
+      this.closeCategory()
+    },
+    closeCategory() {
+      this.activeCateId = ''
+      this.activeCateName = ''
+      this.leftChildren = []
+    },
     onSearch(val) {
       const q = (val || this.keyword || '').trim()
       if (!q) { uni.showToast({ title: '请输入关键字', icon: 'none' }); return }
@@ -641,11 +645,11 @@ export default {
             this.announcement = null
           }
         }).catch(() => { this.announcement = null })
-        .finally(() => {
-          this.announcementLoading = false
-          this.showAnnouncementModal = true
-          this.showAnnContent = true
-        })
+          .finally(() => {
+            this.announcementLoading = false
+            this.showAnnouncementModal = true
+            this.showAnnContent = true
+          })
       } catch (e) {
         this.announcement = null
         this.announcementLoading = false
@@ -748,7 +752,7 @@ export default {
 <style scoped>
 .page {
   /* background: white; */
-  
+
   /* #ifdef H5 */
   min-height: 100vh;
   /* #endif */
@@ -758,7 +762,16 @@ export default {
   /* #endif */
 }
 
-.page-bg { position: fixed; left: 0; right: 0; top: 0; bottom: 0; width: 100vw; height: 100vh; z-index: -1; }
+.page-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+}
 
 /* H5 New Layout Styles */
 /* #ifdef H5 */
@@ -775,13 +788,15 @@ export default {
 .h5-header {
   display: flex;
   align-items: center;
-  height: 140rpx; /* Increased height for better top spacing */
+  height: 140rpx;
+  /* Increased height for better top spacing */
   padding: 30rpx 0;
   /* margin-bottom: 20rpx; */
 }
 
 .h5-logo-area {
-  width: 300px; /* Match side-cate width */
+  width: 300px;
+  /* Match side-cate width */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -799,7 +814,8 @@ export default {
   flex: 1;
   display: flex;
   justify-content: flex-start;
-  padding-left: 20rpx; /* Align with gap */
+  padding-left: 20rpx;
+  /* Align with gap */
   padding-right: 120rpx;
 }
 
@@ -871,7 +887,7 @@ export default {
   padding: 20rpx;
   display: flex;
   flex-direction: column;
-  width:60%;
+  width: 60%;
   /* align-items: center; */
   /* text-align: center; */
   height: 100%;
@@ -904,7 +920,8 @@ export default {
   padding: 16rpx 0;
   cursor: pointer;
   color: #333;
-  font-size: 32rpx; /* 分类字体加大 */
+  font-size: 32rpx;
+  /* 分类字体加大 */
   transition: all 0.2s;
   /* justify-content: center; */
 }
@@ -914,8 +931,15 @@ export default {
   font-weight: bold;
 }
 
-.cate-dot { margin-right: 12rpx; font-size: 24rpx; color: #000; }
-.cate-name { font-size: 32rpx; }
+.cate-dot {
+  margin-right: 12rpx;
+  font-size: 24rpx;
+  color: #000;
+}
+
+.cate-name {
+  font-size: 32rpx;
+}
 
 /* Center Banner */
 .center-content {
@@ -930,7 +954,8 @@ export default {
   height: 100%;
 }
 
-.center-content :deep(.banner), .center-content :deep(.swiper) {
+.center-content :deep(.banner),
+.center-content :deep(.swiper) {
   height: 100% !important;
   padding: 0 !important;
 }
@@ -972,7 +997,7 @@ export default {
   margin-right: 20rpx;
   background: #fff;
   border: 2rpx solid #fff;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
 
 .uc-info {
@@ -1031,7 +1056,7 @@ export default {
   height: 80rpx;
   line-height: 80rpx;
   margin-top: auto;
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.2);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
 }
 
 .uc-login-btn:active {
@@ -1081,10 +1106,10 @@ export default {
 .sub-panel {
   position: fixed;
   z-index: 999;
-  background: rgba(255,255,255,0.98);
+  background: rgba(255, 255, 255, 0.98);
   border: 1rpx solid #eee;
   padding: 40rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
   border-radius: 12rpx;
   min-width: 600rpx;
   margin-left: -90rpx;
@@ -1126,9 +1151,11 @@ export default {
 } */
 
 /* Hide original components overrides */
-.main :deep(.search-bar), .main :deep(.banner) {
+.main :deep(.search-bar),
+.main :deep(.banner) {
   display: none;
 }
+
 /* #endif */
 
 .block {
@@ -1192,23 +1219,135 @@ export default {
   display: none !important;
 }
 
-.h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.h5-modal { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; height: 60vh; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #f0f0f0; margin-bottom: 16rpx; }
-.modal-title { font-size: 32rpx; font-weight: 700; color: #333; }
-.modal-close { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #999; cursor: pointer; }
-.modal-close:active { color: #333; }
-.modal-body { flex: 1; min-height: 0; overflow-y: auto; }
-.modal-body-two { display: flex; gap: 16rpx; height: 100%; }
-.two-left { width: 280rpx; flex-shrink: 0; padding-right: 16rpx; border-right: 1rpx solid #f0f0f0; display: flex; flex-direction: column; gap: 12rpx; }
-.two-left { cursor: pointer; }
-.two-label { font-size: 24rpx; color: #999; }
-.two-title { font-size: 30rpx; color: #333; font-weight: 600; }
-.two-right { flex: 1; min-height: 0; overflow-y: auto; padding-left: 16rpx; }
-.two-hint { height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 26rpx; }
-.a-title { font-size: 34rpx; font-weight: 600; color: #333; display: block; }
-.a-time { font-size: 24rpx; color: #999; display: block; margin-top: 8rpx; margin-bottom: 16rpx; }
-.a-content { font-size: 28rpx; color: #333; line-height: 1.6; white-space: pre-wrap; }
+.h5-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.h5-modal {
+  width: 820rpx;
+  max-width: 90vw;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  height: 60vh;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  margin-bottom: 16rpx;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.modal-close {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #999;
+  cursor: pointer;
+}
+
+.modal-close:active {
+  color: #333;
+}
+
+.modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.modal-body-two {
+  display: flex;
+  gap: 16rpx;
+  height: 100%;
+}
+
+.two-left {
+  width: 280rpx;
+  flex-shrink: 0;
+  padding-right: 16rpx;
+  border-right: 1rpx solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.two-left {
+  cursor: pointer;
+}
+
+.two-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.two-title {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.two-right {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-left: 16rpx;
+}
+
+.two-hint {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 26rpx;
+}
+
+.a-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+}
+
+.a-time {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-top: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.a-content {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
 
 /* 房间名输入样式（H5和小程序通用） */
 .room-block {
@@ -1290,9 +1429,42 @@ export default {
 }
 </style>
 <style scoped>
-.mp-cate-nav { white-space: nowrap; padding: 12rpx 20rpx; background: #fff; position: sticky; top: 0; z-index: 50; }
-.mp-cate-item { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 14rpx 18rpx; margin-right: 12rpx; border-radius: 16rpx; background: #fff; color: #333; font-size: 26rpx; box-shadow: 0 4rpx 12rpx rgba(0,0,0,.04); }
-.mp-cate-thumb { width: 96rpx; height: 96rpx; background: #f5f5f5; border-radius: 12rpx; }
-.mp-cate-name { margin-top: 8rpx; }
-.mp-cate-item.active { background: #ffe9e3; color: #ff5000; }
+.mp-cate-nav {
+  white-space: nowrap;
+  padding: 12rpx 20rpx;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.mp-cate-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14rpx 18rpx;
+  margin-right: 12rpx;
+  border-radius: 16rpx;
+  background: #fff;
+  color: #333;
+  font-size: 26rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .04);
+}
+
+.mp-cate-thumb {
+  width: 96rpx;
+  height: 96rpx;
+  background: #f5f5f5;
+  border-radius: 12rpx;
+}
+
+.mp-cate-name {
+  margin-top: 8rpx;
+}
+
+.mp-cate-item.active {
+  background: #ffe9e3;
+  color: #ff5000;
+}
 </style>
