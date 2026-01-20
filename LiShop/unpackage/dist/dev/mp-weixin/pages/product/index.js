@@ -156,7 +156,10 @@ const _sfc_main = {
     displayTopPrice() {
       var _a;
       const sel = this.selectedSpec;
-      const basePerM = sel ? Number(sel.price || 0) || 0 : Number(((_a = this.product) == null ? void 0 : _a.price) || 0) || 0;
+      const rawBase = sel ? sel.price : (_a = this.product) == null ? void 0 : _a.price;
+      if (rawBase === "-" || rawBase === "—")
+        return "-";
+      const basePerM = Number(rawBase || 0) || 0;
       if (sel && sel.has_length === 1) {
         const rawStr = (this.specLength || "").replace(/[^0-9.]/g, "");
         const raw = rawStr ? Number(rawStr) : 0;
@@ -167,6 +170,12 @@ const _sfc_main = {
         return `${basePerM.toFixed(2)}/m`;
       }
       return basePerM.toFixed(2);
+    },
+    displayTopPriceWithSymbol() {
+      const s = this.displayTopPrice;
+      if (s === "-")
+        return "-";
+      return "¥" + s;
     }
   },
   watch: {
@@ -724,8 +733,36 @@ const _sfc_main = {
       } catch (e) {
       }
     },
+    ensureLoggedIn() {
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const exp = common_vendor.index.getStorageSync("token_expiration") || 0;
+        const ok = !!u && (!exp || Date.now() < exp);
+        if (ok)
+          return true;
+        common_vendor.index.showModal({
+          title: "提示",
+          content: "点击前往登陆的话就跳转到登陆页面",
+          cancelText: "取消",
+          confirmText: "去登录",
+          success: (res) => {
+            if (res && res.confirm) {
+              try {
+                common_vendor.index.navigateTo({ url: "/pages/login/index" });
+              } catch (e) {
+              }
+            }
+          }
+        });
+        return false;
+      } catch (e) {
+        return false;
+      }
+    },
     addToCart() {
       var _a;
+      if (!this.ensureLoggedIn())
+        return;
       const spec = this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex] ? this.specs[this.selectedSpecIndex] : null;
       const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
       api_index.addCartItem({ product_id: pid, quantity: 1 }).then((res) => {
@@ -753,6 +790,8 @@ const _sfc_main = {
     },
     addToCartWithQty() {
       var _a;
+      if (!this.ensureLoggedIn())
+        return;
       const chosen = (this.roomName || "").trim();
       if (!chosen) {
         common_vendor.index.showToast({ title: "请先填写房间名", icon: "none" });
@@ -794,6 +833,8 @@ const _sfc_main = {
     },
     buyNow() {
       var _a, _b, _c;
+      if (!this.ensureLoggedIn())
+        return;
       try {
         const spec = this.selectedSpec;
         const pid = spec ? spec.product_id || ((_a = this.product) == null ? void 0 : _a.id) || "" : ((_b = this.product) == null ? void 0 : _b.id) || "";
@@ -1034,6 +1075,18 @@ const _sfc_main = {
       this.roomSelectorVisible = false;
       this.lockScroll = false;
     },
+    formatPriceWithSymbol(val) {
+      try {
+        if (val === "-" || val === "—")
+          return "-";
+        const n = Number(val);
+        if (isNaN(n))
+          return "-";
+        return "¥" + n.toFixed(2);
+      } catch (e) {
+        return "-";
+      }
+    },
     displaySpecPrice(it) {
       if (!it)
         return 0;
@@ -1155,7 +1208,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.t($data.isFavorite ? "★" : "☆"),
     h: $data.isFavorite ? 1 : "",
     i: common_vendor.o((...args) => $options.favProduct && $options.favProduct(...args)),
-    j: common_vendor.t($data.product.price.toFixed(2)),
+    j: common_vendor.t($options.formatPriceWithSymbol($data.product.price)),
     k: common_vendor.t($data.product.sales),
     l: common_vendor.t($data.product.id || "默认款"),
     m: common_vendor.t($data.product.title),
@@ -1189,7 +1242,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     E: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
       return common_vendor.e({
         a: common_vendor.t(it.name),
-        b: common_vendor.t(Number(it.price || 0).toFixed(2)),
+        b: common_vendor.t($options.formatPriceWithSymbol(it.price)),
         c: Number(it.original_price) > 0
       }, Number(it.original_price) > 0 ? {
         d: common_vendor.t(Number(it.original_price).toFixed(2))

@@ -26,7 +26,7 @@ const _sfc_main = {
           return {
             id: (it == null ? void 0 : it.available_product_id) || (it == null ? void 0 : it.product_id) || (it == null ? void 0 : it.id) || "f" + i,
             title: (it == null ? void 0 : it.name) || (it == null ? void 0 : it.title) || "收藏 " + (i + 1),
-            price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
+            price: (it == null ? void 0 : it.price) === "-" || (it == null ? void 0 : it.price) === "—" ? "-" : Number((it == null ? void 0 : it.price) ?? 0) || 0,
             image: img
           };
         });
@@ -41,6 +41,44 @@ const _sfc_main = {
     }
   },
   methods: {
+    ensureLoggedIn() {
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const exp = common_vendor.index.getStorageSync("token_expiration") || 0;
+        const ok = !!u && (!exp || Date.now() < exp);
+        if (ok)
+          return true;
+        common_vendor.index.showModal({
+          title: "提示",
+          content: "点击前往登陆的话就跳转到登陆页面",
+          cancelText: "取消",
+          confirmText: "去登录",
+          success: (res) => {
+            if (res && res.confirm) {
+              try {
+                common_vendor.index.navigateTo({ url: "/pages/login/index" });
+              } catch (e) {
+              }
+            }
+          }
+        });
+        return false;
+      } catch (e) {
+        return false;
+      }
+    },
+    formatPriceWithSymbol(val) {
+      try {
+        if (val === "-" || val === "—")
+          return "-";
+        const n = Number(val);
+        if (isNaN(n))
+          return "-";
+        return "¥" + n.toFixed(2);
+      } catch (e) {
+        return "-";
+      }
+    },
     goBack() {
       try {
         if (typeof window !== "undefined" && window.history && window.history.length > 1) {
@@ -65,6 +103,8 @@ const _sfc_main = {
       }
     },
     openProduct(id) {
+      if (!this.ensureLoggedIn())
+        return;
       if (!id)
         return;
       const url = "/pages/product/index?id=" + encodeURIComponent(id);
@@ -95,7 +135,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return {
         a: it.image,
         b: common_vendor.t(it.title),
-        c: common_vendor.t(it.price.toFixed(2)),
+        c: common_vendor.t($options.formatPriceWithSymbol(it.price)),
         d: i,
         e: common_vendor.o(($event) => $options.openProduct(it.id), i)
       };

@@ -7,7 +7,7 @@
         <image class="thumb" :src="it.image" mode="aspectFill" />
         <view class="info">
           <text class="name">{{ it.title }}</text>
-          <text class="price">¥{{ it.price.toFixed(2) }}</text>
+          <text class="price">{{ formatPriceWithSymbol(it.price) }}</text>
         </view>
       </view>
     </view>
@@ -45,7 +45,7 @@ export default {
           return {
             id: it?.available_product_id || it?.product_id || it?.id || ('f' + i),
             title: it?.name || it?.title || ('收藏 ' + (i + 1)),
-            price: Number(it?.price ?? 0) || 0,
+            price: (it?.price === '-' || it?.price === '—') ? '-' : (Number(it?.price ?? 0) || 0),
             image: img
           }
         })
@@ -55,6 +55,32 @@ export default {
     } catch (e) { this.loading = false; this.favorites = [] }
   },
   methods: {
+    ensureLoggedIn() {
+      try {
+        const u = uni.getStorageSync('user') || null
+        const exp = uni.getStorageSync('token_expiration') || 0
+        const ok = !!u && (!exp || Date.now() < exp)
+        if (ok) return true
+        uni.showModal({
+          title: '提示',
+          content: '点击前往登陆的话就跳转到登陆页面',
+          cancelText: '取消',
+          confirmText: '去登录',
+          success: (res) => {
+            if (res && res.confirm) { try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {} }
+          }
+        })
+        return false
+      } catch (e) { return false }
+    },
+    formatPriceWithSymbol(val) {
+      try {
+        if (val === '-' || val === '—') return '-'
+        const n = Number(val)
+        if (isNaN(n)) return '-'
+        return '¥' + n.toFixed(2)
+      } catch (e) { return '-' }
+    },
     goBack() {
       try {
         if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
@@ -67,6 +93,7 @@ export default {
       } catch (e) {}
     },
     openProduct(id) {
+      if (!this.ensureLoggedIn()) return
       if (!id) return
       const url = '/pages/product/index?id=' + encodeURIComponent(id)
       if (typeof window !== 'undefined' && window.open) {

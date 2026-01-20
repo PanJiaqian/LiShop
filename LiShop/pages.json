@@ -1,6 +1,16 @@
 {
 	"pages": [
 		{
+			"path": "pages/home/index",
+			"style": {
+				"navigationBarTitleText": "诺米",
+				"enablePullDownRefresh": true,
+				"h5": {
+					"navigationStyle": "custom"
+				}
+			}
+		},
+		{
 			"path": "pages/login/index",
 			"style": {
 				"navigationBarTitleText": "登录",
@@ -22,16 +32,6 @@
 			"path": "pages/favorites/index",
 			"style": {
 				"navigationBarTitleText": "我的收藏",
-				"enablePullDownRefresh": true,
-				"h5": {
-					"navigationStyle": "custom"
-				}
-			}
-		},
-		{
-			"path": "pages/home/index",
-			"style": {
-				"navigationBarTitleText": "诺米",
 				"enablePullDownRefresh": true,
 				"h5": {
 					"navigationStyle": "custom"

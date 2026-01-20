@@ -85,6 +85,41 @@ const _sfc_main = {
     }
   },
   onShow() {
+    try {
+      const u = common_vendor.index.getStorageSync("user") || null;
+      const exp = common_vendor.index.getStorageSync("token_expiration") || 0;
+      const ok = !!u && (!exp || Date.now() < exp);
+      if (!ok) {
+        common_vendor.index.showModal({
+          title: "提示",
+          content: "点击前往登陆的话就跳转到登陆页面",
+          cancelText: "取消",
+          confirmText: "去登录",
+          success: (res) => {
+            if (res && res.confirm) {
+              try {
+                common_vendor.index.navigateTo({ url: "/pages/login/index" });
+              } catch (e) {
+              }
+            } else {
+              try {
+                if (common_vendor.index && common_vendor.index.switchTab) {
+                  common_vendor.index.switchTab({ url: "/pages/home/index" });
+                  return;
+                }
+                if (common_vendor.index && common_vendor.index.navigateTo) {
+                  common_vendor.index.navigateTo({ url: "/pages/home/index" });
+                  return;
+                }
+              } catch (e) {
+              }
+            }
+          }
+        });
+        return;
+      }
+    } catch (e) {
+    }
     this.load();
     this.loadAddresses();
   },
@@ -320,6 +355,32 @@ const _sfc_main = {
         this.fetchSummary();
       });
     },
+    ensureLoggedIn() {
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const exp = common_vendor.index.getStorageSync("token_expiration") || 0;
+        const ok = !!u && (!exp || Date.now() < exp);
+        if (ok)
+          return true;
+        common_vendor.index.showModal({
+          title: "提示",
+          content: "点击前往登陆的话就跳转到登陆页面",
+          cancelText: "取消",
+          confirmText: "去登录",
+          success: (res) => {
+            if (res && res.confirm) {
+              try {
+                common_vendor.index.navigateTo({ url: "/pages/login/index" });
+              } catch (e) {
+              }
+            }
+          }
+        });
+        return false;
+      } catch (e) {
+        return false;
+      }
+    },
     removeById(id) {
       api_index.deleteCartItem({ id }).then(() => {
         const i = this.findIndexById(id);
@@ -358,6 +419,8 @@ const _sfc_main = {
       });
     },
     clearRemote() {
+      if (!this.ensureLoggedIn())
+        return;
       let token = "";
       try {
         const u = common_vendor.index.getStorageSync("user") || null;
@@ -408,6 +471,8 @@ const _sfc_main = {
     },
     async checkout() {
       var _a;
+      if (!this.ensureLoggedIn())
+        return;
       if (this.selectedCount === 0) {
         common_vendor.index.showToast({ title: "请选择商品", icon: "none" });
         return;

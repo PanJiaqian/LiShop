@@ -86,7 +86,7 @@
                       '七天无理由' : '不支持七天无理由' }}</text>
                 </view>
                 <view class="pd-price-row">
-                  <text class="pd-price" selectable="true">¥{{ displayTopPrice }}</text>
+                  <text class="pd-price" selectable="true">{{ displayTopPriceWithSymbol }}</text>
                   <text class="pd-coupon" selectable="true">券后更低</text>
                 </view>
 
@@ -101,7 +101,7 @@
                       <view class="spec-info">
                         <text class="spec-name" selectable="true">{{ it.name }}</text>
                         <view class="spec-price-row">
-                          <text class="spec-price" selectable="true">¥{{ Number(it.price || 0).toFixed(2) }}</text>
+                          <text class="spec-price" selectable="true">{{ formatPriceWithSymbol(it.price) }}</text>
                           <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
                             Number(it.original_price).toFixed(2) }}</text>
                         </view>
@@ -195,7 +195,7 @@
           <text class="fav-star" :class="{ active: isFavorite }" @click="favProduct">{{ isFavorite ? '★' : '☆' }}</text>
         </view>
         <view class="mp-price-row">
-          <text class="price" selectable="true">¥{{ product.price.toFixed(2) }}</text>
+          <text class="price" selectable="true">{{ formatPriceWithSymbol(product.price) }}</text>
           <text class="sales" selectable="true">销量 {{ product.sales }}</text>
         </view>
       </view>
@@ -263,7 +263,7 @@
                 <view class="spec-info">
                   <text class="spec-name" selectable="true">{{ it.name }}</text>
                   <view class="spec-price-row">
-                    <text class="spec-price" selectable="true">¥{{ Number(it.price || 0).toFixed(2) }}</text>
+                    <text class="spec-price" selectable="true">{{ formatPriceWithSymbol(it.price) }}</text>
                     <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
                       Number(it.original_price).toFixed(2) }}</text>
                   </view>
@@ -465,7 +465,9 @@ export default {
     },
     displayTopPrice() {
       const sel = this.selectedSpec
-      const basePerM = sel ? (Number(sel.price || 0) || 0) : (Number(this.product?.price || 0) || 0)
+      const rawBase = sel ? sel.price : this.product?.price
+      if (rawBase === '-' || rawBase === '—') return '-'
+      const basePerM = Number(rawBase || 0) || 0
       if (sel && sel.has_length === 1) {
         const rawStr = (this.specLength || '').replace(/[^0-9.]/g, '')
         const raw = rawStr ? Number(rawStr) : 0
@@ -476,6 +478,11 @@ export default {
         return `${basePerM.toFixed(2)}/m`
       }
       return basePerM.toFixed(2)
+    },
+    displayTopPriceWithSymbol() {
+      const s = this.displayTopPrice
+      if (s === '-') return '-'
+      return '¥' + s
     }
   },
   watch: {
@@ -957,7 +964,28 @@ export default {
         uni.previewImage({ urls: arr.length ? arr : [current], current })
       } catch (e) {}
     },
+    ensureLoggedIn() {
+      try {
+        const u = uni.getStorageSync('user') || null
+        const exp = uni.getStorageSync('token_expiration') || 0
+        const ok = !!u && (!exp || Date.now() < exp)
+        if (ok) return true
+        uni.showModal({
+          title: '提示',
+          content: '点击前往登陆的话就跳转到登陆页面',
+          cancelText: '取消',
+          confirmText: '去登录',
+          success: (res) => {
+            if (res && res.confirm) {
+              try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
+            }
+          }
+        })
+        return false
+      } catch (e) { return false }
+    },
     addToCart() {
+      if (!this.ensureLoggedIn()) return
       const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
       const pid = spec ? spec.product_id : (this.product?.id || '')
       addCartItem({ product_id: pid, quantity: 1 })
@@ -978,6 +1006,7 @@ export default {
       this.qty = isNaN(n) ? 1 : Math.max(1, Math.floor(n))
     },
     addToCartWithQty() {
+      if (!this.ensureLoggedIn()) return
       const chosen = (this.roomName || '').trim()
       if (!chosen) { uni.showToast({ title: '请先填写房间名', icon: 'none' }); return }
       const lengthNum = (this.specLength || '').replace(/[^0-9.]/g, '')
@@ -1015,6 +1044,7 @@ export default {
         .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
     },
     buyNow() {
+      if (!this.ensureLoggedIn()) return
       try {
         const spec = this.selectedSpec
         const pid = spec ? (spec.product_id || this.product?.id || '') : (this.product?.id || '')
@@ -1236,6 +1266,14 @@ export default {
       this.loadAddresses()
     },
     closeMpRoomSheet() { this.roomSelectorVisible = false; this.lockScroll = false },
+    formatPriceWithSymbol(val) {
+      try {
+        if (val === '-' || val === '—') return '-'
+        const n = Number(val)
+        if (isNaN(n)) return '-'
+        return '¥' + n.toFixed(2)
+      } catch (e) { return '-' }
+    },
     displaySpecPrice(it) {
       if (!it) return 0
       const base = Number(it.price || 0) || 0

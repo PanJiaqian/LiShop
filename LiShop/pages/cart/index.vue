@@ -325,6 +325,32 @@ export default {
     }
   },
   onShow() {
+    // #ifdef MP-WEIXIN
+    try {
+      const u = uni.getStorageSync('user') || null
+      const exp = uni.getStorageSync('token_expiration') || 0
+      const ok = !!u && (!exp || Date.now() < exp)
+      if (!ok) {
+        uni.showModal({
+          title: '提示',
+          content: '点击前往登陆的话就跳转到登陆页面',
+          cancelText: '取消',
+          confirmText: '去登录',
+          success: (res) => {
+            if (res && res.confirm) {
+              try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
+            } else {
+              try {
+                if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+                if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+              } catch (e) {}
+            }
+          }
+        })
+        return
+      }
+    } catch (e) {}
+    // #endif
     this.load()
     this.loadAddresses()
     // #ifdef H5
@@ -534,6 +560,26 @@ export default {
         })
         .finally(() => { this.fetchSummary() })
     },
+    ensureLoggedIn() {
+      try {
+        const u = uni.getStorageSync('user') || null
+        const exp = uni.getStorageSync('token_expiration') || 0
+        const ok = !!u && (!exp || Date.now() < exp)
+        if (ok) return true
+        uni.showModal({
+          title: '提示',
+          content: '点击前往登陆的话就跳转到登陆页面',
+          cancelText: '取消',
+          confirmText: '去登录',
+          success: (res) => {
+            if (res && res.confirm) {
+              try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
+            }
+          }
+        })
+        return false
+      } catch (e) { return false }
+    },
     removeById(id) {
       deleteCartItem({ id })
         .then(() => {
@@ -562,6 +608,7 @@ export default {
       })
     },
     clearRemote() {
+      if (!this.ensureLoggedIn()) return
       let token = ''
       try {
         const u = uni.getStorageSync('user') || null
@@ -606,6 +653,7 @@ export default {
     },
     clear() { this.cart = []; this.sync(); this.fetchSummary() },
     async checkout() {
+      if (!this.ensureLoggedIn()) return
       if (this.selectedCount === 0) { uni.showToast({ title: '请选择商品', icon: 'none' }); return }
       const selectedIds = this.cart.filter(it => it.selected).map(it => it.id)
       const addressId = this.selectedAddress?.id || ''

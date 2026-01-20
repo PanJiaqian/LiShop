@@ -91,7 +91,7 @@ const _sfc_main = {
       return rows.map((it, i) => ({
         id: (it == null ? void 0 : it.available_product_id) || "p" + i,
         title: (it == null ? void 0 : it.name) || "商品 " + (i + 1),
-        price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
+        price: (it == null ? void 0 : it.price) === "-" || (it == null ? void 0 : it.price) === "—" ? "-" : Number((it == null ? void 0 : it.price) ?? 0) || 0,
         sales: 0,
         image: this.cleanImage(it == null ? void 0 : it.main_image) || this.cleanImage(it == null ? void 0 : it.thumbnail)
       }));

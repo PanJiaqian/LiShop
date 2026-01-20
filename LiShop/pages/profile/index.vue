@@ -328,6 +328,32 @@ export default {
     }
   },
   onShow() {
+    // #ifdef MP-WEIXIN
+    try {
+      const u = uni.getStorageSync('user') || null
+      const exp = uni.getStorageSync('token_expiration') || 0
+      const ok = !!u && (!exp || Date.now() < exp)
+      if (!ok) {
+        uni.showModal({
+          title: '提示',
+          content: '点击前往登陆的话就跳转到登陆页面',
+          cancelText: '取消',
+          confirmText: '去登录',
+          success: (res) => {
+            if (res && res.confirm) {
+              try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
+            } else {
+              try {
+                if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+                if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+              } catch (e) {}
+            }
+          }
+        })
+        return
+      }
+    } catch (e) {}
+    // #endif
     this.loadAddresses()
     // #ifdef H5
     try { uni.hideTabBar({ animation: false }) } catch (e) { }

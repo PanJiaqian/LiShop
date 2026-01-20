@@ -152,7 +152,7 @@ const _sfc_main = {
         this.recommendList = list.map((it, i) => ({
           id: (it == null ? void 0 : it.available_product_id) || (it == null ? void 0 : it.id) || "p" + i,
           title: (it == null ? void 0 : it.name) || "推荐商品 " + (i + 1),
-          price: Number((it == null ? void 0 : it.price) ?? 0) || 0,
+          price: (it == null ? void 0 : it.price) === "-" || (it == null ? void 0 : it.price) === "—" ? "-" : Number((it == null ? void 0 : it.price) ?? 0) || 0,
           sales: Number((it == null ? void 0 : it.order_count) ?? (it == null ? void 0 : it.sales) ?? 0) || 0,
           image: (typeof (it == null ? void 0 : it.main_image) === "string" ? it.main_image.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || "/static/logo.png"
         }));
@@ -174,7 +174,35 @@ const _sfc_main = {
     this.showOnboarding = false;
   },
   methods: {
+    ensureLoggedIn() {
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        const exp = common_vendor.index.getStorageSync("token_expiration") || 0;
+        const ok = !!u && (!exp || Date.now() < exp);
+        if (ok)
+          return true;
+        common_vendor.index.showModal({
+          title: "提示",
+          content: "点击前往登陆的话就跳转到登陆页面",
+          cancelText: "取消",
+          confirmText: "去登录",
+          success: (res) => {
+            if (res && res.confirm) {
+              try {
+                common_vendor.index.navigateTo({ url: "/pages/login/index" });
+              } catch (e) {
+              }
+            }
+          }
+        });
+        return false;
+      } catch (e) {
+        return false;
+      }
+    },
     triggerOnboarding() {
+      if (!this.ensureLoggedIn())
+        return;
       this.showOnboarding = true;
       this.onboardingStepIndex = 0;
       try {
@@ -486,6 +514,8 @@ const _sfc_main = {
       common_vendor.index.navigateTo({ url: "/pages/search/index?q=" + encodeURIComponent(q) });
     },
     openAnnouncementModalH5() {
+      if (!this.ensureLoggedIn())
+        return;
       this.announcementLoading = true;
       try {
         const u = common_vendor.index.getStorageSync("user") || null;

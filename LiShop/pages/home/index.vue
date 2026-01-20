@@ -357,7 +357,7 @@ export default {
           this.recommendList = list.map((it, i) => ({
             id: it?.available_product_id || it?.id || ('p' + i),
             title: it?.name || ('推荐商品 ' + (i + 1)),
-            price: Number(it?.price ?? 0) || 0,
+            price: (it?.price === '-' || it?.price === '—') ? '-' : (Number(it?.price ?? 0) || 0),
             sales: Number(it?.order_count ?? it?.sales ?? 0) || 0,
             image: (typeof it?.main_image === 'string' ? it.main_image.replace(/`/g, '').trim() : '')
               || (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '')
@@ -378,7 +378,26 @@ export default {
     this.showOnboarding = false
   },
   methods: {
+    ensureLoggedIn() {
+      try {
+        const u = uni.getStorageSync('user') || null
+        const exp = uni.getStorageSync('token_expiration') || 0
+        const ok = !!u && (!exp || Date.now() < exp)
+        if (ok) return true
+        uni.showModal({
+          title: '提示',
+          content: '点击前往登陆的话就跳转到登陆页面',
+          cancelText: '取消',
+          confirmText: '去登录',
+          success: (res) => {
+            if (res && res.confirm) { try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {} }
+          }
+        })
+        return false
+      } catch (e) { return false }
+    },
     triggerOnboarding() {
+      if (!this.ensureLoggedIn()) return
       this.showOnboarding = true
       this.onboardingStepIndex = 0
       try {
@@ -627,6 +646,7 @@ export default {
       // #endif
     },
     openAnnouncementModalH5() {
+      if (!this.ensureLoggedIn()) return
       this.announcementLoading = true
       try {
         const u = uni.getStorageSync('user') || null

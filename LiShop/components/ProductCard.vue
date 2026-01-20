@@ -4,7 +4,7 @@
     <view class="info">
       <text class="title">{{ product.title }}</text>
       <view class="price-row">
-        <text class="price">¥{{ product.price.toFixed(2) }}</text>
+        <text class="price">{{ priceDisplay }}</text>
         <text class="sales">已售 {{ product.sales }}</text>
       </view>
       <view class="actions">
@@ -21,11 +21,41 @@ export default {
     product: { type: Object, required: true }
   },
   emits: ['add-to-cart'],
+  computed: {
+    priceDisplay() {
+      try {
+        const v = this.product && this.product.price
+        if (v === '-' || v === '—') return '-'
+        const n = Number(v)
+        if (isNaN(n)) return '-'
+        return '¥' + n.toFixed(2)
+      } catch (e) { return '-' }
+    }
+  },
   methods: {
+    ensureLoggedIn() {
+      try {
+        const u = uni.getStorageSync('user') || null
+        const exp = uni.getStorageSync('token_expiration') || 0
+        const ok = !!u && (!exp || Date.now() < exp)
+        if (ok) return true
+        uni.showModal({
+          title: '提示',
+          content: '点击前往登陆的话就跳转到登陆页面',
+          cancelText: '取消',
+          confirmText: '去登录',
+          success: (res) => {
+            if (res && res.confirm) { try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {} }
+          }
+        })
+        return false
+      } catch (e) { return false }
+    },
     add() {
       this.$emit('add-to-cart', this.product)
     },
     openDetail() {
+      if (!this.ensureLoggedIn()) return
       const id = this.product?.id ?? ''
       const url = '/pages/product/index?id=' + encodeURIComponent(id)
       if (typeof window !== 'undefined' && window.open) {

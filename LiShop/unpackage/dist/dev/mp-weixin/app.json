@@ -1,9 +1,9 @@
 {
   "pages": [
+    "pages/home/index",
     "pages/login/index",
     "pages/announcement/index",
     "pages/favorites/index",
-    "pages/home/index",
     "pages/category/index",
     "pages/cart/index",
     "pages/profile/index",

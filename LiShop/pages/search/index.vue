@@ -73,7 +73,7 @@ export default {
       return rows.map((it, i) => ({
         id: it?.available_product_id || ('p' + i),
         title: it?.name || ('商品 ' + (i + 1)),
-        price: Number(it?.price ?? 0) || 0,
+        price: (it?.price === '-' || it?.price === '—') ? '-' : (Number(it?.price ?? 0) || 0),
         sales: 0,
         image: this.cleanImage(it?.thumbnail)
       }))
