@@ -254,6 +254,7 @@
       @select="onAddressSelect" 
       @createAddress="onCreateAddress"
     />
+    <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
   </view>
 </template>
 
@@ -261,9 +262,10 @@
 import FloatingNav from '@/components/FloatingNav.vue'
 import RoomSelector from '@/components/RoomSelector.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import LoginPrompt from '@/components/LoginPrompt.vue'
 import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses, addAddress } from '../../api/index.js'
 export default {
-  components: { FloatingNav, RoomSelector, Skeleton },
+  components: { FloatingNav, RoomSelector, Skeleton, LoginPrompt },
   data() {
     return {
       loading: true,
@@ -283,7 +285,8 @@ export default {
         total_price: 0,
         total_original: 0,
         is_free_shipping: 0
-      }
+      },
+      showLoginModal: false
     }
   },
   computed: {
@@ -331,22 +334,7 @@ export default {
       const exp = uni.getStorageSync('token_expiration') || 0
       const ok = !!u && (!exp || Date.now() < exp)
       if (!ok) {
-        uni.showModal({
-          title: '提示',
-          content: '点击前往登陆的话就跳转到登陆页面',
-          cancelText: '取消',
-          confirmText: '去登录',
-          success: (res) => {
-            if (res && res.confirm) {
-              try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
-            } else {
-              try {
-                if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
-                if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
-              } catch (e) {}
-            }
-          }
-        })
+        this.showLoginModal = true
         return
       }
     } catch (e) {}
@@ -364,7 +352,32 @@ export default {
     } catch (e) {}
     // #endif
   },
+  onLoad() {
+    try {
+      const h = () => { this.showLoginModal = true }
+      this._globalLoginHandler = h
+      uni.$on('global-login-prompt', h)
+    } catch (e) {}
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler) uni.$off('global-login-prompt', this._globalLoginHandler)
+      this._globalLoginHandler = null
+    } catch (e) {}
+  },
     methods: {
+      closeLoginModal() {
+        this.showLoginModal = false
+        try {
+          let isH5 = false
+          try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+          if (!isH5) {
+            if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+            if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+          }
+        } catch (e) {}
+      },
+      goLogin() { this.showLoginModal = false; uni.navigateTo({ url: '/pages/login/index' }) },
       goHome() {
         if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
         if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
@@ -566,17 +579,7 @@ export default {
         const exp = uni.getStorageSync('token_expiration') || 0
         const ok = !!u && (!exp || Date.now() < exp)
         if (ok) return true
-        uni.showModal({
-          title: '提示',
-          content: '点击前往登陆的话就跳转到登陆页面',
-          cancelText: '取消',
-          confirmText: '去登录',
-          success: (res) => {
-            if (res && res.confirm) {
-              try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
-            }
-          }
-        })
+        this.showLoginModal = true
         return false
       } catch (e) { return false }
     },

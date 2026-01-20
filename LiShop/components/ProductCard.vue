@@ -1,5 +1,7 @@
 <template>
-  <view class="card" @click="openDetail">
+  <view>
+    <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
+    <view class="card" @click="openDetail">
     <image class="cover" :src="product.image || '/static/logo.png'" mode="aspectFill" />
     <view class="info">
       <text class="title">{{ product.title }}</text>
@@ -11,25 +13,31 @@
         <!-- <button class="btn-cart" size="mini" @click.stop="add">加入购物车</button> -->
       </view>
     </view>
+    </view>
   </view>
 </template>
 
 <script>
+import LoginPrompt from '@/components/LoginPrompt.vue'
 export default {
   name: 'ProductCard',
   props: {
     product: { type: Object, required: true }
   },
   emits: ['add-to-cart'],
+  data() {
+    return { showLoginModal: false }
+  },
+  components: { LoginPrompt },
   computed: {
     priceDisplay() {
       try {
         const v = this.product && this.product.price
-        if (v === '-' || v === '—') return '-'
+        if (v === '-' || v === '—') return '登录可查看售价'
         const n = Number(v)
-        if (isNaN(n)) return '-'
+        if (isNaN(n)) return '---'
         return '¥' + n.toFixed(2)
-      } catch (e) { return '-' }
+      } catch (e) { return '---' }
     }
   },
   methods: {
@@ -39,18 +47,12 @@ export default {
         const exp = uni.getStorageSync('token_expiration') || 0
         const ok = !!u && (!exp || Date.now() < exp)
         if (ok) return true
-        uni.showModal({
-          title: '提示',
-          content: '点击前往登陆的话就跳转到登陆页面',
-          cancelText: '取消',
-          confirmText: '去登录',
-          success: (res) => {
-            if (res && res.confirm) { try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {} }
-          }
-        })
+        this.showLoginModal = true
         return false
       } catch (e) { return false }
     },
+    closeLoginModal() { this.showLoginModal = false },
+    goLogin() { this.showLoginModal = false; uni.navigateTo({ url: '/pages/login/index' }) },
     add() {
       this.$emit('add-to-cart', this.product)
     },

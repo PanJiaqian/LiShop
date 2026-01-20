@@ -6,10 +6,11 @@ const RoomSelector = () => "../../components/RoomSelector.js";
 const FloatingNav = () => "../../components/FloatingNav.js";
 const Skeleton = () => "../../components/Skeleton.js";
 const OnboardingGuide = () => "../../components/OnboardingGuide.js";
+const LoginPrompt = () => "../../components/LoginPrompt.js";
 const _sfc_main = {
-  components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide },
+  components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
   data() {
-    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0 };
+    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
@@ -82,6 +83,24 @@ const _sfc_main = {
         }
       });
     });
+  },
+  created() {
+    try {
+      const h = () => {
+        this.showLoginModal = true;
+      };
+      this._globalLoginHandler = h;
+      common_vendor.index.$on("global-login-prompt", h);
+    } catch (e) {
+    }
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler)
+        common_vendor.index.$off("global-login-prompt", this._globalLoginHandler);
+      this._globalLoginHandler = null;
+    } catch (e) {
+    }
   },
   computed: {
     selectorType() {
@@ -740,24 +759,18 @@ const _sfc_main = {
         const ok = !!u && (!exp || Date.now() < exp);
         if (ok)
           return true;
-        common_vendor.index.showModal({
-          title: "提示",
-          content: "点击前往登陆的话就跳转到登陆页面",
-          cancelText: "取消",
-          confirmText: "去登录",
-          success: (res) => {
-            if (res && res.confirm) {
-              try {
-                common_vendor.index.navigateTo({ url: "/pages/login/index" });
-              } catch (e) {
-              }
-            }
-          }
-        });
+        this.showLoginModal = true;
         return false;
       } catch (e) {
         return false;
       }
+    },
+    closeLoginModal() {
+      this.showLoginModal = false;
+    },
+    goLogin() {
+      this.showLoginModal = false;
+      common_vendor.index.navigateTo({ url: "/pages/login/index" });
     },
     addToCart() {
       var _a;
@@ -1177,7 +1190,8 @@ if (!Array) {
   const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
   const _component_RoomSelector = common_vendor.resolveComponent("RoomSelector");
   const _component_OnboardingGuide = common_vendor.resolveComponent("OnboardingGuide");
-  (_component_Skeleton + _component_RoomSelector + _component_OnboardingGuide)();
+  const _component_LoginPrompt = common_vendor.resolveComponent("LoginPrompt");
+  (_component_Skeleton + _component_RoomSelector + _component_OnboardingGuide + _component_LoginPrompt)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
@@ -1311,7 +1325,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       targets: $data.onboardingRects,
       initialIndex: $data.onboardingIndex
     })
-  } : {});
+  } : {}, {
+    an: common_vendor.o($options.closeLoginModal),
+    ao: common_vendor.o($options.goLogin),
+    ap: common_vendor.p({
+      visible: $data.showLoginModal
+    })
+  });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);
 wx.createPage(MiniProgramPage);

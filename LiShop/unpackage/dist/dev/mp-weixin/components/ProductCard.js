@@ -1,23 +1,28 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
+const LoginPrompt = () => "./LoginPrompt.js";
 const _sfc_main = {
   name: "ProductCard",
   props: {
     product: { type: Object, required: true }
   },
   emits: ["add-to-cart"],
+  data() {
+    return { showLoginModal: false };
+  },
+  components: { LoginPrompt },
   computed: {
     priceDisplay() {
       try {
         const v = this.product && this.product.price;
         if (v === "-" || v === "—")
-          return "-";
+          return "登录可查看售价";
         const n = Number(v);
         if (isNaN(n))
-          return "-";
+          return "---";
         return "¥" + n.toFixed(2);
       } catch (e) {
-        return "-";
+        return "---";
       }
     }
   },
@@ -29,24 +34,18 @@ const _sfc_main = {
         const ok = !!u && (!exp || Date.now() < exp);
         if (ok)
           return true;
-        common_vendor.index.showModal({
-          title: "提示",
-          content: "点击前往登陆的话就跳转到登陆页面",
-          cancelText: "取消",
-          confirmText: "去登录",
-          success: (res) => {
-            if (res && res.confirm) {
-              try {
-                common_vendor.index.navigateTo({ url: "/pages/login/index" });
-              } catch (e) {
-              }
-            }
-          }
-        });
+        this.showLoginModal = true;
         return false;
       } catch (e) {
         return false;
       }
+    },
+    closeLoginModal() {
+      this.showLoginModal = false;
+    },
+    goLogin() {
+      this.showLoginModal = false;
+      common_vendor.index.navigateTo({ url: "/pages/login/index" });
     },
     add() {
       this.$emit("add-to-cart", this.product);
@@ -67,13 +66,22 @@ const _sfc_main = {
     }
   }
 };
+if (!Array) {
+  const _component_LoginPrompt = common_vendor.resolveComponent("LoginPrompt");
+  _component_LoginPrompt();
+}
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: $props.product.image || "/static/logo.png",
-    b: common_vendor.t($props.product.title),
-    c: common_vendor.t($options.priceDisplay),
-    d: common_vendor.t($props.product.sales),
-    e: common_vendor.o((...args) => $options.openDetail && $options.openDetail(...args))
+    a: common_vendor.o($options.closeLoginModal),
+    b: common_vendor.o($options.goLogin),
+    c: common_vendor.p({
+      visible: $data.showLoginModal
+    }),
+    d: $props.product.image || "/static/logo.png",
+    e: common_vendor.t($props.product.title),
+    f: common_vendor.t($options.priceDisplay),
+    g: common_vendor.t($props.product.sales),
+    h: common_vendor.o((...args) => $options.openDetail && $options.openDetail(...args))
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-fe52aa40"]]);

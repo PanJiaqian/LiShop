@@ -20,17 +20,7 @@
 						const raw = (args && args.url) || ''
 						const path = raw.split('?')[0]
 						if (allowed.has(path)) return true
-						uni.showModal({
-							title: '提示',
-							content: '点击前往登陆的话就跳转到登陆页面',
-							cancelText: '取消',
-							confirmText: '去登录',
-							success: (res) => {
-								if (res && res.confirm) {
-									try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
-								}
-							}
-						})
+						try { uni.$emit('global-login-prompt', { from: path, ts: Date.now() }) } catch (e) {}
 						return false
 					} catch (e) { return false }
 				}

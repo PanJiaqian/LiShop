@@ -4,6 +4,7 @@
   "usingComponents": {
     "room-selector": "../../components/RoomSelector",
     "skeleton": "../../components/Skeleton",
-    "onboarding-guide": "../../components/OnboardingGuide"
+    "onboarding-guide": "../../components/OnboardingGuide",
+    "login-prompt": "../../components/LoginPrompt"
   }
 }

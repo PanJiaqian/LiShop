@@ -3,6 +3,7 @@
   "enablePullDownRefresh": true,
   "usingComponents": {
     "room-selector": "../../components/RoomSelector",
-    "skeleton": "../../components/Skeleton"
+    "skeleton": "../../components/Skeleton",
+    "login-prompt": "../../components/LoginPrompt"
   }
 }

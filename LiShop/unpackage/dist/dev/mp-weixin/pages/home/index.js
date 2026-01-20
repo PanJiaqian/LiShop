@@ -9,8 +9,9 @@ const ProductCard = () => "../../components/ProductCard.js";
 const FloatingNav = () => "../../components/FloatingNav.js";
 const Skeleton = () => "../../components/Skeleton.js";
 const OnboardingGuide = () => "../../components/OnboardingGuide.js";
+const LoginPrompt = () => "../../components/LoginPrompt.js";
 const _sfc_main = {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide },
+  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
   data() {
     return {
       loading: true,
@@ -65,7 +66,8 @@ const _sfc_main = {
         "个人信息管理",
         "功能区",
         "收货地址管理"
-      ]
+      ],
+      showLoginModal: false
     };
   },
   onLoad() {
@@ -165,6 +167,24 @@ const _sfc_main = {
       this.loading = false;
     }
   },
+  onLoad() {
+    try {
+      const h = () => {
+        this.showLoginModal = true;
+      };
+      this._globalLoginHandler = h;
+      common_vendor.index.$on("global-login-prompt", h);
+    } catch (e) {
+    }
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler)
+        common_vendor.index.$off("global-login-prompt", this._globalLoginHandler);
+      this._globalLoginHandler = null;
+    } catch (e) {
+    }
+  },
   onPullDownRefresh() {
     setTimeout(() => {
       common_vendor.index.stopPullDownRefresh();
@@ -181,20 +201,7 @@ const _sfc_main = {
         const ok = !!u && (!exp || Date.now() < exp);
         if (ok)
           return true;
-        common_vendor.index.showModal({
-          title: "提示",
-          content: "点击前往登陆的话就跳转到登陆页面",
-          cancelText: "取消",
-          confirmText: "去登录",
-          success: (res) => {
-            if (res && res.confirm) {
-              try {
-                common_vendor.index.navigateTo({ url: "/pages/login/index" });
-              } catch (e) {
-              }
-            }
-          }
-        });
+        this.showLoginModal = true;
         return false;
       } catch (e) {
         return false;
@@ -590,6 +597,9 @@ const _sfc_main = {
     goLogin() {
       common_vendor.index.navigateTo({ url: "/pages/login/index" });
     },
+    closeLoginModal() {
+      this.showLoginModal = false;
+    },
     onAvatarClick() {
       if (this.user) {
         if (common_vendor.index.switchTab)
@@ -633,7 +643,8 @@ if (!Array) {
   const _component_BannerSwiper = common_vendor.resolveComponent("BannerSwiper");
   const _component_ProductCard = common_vendor.resolveComponent("ProductCard");
   const _component_OnboardingGuide = common_vendor.resolveComponent("OnboardingGuide");
-  (_component_Skeleton + _component_SearchBar + _component_BannerSwiper + _component_ProductCard + _component_OnboardingGuide)();
+  const _component_LoginPrompt = common_vendor.resolveComponent("LoginPrompt");
+  (_component_Skeleton + _component_SearchBar + _component_BannerSwiper + _component_ProductCard + _component_OnboardingGuide + _component_LoginPrompt)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
@@ -678,7 +689,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       targets: $data.onboardingRects,
       initialIndex: $data.onboardingStepIndex
     })
-  } : {});
+  } : {}, {
+    n: common_vendor.o($options.closeLoginModal),
+    o: common_vendor.o($options.goLogin),
+    p: common_vendor.p({
+      visible: $data.showLoginModal
+    })
+  });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-4978fed5"]]);
 wx.createPage(MiniProgramPage);

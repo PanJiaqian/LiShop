@@ -198,6 +198,7 @@
     <OnboardingGuide v-if="showOnboarding" :steps="onboardingSteps" :targets="onboardingRects"
       :initialIndex="onboardingStepIndex" @advance="handleOnboardingNext" @back="handleOnboardingPrev"
       @close="handleOnboardingClose" />
+    <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
   </view>
 </template>
 
@@ -209,10 +210,11 @@ import ProductCard from '@/components/ProductCard.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import OnboardingGuide from '@/components/OnboardingGuide.vue'
+import LoginPrompt from '@/components/LoginPrompt.vue'
 import { getRecommendedProducts, getVisibleCategories, searchProducts, getCarousel, getCurrentAnnouncement } from '../../api/index.js'
 
 export default {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide },
+  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
   data() {
     return {
       loading: true,
@@ -267,7 +269,8 @@ export default {
         '个人信息管理',
         '功能区',
         '收货地址管理'
-      ]
+      ],
+      showLoginModal: false
     }
   },
   onLoad() {
@@ -371,6 +374,19 @@ export default {
       })
     } catch (e) { this.loading = false }
   },
+  onLoad() {
+    try {
+      const h = () => { this.showLoginModal = true }
+      this._globalLoginHandler = h
+      uni.$on('global-login-prompt', h)
+    } catch (e) {}
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler) uni.$off('global-login-prompt', this._globalLoginHandler)
+      this._globalLoginHandler = null
+    } catch (e) {}
+  },
   onPullDownRefresh() {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
   },
@@ -384,15 +400,7 @@ export default {
         const exp = uni.getStorageSync('token_expiration') || 0
         const ok = !!u && (!exp || Date.now() < exp)
         if (ok) return true
-        uni.showModal({
-          title: '提示',
-          content: '点击前往登陆的话就跳转到登陆页面',
-          cancelText: '取消',
-          confirmText: '去登录',
-          success: (res) => {
-            if (res && res.confirm) { try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {} }
-          }
-        })
+        this.showLoginModal = true
         return false
       } catch (e) { return false }
     },
@@ -737,6 +745,7 @@ export default {
     goLogin() {
       uni.navigateTo({ url: '/pages/login/index' })
     },
+    closeLoginModal() { this.showLoginModal = false },
     onAvatarClick() {
       if (this.user) {
         if (uni.switchTab) uni.switchTab({ url: '/pages/profile/index' })
@@ -800,7 +809,7 @@ export default {
   margin: 0 auto;
   padding: 0 100rpx;
   min-height: 100vh;
-  background-color: #fff;
+  /* background-color: #fff; */
   padding-bottom: 60rpx;
 }
 

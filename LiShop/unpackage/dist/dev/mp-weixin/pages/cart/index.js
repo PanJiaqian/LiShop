@@ -5,8 +5,9 @@ const common_assets = require("../../common/assets.js");
 const FloatingNav = () => "../../components/FloatingNav.js";
 const RoomSelector = () => "../../components/RoomSelector.js";
 const Skeleton = () => "../../components/Skeleton.js";
+const LoginPrompt = () => "../../components/LoginPrompt.js";
 const _sfc_main = {
-  components: { FloatingNav, RoomSelector, Skeleton },
+  components: { FloatingNav, RoomSelector, Skeleton, LoginPrompt },
   data() {
     return {
       loading: true,
@@ -26,7 +27,8 @@ const _sfc_main = {
         total_price: 0,
         total_original: 0,
         is_free_shipping: 0
-      }
+      },
+      showLoginModal: false
     };
   },
   computed: {
@@ -90,32 +92,7 @@ const _sfc_main = {
       const exp = common_vendor.index.getStorageSync("token_expiration") || 0;
       const ok = !!u && (!exp || Date.now() < exp);
       if (!ok) {
-        common_vendor.index.showModal({
-          title: "提示",
-          content: "点击前往登陆的话就跳转到登陆页面",
-          cancelText: "取消",
-          confirmText: "去登录",
-          success: (res) => {
-            if (res && res.confirm) {
-              try {
-                common_vendor.index.navigateTo({ url: "/pages/login/index" });
-              } catch (e) {
-              }
-            } else {
-              try {
-                if (common_vendor.index && common_vendor.index.switchTab) {
-                  common_vendor.index.switchTab({ url: "/pages/home/index" });
-                  return;
-                }
-                if (common_vendor.index && common_vendor.index.navigateTo) {
-                  common_vendor.index.navigateTo({ url: "/pages/home/index" });
-                  return;
-                }
-              } catch (e) {
-              }
-            }
-          }
-        });
+        this.showLoginModal = true;
         return;
       }
     } catch (e) {
@@ -123,7 +100,51 @@ const _sfc_main = {
     this.load();
     this.loadAddresses();
   },
+  onLoad() {
+    try {
+      const h = () => {
+        this.showLoginModal = true;
+      };
+      this._globalLoginHandler = h;
+      common_vendor.index.$on("global-login-prompt", h);
+    } catch (e) {
+    }
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler)
+        common_vendor.index.$off("global-login-prompt", this._globalLoginHandler);
+      this._globalLoginHandler = null;
+    } catch (e) {
+    }
+  },
   methods: {
+    closeLoginModal() {
+      this.showLoginModal = false;
+      try {
+        let isH5 = false;
+        try {
+          isH5 = typeof window !== "undefined";
+        } catch (e) {
+          isH5 = false;
+        }
+        if (!isH5) {
+          if (common_vendor.index && common_vendor.index.switchTab) {
+            common_vendor.index.switchTab({ url: "/pages/home/index" });
+            return;
+          }
+          if (common_vendor.index && common_vendor.index.navigateTo) {
+            common_vendor.index.navigateTo({ url: "/pages/home/index" });
+            return;
+          }
+        }
+      } catch (e) {
+      }
+    },
+    goLogin() {
+      this.showLoginModal = false;
+      common_vendor.index.navigateTo({ url: "/pages/login/index" });
+    },
     goHome() {
       if (common_vendor.index && common_vendor.index.switchTab) {
         common_vendor.index.switchTab({ url: "/pages/home/index" });
@@ -362,20 +383,7 @@ const _sfc_main = {
         const ok = !!u && (!exp || Date.now() < exp);
         if (ok)
           return true;
-        common_vendor.index.showModal({
-          title: "提示",
-          content: "点击前往登陆的话就跳转到登陆页面",
-          cancelText: "取消",
-          confirmText: "去登录",
-          success: (res) => {
-            if (res && res.confirm) {
-              try {
-                common_vendor.index.navigateTo({ url: "/pages/login/index" });
-              } catch (e) {
-              }
-            }
-          }
-        });
+        this.showLoginModal = true;
         return false;
       } catch (e) {
         return false;
@@ -595,7 +603,8 @@ const _sfc_main = {
 if (!Array) {
   const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
   const _component_RoomSelector = common_vendor.resolveComponent("RoomSelector");
-  (_component_Skeleton + _component_RoomSelector)();
+  const _component_LoginPrompt = common_vendor.resolveComponent("LoginPrompt");
+  (_component_Skeleton + _component_RoomSelector + _component_LoginPrompt)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
@@ -694,6 +703,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       rooms: $options.addressRooms,
       type: "addr",
       selectedName: $data.selectedAddress ? ($data.selectedAddress.receiver + " " + $data.selectedAddress.phone + " " + $data.selectedAddress.full).trim() : ""
+    }),
+    M: common_vendor.o($options.closeLoginModal),
+    N: common_vendor.o($options.goLogin),
+    O: common_vendor.p({
+      visible: $data.showLoginModal
     })
   });
 }

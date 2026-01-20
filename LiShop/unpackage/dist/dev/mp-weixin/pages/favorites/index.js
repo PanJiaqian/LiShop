@@ -2,13 +2,33 @@
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
 const Skeleton = () => "../../components/Skeleton.js";
+const LoginPrompt = () => "../../components/LoginPrompt.js";
 const _sfc_main = {
-  components: { Skeleton },
+  components: { Skeleton, LoginPrompt },
   data() {
     return {
       loading: true,
-      favorites: []
+      favorites: [],
+      showLoginModal: false
     };
+  },
+  onLoad() {
+    try {
+      const h = () => {
+        this.showLoginModal = true;
+      };
+      this._globalLoginHandler = h;
+      common_vendor.index.$on("global-login-prompt", h);
+    } catch (e) {
+    }
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler)
+        common_vendor.index.$off("global-login-prompt", this._globalLoginHandler);
+      this._globalLoginHandler = null;
+    } catch (e) {
+    }
   },
   onShow() {
     try {
@@ -48,24 +68,18 @@ const _sfc_main = {
         const ok = !!u && (!exp || Date.now() < exp);
         if (ok)
           return true;
-        common_vendor.index.showModal({
-          title: "提示",
-          content: "点击前往登陆的话就跳转到登陆页面",
-          cancelText: "取消",
-          confirmText: "去登录",
-          success: (res) => {
-            if (res && res.confirm) {
-              try {
-                common_vendor.index.navigateTo({ url: "/pages/login/index" });
-              } catch (e) {
-              }
-            }
-          }
-        });
+        this.showLoginModal = true;
         return false;
       } catch (e) {
         return false;
       }
+    },
+    closeLoginModal() {
+      this.showLoginModal = false;
+    },
+    goLogin() {
+      this.showLoginModal = false;
+      common_vendor.index.navigateTo({ url: "/pages/login/index" });
     },
     formatPriceWithSymbol(val) {
       try {
@@ -120,7 +134,8 @@ const _sfc_main = {
 };
 if (!Array) {
   const _component_Skeleton = common_vendor.resolveComponent("Skeleton");
-  _component_Skeleton();
+  const _component_LoginPrompt = common_vendor.resolveComponent("LoginPrompt");
+  (_component_Skeleton + _component_LoginPrompt)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
@@ -141,7 +156,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : !$data.loading ? {} : {}, {
-    e: !$data.loading
+    e: !$data.loading,
+    f: common_vendor.o($options.closeLoginModal),
+    g: common_vendor.o($options.goLogin),
+    h: common_vendor.p({
+      visible: $data.showLoginModal
+    })
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-bbc2a813"]]);

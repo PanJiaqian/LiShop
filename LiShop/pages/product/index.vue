@@ -328,6 +328,7 @@
     @back="handleOnboardingPrev"
     @close="closeOnboarding"
   />
+  <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
 </template>
 
 <script>
@@ -336,10 +337,11 @@ import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import OnboardingGuide from '@/components/OnboardingGuide.vue'
+import LoginPrompt from '@/components/LoginPrompt.vue'
 
 export default {
-  components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide },
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0 } },
+  components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
+  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
@@ -405,6 +407,19 @@ export default {
           }
         })
       })
+  },
+  created() {
+    try {
+      const h = () => { this.showLoginModal = true }
+      this._globalLoginHandler = h
+      uni.$on('global-login-prompt', h)
+    } catch (e) {}
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler) uni.$off('global-login-prompt', this._globalLoginHandler)
+      this._globalLoginHandler = null
+    } catch (e) {}
   },
   computed: {
     selectorType() {
@@ -970,20 +985,12 @@ export default {
         const exp = uni.getStorageSync('token_expiration') || 0
         const ok = !!u && (!exp || Date.now() < exp)
         if (ok) return true
-        uni.showModal({
-          title: '提示',
-          content: '点击前往登陆的话就跳转到登陆页面',
-          cancelText: '取消',
-          confirmText: '去登录',
-          success: (res) => {
-            if (res && res.confirm) {
-              try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
-            }
-          }
-        })
+        this.showLoginModal = true
         return false
       } catch (e) { return false }
     },
+    closeLoginModal() { this.showLoginModal = false },
+    goLogin() { this.showLoginModal = false; uni.navigateTo({ url: '/pages/login/index' }) },
     addToCart() {
       if (!this.ensureLoggedIn()) return
       const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
@@ -1427,6 +1434,64 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12rpx;
+}
+
+.login-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.login-modal {
+  width: 720rpx;
+  max-width: 90vw;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 48rpx 40rpx;
+  box-shadow: 0 20rpx 40rpx rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+}
+.login-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+.login-desc {
+  font-size: 28rpx;
+  color: #666;
+  text-align: center;
+}
+.login-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+}
+.btn-pill {
+  min-width: 240rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 40rpx;
+  border-radius: 999rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.btn-pill.confirm {
+  background: #000;
+  color: #fff;
+  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.15);
+}
+.btn-pill.cancel {
+  background: #fff;
+  color: #999;
+  border: 2rpx solid #e5e5e5;
 }
 
 .spec-item {

@@ -2,6 +2,7 @@
   "navigationBarTitleText": "我的收藏",
   "enablePullDownRefresh": true,
   "usingComponents": {
-    "skeleton": "../../components/Skeleton"
+    "skeleton": "../../components/Skeleton",
+    "login-prompt": "../../components/LoginPrompt"
   }
 }

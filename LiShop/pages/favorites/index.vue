@@ -12,19 +12,35 @@
       </view>
     </view>
     <view v-else-if="!loading" class="empty">暂无收藏</view>
+    <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
   </view>
 </template>
 
 <script>
 import Skeleton from '@/components/Skeleton.vue'
+import LoginPrompt from '@/components/LoginPrompt.vue'
 import { getFavorites } from '../../api/index.js'
 export default {
-  components: { Skeleton },
+  components: { Skeleton, LoginPrompt },
   data() {
     return {
       loading: true,
-      favorites: []
+      favorites: [],
+      showLoginModal: false
     }
+  },
+  onLoad() {
+    try {
+      const h = () => { this.showLoginModal = true }
+      this._globalLoginHandler = h
+      uni.$on('global-login-prompt', h)
+    } catch (e) {}
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler) uni.$off('global-login-prompt', this._globalLoginHandler)
+      this._globalLoginHandler = null
+    } catch (e) {}
   },
   onShow() {
     try {
@@ -61,18 +77,12 @@ export default {
         const exp = uni.getStorageSync('token_expiration') || 0
         const ok = !!u && (!exp || Date.now() < exp)
         if (ok) return true
-        uni.showModal({
-          title: '提示',
-          content: '点击前往登陆的话就跳转到登陆页面',
-          cancelText: '取消',
-          confirmText: '去登录',
-          success: (res) => {
-            if (res && res.confirm) { try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {} }
-          }
-        })
+        this.showLoginModal = true
         return false
       } catch (e) { return false }
     },
+    closeLoginModal() { this.showLoginModal = false },
+    goLogin() { this.showLoginModal = false; uni.navigateTo({ url: '/pages/login/index' }) },
     formatPriceWithSymbol(val) {
       try {
         if (val === '-' || val === '—') return '-'
@@ -245,4 +255,3 @@ export default {
   margin-top: 40rpx;
 }
 </style>
-

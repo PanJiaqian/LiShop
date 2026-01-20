@@ -6,6 +6,7 @@
     "banner-swiper": "../../components/BannerSwiper",
     "product-card": "../../components/ProductCard",
     "skeleton": "../../components/Skeleton",
-    "onboarding-guide": "../../components/OnboardingGuide"
+    "onboarding-guide": "../../components/OnboardingGuide",
+    "login-prompt": "../../components/LoginPrompt"
   }
 }

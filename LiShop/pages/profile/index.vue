@@ -236,6 +236,7 @@
         </view>
       </view>
     </view>
+    <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
   </view>
 </template>
 
@@ -243,9 +244,10 @@
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import OnboardingGuide from '@/components/OnboardingGuide.vue'
+import LoginPrompt from '@/components/LoginPrompt.vue'
 import { getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, updateUserAvatar, getCurrentAnnouncement } from '../../api/index.js'
 export default {
-  components: { FloatingNav, Skeleton, OnboardingGuide },
+  components: { FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
   data() { return { 
     loading: true,
     loggedIn: false, displayName: '', fetchedProfile: {}, isEditing: false, editForm: {},
@@ -281,7 +283,8 @@ export default {
       '个人信息管理',
       '功能区',
       '收货地址管理'
-    ]
+    ],
+    showLoginModal: false
   } },
   computed: {
     profile() {
@@ -334,22 +337,7 @@ export default {
       const exp = uni.getStorageSync('token_expiration') || 0
       const ok = !!u && (!exp || Date.now() < exp)
       if (!ok) {
-        uni.showModal({
-          title: '提示',
-          content: '点击前往登陆的话就跳转到登陆页面',
-          cancelText: '取消',
-          confirmText: '去登录',
-          success: (res) => {
-            if (res && res.confirm) {
-              try { uni.navigateTo({ url: '/pages/login/index' }) } catch (e) {}
-            } else {
-              try {
-                if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
-                if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
-              } catch (e) {}
-            }
-          }
-        })
+        this.showLoginModal = true
         return
       }
     } catch (e) {}
@@ -397,7 +385,32 @@ export default {
       }
     } catch (e) { this.loading = false }
   },
+  onLoad() {
+    try {
+      const h = () => { this.showLoginModal = true }
+      this._globalLoginHandler = h
+      uni.$on('global-login-prompt', h)
+    } catch (e) {}
+  },
+  onUnload() {
+    try {
+      if (this._globalLoginHandler) uni.$off('global-login-prompt', this._globalLoginHandler)
+      this._globalLoginHandler = null
+    } catch (e) {}
+  },
   methods: {
+    closeLoginModal() {
+      this.showLoginModal = false
+      try {
+        let isH5 = false
+        try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+        if (!isH5) {
+          if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/home/index' }); return }
+          if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/home/index' }); return }
+        }
+      } catch (e) {}
+    },
+    goLogin() { this.showLoginModal = false; uni.navigateTo({ url: '/pages/login/index' }) },
     startOnboardingFromProfile() {
       try {
         let isH5 = false
@@ -1374,6 +1387,7 @@ export default {
 .edit-under { margin-top: 12rpx; }
 .link-under { color: #007aff; font-size: 24rpx; }
 /* #endif */
+
 
 .h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .h5-modal { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; height: 60vh; }
