@@ -126,6 +126,7 @@
           </view>
         </view>
       </view>
+      <IcpFooter />
     </view>
     <FloatingNav />
     <view v-if="showAnnouncementModal" class="h5-mask" @click="closeAnnouncementModal">
@@ -215,10 +216,11 @@ import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import OnboardingGuide from '@/components/OnboardingGuide.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
+import IcpFooter from '@/components/IcpFooter.vue'
 import { getRecommendedProducts, getVisibleCategories, searchProducts, getCarousel, getCurrentAnnouncement } from '../../api/index.js'
 
 export default {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
+  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt, IcpFooter },
   data() {
     return {
       loading: true,
