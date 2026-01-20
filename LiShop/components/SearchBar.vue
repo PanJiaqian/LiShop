@@ -1,9 +1,10 @@
 <template>
   <view class="search-bar">
     <view class="search-input">
-      <text class="icon">🔍</text>
-      <input class="input" :value="modelValue" :placeholder="placeholder" confirm-type="search"
-        @input="onInput" />
+      <image v-if="isH5" class="icon"
+        src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='28' cy='28' r='16' fill='none' stroke='%23000' stroke-width='4'/><line x1='42' y1='42' x2='58' y2='58' stroke='%23000' stroke-width='4' stroke-linecap='round'/></svg>"
+        mode="widthFix" />
+      <input class="input" :value="modelValue" :placeholder="placeholder" confirm-type="search" @input="onInput" />
     </view>
     <button class="search-btn" size="mini" @click="onSearch">搜索</button>
   </view>
@@ -17,6 +18,11 @@ export default {
     placeholder: { type: String, default: '搜索商品、店铺' }
   },
   emits: ['update:modelValue', 'search'],
+  computed: {
+    isH5() {
+      try { return typeof window !== 'undefined' } catch (e) { return false }
+    }
+  },
   methods: {
     onInput(e) {
       const value = e?.detail?.value ?? ''
@@ -50,8 +56,9 @@ export default {
 }
 
 .icon {
+  width: 32rpx;
+  height: 32rpx;
   margin-right: 12rpx;
-  font-size: 28rpx;
 }
 
 .input {

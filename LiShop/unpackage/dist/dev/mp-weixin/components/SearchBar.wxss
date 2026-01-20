@@ -17,8 +17,9 @@
   padding: 12rpx 20rpx;
 }
 .icon.data-v-2334f7bd {
+  width: 32rpx;
+  height: 32rpx;
   margin-right: 12rpx;
-  font-size: 28rpx;
 }
 .input.data-v-2334f7bd {
   flex: 1;

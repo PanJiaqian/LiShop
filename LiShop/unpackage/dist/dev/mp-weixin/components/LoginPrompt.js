@@ -5,7 +5,7 @@ const _sfc_main = {
   props: {
     visible: { type: Boolean, default: false },
     title: { type: String, default: "提示" },
-    desc: { type: String, default: "点击前往登录的话就跳转到登录页面" },
+    desc: { type: String, default: "登录即可查看" },
     cancelText: { type: String, default: "取消" },
     confirmText: { type: String, default: "立即登录" }
   },

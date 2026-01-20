@@ -14,7 +14,11 @@
         </view>
         <view class="h5-search-wrapper">
           <view class="search-bar-box">
-            <view class="search-type">宝贝<text class="arrow-down">∨</text></view>
+            <view class="search-type">
+              <image class="search-icon-img"
+                src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='28' cy='28' r='16' fill='none' stroke='%23000' stroke-width='4'/><line x1='42' y1='42' x2='58' y2='58' stroke='%23000' stroke-width='4' stroke-linecap='round'/></svg>"
+                mode="widthFix" />
+            </view>
             <view class="divider-v"></view>
             <input id="og-search" class="search-input-field" v-model="keyword" confirm-type="search"
               @confirm="onSearch(null)" />
@@ -379,13 +383,13 @@ export default {
       const h = () => { this.showLoginModal = true }
       this._globalLoginHandler = h
       uni.$on('global-login-prompt', h)
-    } catch (e) {}
+    } catch (e) { }
   },
   onUnload() {
     try {
       if (this._globalLoginHandler) uni.$off('global-login-prompt', this._globalLoginHandler)
       this._globalLoginHandler = null
-    } catch (e) {}
+    } catch (e) { }
   },
   onPullDownRefresh() {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
@@ -860,7 +864,7 @@ export default {
 }
 
 .search-type {
-  padding: 0 30rpx;
+  padding: 0 8rpx;
   font-size: 30rpx;
   color: #333;
   font-weight: 500;
@@ -869,8 +873,22 @@ export default {
   cursor: pointer;
 }
 
+.search-icon-img {
+  width: 32rpx;
+  height: 32rpx;
+  margin: 0 12rpx;
+}
+
+.search-icon {
+  display: inline-block;
+  font-size: 28rpx;
+  margin: 0 12rpx;
+  color: #000;
+  filter: grayscale(100%) brightness(0);
+}
+
 .arrow-down {
-  font-size: 20rpx;
+  font-size: 30rpx;
   margin-left: 10rpx;
   color: #666;
 }
@@ -903,11 +921,15 @@ export default {
 /* Middle Layout */
 .h5-middle-layout {
   display: grid;
-  grid-template-columns: 300px 1fr 300px;
-  gap: 20rpx;
+  grid-template-columns: 200px 1fr 200px;
+  gap: 0rpx;
   height: 720rpx;
   margin-bottom: 40rpx;
   align-items: stretch;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+  max-width: 1200px;
 }
 
 .side-cate {
@@ -916,7 +938,7 @@ export default {
   padding: 20rpx;
   display: flex;
   flex-direction: column;
-  width: 60%;
+  width: 85%;
   /* align-items: center; */
   /* text-align: center; */
   height: 100%;
@@ -997,7 +1019,7 @@ export default {
 .side-user {
   height: 100%;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   box-sizing: border-box;
 }
@@ -1006,6 +1028,7 @@ export default {
   background: #f8f8f8;
   border-radius: 24rpx;
   height: 100%;
+  width: 85%;
   padding: 40rpx 30rpx;
   display: flex;
   flex-direction: column;
