@@ -6,7 +6,11 @@
     <view class="info">
       <text class="title">{{ product.title }}</text>
       <view class="price-row">
-        <text class="price">{{ priceDisplay }}</text>
+        <view class="price">
+          <text v-if="!displayPriceParts.textMsg" class="price-icon">¥</text>
+          <text v-if="!displayPriceParts.textMsg" class="price-amount">{{ displayPriceParts.amount }}</text>
+          <text v-else class="price-text">{{ displayPriceParts.textMsg }}</text>
+        </view>
         <text class="sales">已售 {{ product.sales }}</text>
       </view>
       <view class="actions">
@@ -30,14 +34,14 @@ export default {
   },
   components: { LoginPrompt },
   computed: {
-    priceDisplay() {
+    displayPriceParts() {
       try {
         const v = this.product && this.product.price
-        if (v === '-' || v === '—') return '登录可查看售价'
+        if (v === '-' || v === '—') return { textMsg: '登录可查看售价' }
         const n = Number(v)
-        if (isNaN(n)) return '---'
-        return '¥' + n.toFixed(2)
-      } catch (e) { return '---' }
+        if (isNaN(n)) return { textMsg: '---' }
+        return { amount: n.toFixed(2) }
+      } catch (e) { return { textMsg: '---' } }
     }
   },
   methods: {
@@ -107,15 +111,30 @@ export default {
 }
 
 .price {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+}
+.price-icon {
+  color: #000;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.price-amount {
   color: #000;
   font-size: 30rpx;
+  font-weight: 700;
+}
+.price-text {
+  color: #000;
+  font-size: 28rpx;
   font-weight: 600;
 }
 
 /* #ifdef MP-WEIXIN */
-.price {
-  color: #000;
-}
+.price-icon { color: #000; }
+.price-amount { color: #000; }
+.price-text { color: #000; }
 /* #endif */
 
 .sales {
