@@ -110,6 +110,12 @@ export default {
     },
     goBack() {
       if (typeof window !== 'undefined' && window.history && window.history.length > 1) { window.history.back(); return }
+      // #ifndef H5
+      try {
+        const pid = this.parentId || ''
+        if (pid) uni.setStorageSync('category_pending_active_id', pid)
+      } catch (e) {}
+      // #endif
       if (uni && uni.switchTab) { uni.switchTab({ url: '/pages/category/index' }); return }
       if (uni && uni.navigateTo) { uni.navigateTo({ url: '/pages/category/index' }); return }
     },

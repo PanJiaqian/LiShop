@@ -72,7 +72,7 @@ const _sfc_main = {
           }
         }, 300);
       }).catch((err) => {
-        console.error("login error", err);
+        common_vendor.index.__f__("error", "at pages/login/index.vue:81", "login error", err);
         common_vendor.index.showToast({ title: "账号或密码错误", icon: "none" });
       }).finally(() => {
         try {
@@ -103,3 +103,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-d08ef7d4"]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/login/index.js.map

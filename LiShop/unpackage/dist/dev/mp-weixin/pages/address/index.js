@@ -29,7 +29,7 @@ const _sfc_main = {
           this.addressList = res.data.items || [];
         }
       }).catch((err) => {
-        console.error(err);
+        common_vendor.index.__f__("error", "at pages/address/index.vue:65", err);
         common_vendor.index.showToast({ title: "获取地址失败", icon: "none" });
       }).finally(() => {
         this.loading = false;
@@ -99,3 +99,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/address/index.js.map

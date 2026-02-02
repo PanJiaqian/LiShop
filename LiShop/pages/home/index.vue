@@ -719,10 +719,16 @@ export default {
       } catch (e) { this.leftChildren = [] }
       // #endif
       // #ifndef H5
-      const aid = encodeURIComponent(cat?.categories_id || '')
-      const aname = encodeURIComponent(cat?.name || '')
-      const url = `/pages/category/index?active=${aname}&active_id=${aid}`
-      if (uni.switchTab) { uni.switchTab({ url }) } else { uni.navigateTo({ url }) }
+      const cid = cat?.categories_id || ''
+      if (!cid) { uni.showToast({ title: '分类缺少ID', icon: 'none' }); return }
+      try { uni.setStorageSync('category_pending_active_id', cid) } catch (e) {}
+      if (uni.switchTab) {
+        uni.switchTab({ url: '/pages/category/index' })
+      } else {
+        const aid = encodeURIComponent(cid)
+        const aname = encodeURIComponent(cat?.name || '')
+        uni.navigateTo({ url: `/pages/category/index?active=${aname}&active_id=${aid}` })
+      }
       // #endif
     },
     goSubList(sub) {

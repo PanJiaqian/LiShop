@@ -193,7 +193,7 @@ const _sfc_main = {
           this.syncH5RegionByForm();
         }
       }).catch((err) => {
-        console.error(err);
+        common_vendor.index.__f__("error", "at pages/address/edit.vue:224", err);
         common_vendor.index.showToast({ title: "获取地址详情失败", icon: "none" });
       }).finally(() => {
         this.loading = false;
@@ -253,7 +253,7 @@ const _sfc_main = {
           common_vendor.index.showToast({ title: res.message || "保存失败", icon: "none" });
         }
       }).catch((err) => {
-        console.error(err);
+        common_vendor.index.__f__("error", "at pages/address/edit.vue:280", err);
         common_vendor.index.showToast({ title: "保存失败", icon: "none" });
       });
     },
@@ -313,3 +313,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/address/edit.js.map

@@ -10,8 +10,9 @@ const FloatingNav = () => "../../components/FloatingNav.js";
 const Skeleton = () => "../../components/Skeleton.js";
 const OnboardingGuide = () => "../../components/OnboardingGuide.js";
 const LoginPrompt = () => "../../components/LoginPrompt.js";
+const IcpFooter = () => "../../components/IcpFooter.js";
 const _sfc_main = {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
+  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt, IcpFooter },
   data() {
     return {
       loading: true,
@@ -559,13 +560,21 @@ const _sfc_main = {
       this.showAnnContent = false;
     },
     openCategory(cat) {
-      const aid = encodeURIComponent((cat == null ? void 0 : cat.categories_id) || "");
-      const aname = encodeURIComponent((cat == null ? void 0 : cat.name) || "");
-      const url = `/pages/category/index?active=${aname}&active_id=${aid}`;
+      const cid = (cat == null ? void 0 : cat.categories_id) || "";
+      if (!cid) {
+        common_vendor.index.showToast({ title: "分类缺少ID", icon: "none" });
+        return;
+      }
+      try {
+        common_vendor.index.setStorageSync("category_pending_active_id", cid);
+      } catch (e) {
+      }
       if (common_vendor.index.switchTab) {
-        common_vendor.index.switchTab({ url });
+        common_vendor.index.switchTab({ url: "/pages/category/index" });
       } else {
-        common_vendor.index.navigateTo({ url });
+        const aid = encodeURIComponent(cid);
+        const aname = encodeURIComponent((cat == null ? void 0 : cat.name) || "");
+        common_vendor.index.navigateTo({ url: `/pages/category/index?active=${aname}&active_id=${aid}` });
       }
     },
     goSubList(sub) {
@@ -591,7 +600,7 @@ const _sfc_main = {
         common_vendor.index.setStorageSync("cart", cart);
         common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
       } catch (e) {
-        console.error(e);
+        common_vendor.index.__f__("error", "at pages/home/index.vue:754", e);
       }
     },
     goLogin() {
@@ -699,3 +708,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-4978fed5"]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/home/index.js.map

@@ -28,12 +28,30 @@
   margin-top: 12rpx;
 }
 .price.data-v-fe52aa40 {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+}
+.price-icon.data-v-fe52aa40 {
   color: #000;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
 }
-.price.data-v-fe52aa40 {
+.price-amount.data-v-fe52aa40 {
   color: #000;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.price-text.data-v-fe52aa40 {
+  color: #000;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.price-icon.data-v-fe52aa40 { color: #000;
+}
+.price-amount.data-v-fe52aa40 { color: #000;
+}
+.price-text.data-v-fe52aa40 { color: #000;
 }
 .sales.data-v-fe52aa40 {
   font-size: 24rpx;

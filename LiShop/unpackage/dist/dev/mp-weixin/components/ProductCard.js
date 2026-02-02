@@ -12,17 +12,17 @@ const _sfc_main = {
   },
   components: { LoginPrompt },
   computed: {
-    priceDisplay() {
+    displayPriceParts() {
       try {
         const v = this.product && this.product.price;
         if (v === "-" || v === "—")
-          return "登录可查看售价";
+          return { textMsg: "登录可查看售价" };
         const n = Number(v);
         if (isNaN(n))
-          return "---";
-        return "¥" + n.toFixed(2);
+          return { textMsg: "---" };
+        return { amount: n.toFixed(2) };
       } catch (e) {
-        return "---";
+        return { textMsg: "---" };
       }
     }
   },
@@ -71,7 +71,7 @@ if (!Array) {
   _component_LoginPrompt();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return {
+  return common_vendor.e({
     a: common_vendor.o($options.closeLoginModal),
     b: common_vendor.o($options.goLogin),
     c: common_vendor.p({
@@ -79,10 +79,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     d: $props.product.image || "/static/logo.png",
     e: common_vendor.t($props.product.title),
-    f: common_vendor.t($options.priceDisplay),
-    g: common_vendor.t($props.product.sales),
-    h: common_vendor.o((...args) => $options.openDetail && $options.openDetail(...args))
-  };
+    f: !$options.displayPriceParts.textMsg
+  }, !$options.displayPriceParts.textMsg ? {} : {}, {
+    g: !$options.displayPriceParts.textMsg
+  }, !$options.displayPriceParts.textMsg ? {
+    h: common_vendor.t($options.displayPriceParts.amount)
+  } : {
+    i: common_vendor.t($options.displayPriceParts.textMsg)
+  }, {
+    j: common_vendor.t($props.product.sales),
+    k: common_vendor.o((...args) => $options.openDetail && $options.openDetail(...args))
+  });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-fe52aa40"]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../.sourcemap/mp-weixin/components/ProductCard.js.map

@@ -72,6 +72,12 @@ const _sfc_main = {
         window.history.back();
         return;
       }
+      try {
+        const pid = this.parentId || "";
+        if (pid)
+          common_vendor.index.setStorageSync("category_pending_active_id", pid);
+      } catch (e) {
+      }
       if (common_vendor.index && common_vendor.index.switchTab) {
         common_vendor.index.switchTab({ url: "/pages/category/index" });
         return;
@@ -184,3 +190,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-17e22e15"]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/category/list.js.map

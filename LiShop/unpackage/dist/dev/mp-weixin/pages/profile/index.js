@@ -582,7 +582,7 @@ const _sfc_main = {
           this.avatarError = false;
         }
       }).catch((err) => {
-        console.error("Fetch user profile failed", err);
+        common_vendor.index.__f__("error", "at pages/profile/index.vue:716", "Fetch user profile failed", err);
       });
     },
     login() {
@@ -651,7 +651,7 @@ const _sfc_main = {
         }
       }).catch((err) => {
         common_vendor.index.hideLoading();
-        console.error(err);
+        common_vendor.index.__f__("error", "at pages/profile/index.vue:784", err);
         common_vendor.index.showToast({ title: "更新出错", icon: "none" });
       });
     },
@@ -708,7 +708,7 @@ const _sfc_main = {
         }
       }).catch((err) => {
         common_vendor.index.hideLoading();
-        console.error(err);
+        common_vendor.index.__f__("error", "at pages/profile/index.vue:834", err);
         common_vendor.index.showToast({ title: "发送出错", icon: "none" });
       });
     },
@@ -749,7 +749,7 @@ const _sfc_main = {
           }
         }).catch((err) => {
           common_vendor.index.hideLoading();
-          console.error(err);
+          common_vendor.index.__f__("error", "at pages/profile/index.vue:870", err);
           common_vendor.index.showToast({ title: err && err.message || "修改出错", icon: "none" });
         });
       }
@@ -992,3 +992,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-201c0da5"]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/profile/index.js.map

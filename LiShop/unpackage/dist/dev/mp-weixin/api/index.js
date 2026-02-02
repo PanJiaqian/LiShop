@@ -1312,3 +1312,4 @@ exports.updateUserAvatar = updateUserAvatar;
 exports.updateUserEmail = updateUserEmail;
 exports.updateUserPhone = updateUserPhone;
 exports.updateUserProfile = updateUserProfile;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/index.js.map

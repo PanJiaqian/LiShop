@@ -13,6 +13,7 @@ const _sfc_main = {
       categories: [],
       pendingActiveName: "",
       pendingActiveId: "",
+      lastActiveId: "",
       rightChildren: []
     };
   },
@@ -22,17 +23,32 @@ const _sfc_main = {
     }
   },
   onShow() {
+    var _a;
+    let rememberedId = "";
+    try {
+      const pid = common_vendor.index.getStorageSync("category_pending_active_id") || "";
+      if (pid) {
+        this.pendingActiveId = pid;
+        try {
+          common_vendor.index.removeStorageSync("category_pending_active_id");
+        } catch (e) {
+        }
+      }
+    } catch (e) {
+    }
+    rememberedId = this.pendingActiveId || this.lastActiveId || (((_a = this.categories[this.activeIndex]) == null ? void 0 : _a.categories_id) || "");
     try {
       api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id" }).then((res) => {
-        var _a;
-        const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
+        var _a2;
+        const items = Array.isArray((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.items) ? res.data.items : [];
         const mapped = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "", children: [] }));
         this.categories = mapped;
+        let selectedId = "";
         if (this.pendingActiveId) {
           const idxById = this.categories.findIndex((c) => c.categories_id === this.pendingActiveId);
           if (idxById >= 0) {
             this.activeIndex = idxById;
-            this.loadChildrenById(this.pendingActiveId);
+            selectedId = this.pendingActiveId;
           }
           this.pendingActiveId = "";
           this.pendingActiveName = "";
@@ -40,19 +56,26 @@ const _sfc_main = {
           const idx = this.categories.findIndex((c) => c.name === this.pendingActiveName);
           if (idx >= 0) {
             this.activeIndex = idx;
-            const id = this.categories[idx].categories_id;
-            if (id)
-              this.loadChildrenById(id);
+            selectedId = this.categories[idx].categories_id || "";
           }
           this.pendingActiveName = "";
         } else {
-          if (this.categories.length) {
+          if (rememberedId) {
+            const idxById = this.categories.findIndex((c) => c.categories_id === rememberedId);
+            if (idxById >= 0) {
+              this.activeIndex = idxById;
+              selectedId = rememberedId;
+            }
+          }
+          if (!selectedId && this.categories.length) {
             this.activeIndex = 0;
-            const firstId = this.categories[0].categories_id;
-            if (firstId)
-              this.loadChildrenById(firstId);
+            selectedId = this.categories[0].categories_id || "";
           }
         }
+        if (selectedId)
+          this.loadChildrenById(selectedId);
+        if (selectedId)
+          this.lastActiveId = selectedId;
         this.loading = false;
       }).catch(() => {
         this.loading = false;
@@ -72,6 +95,7 @@ const _sfc_main = {
       var _a;
       this.activeIndex = idx;
       const id = ((_a = this.categories[idx]) == null ? void 0 : _a.categories_id) || "";
+      this.lastActiveId = id || "";
       if (id)
         this.loadChildrenById(id);
     },
@@ -142,3 +166,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-3cdc7548"]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/category/index.js.map

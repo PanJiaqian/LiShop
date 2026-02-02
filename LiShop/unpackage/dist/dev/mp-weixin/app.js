@@ -21,7 +21,7 @@ if (!Math) {
 }
 const _sfc_main = {
   onLaunch: function() {
-    console.log("App Launch");
+    common_vendor.index.__f__("log", "at App.vue:4", "App Launch");
     try {
       const allowed = /* @__PURE__ */ new Set(["/pages/search/index", "/pages/category/list"]);
       allowed.add("/pages/category/index");
@@ -63,10 +63,10 @@ const _sfc_main = {
     }
   },
   onShow: function() {
-    console.log("App Show");
+    common_vendor.index.__f__("log", "at App.vue:36", "App Show");
   },
   onHide: function() {
-    console.log("App Hide");
+    common_vendor.index.__f__("log", "at App.vue:39", "App Hide");
   }
 };
 function createApp() {
@@ -77,3 +77,4 @@ function createApp() {
 }
 createApp().app.mount("#app");
 exports.createApp = createApp;
+//# sourceMappingURL=../.sourcemap/mp-weixin/app.js.map
