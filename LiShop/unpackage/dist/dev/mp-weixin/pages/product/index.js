@@ -10,10 +10,11 @@ const LoginPrompt = () => "../../components/LoginPrompt.js";
 const _sfc_main = {
   components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
   data() {
-    return { hls: null, product: null, current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false };
+    return { hls: null, product: null, shareProductId: "", current: 0, qty: 1, specTemp: "", specLength: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
+    this.shareProductId = id;
     if (!id) {
       this.product = { id: "", title: "商品", price: 0, sales: 0, image: "/static/logo.png", images: ["/static/logo.png"] };
       return;
@@ -84,6 +85,23 @@ const _sfc_main = {
       });
     });
   },
+  onShow() {
+    try {
+      const uniAny = common_vendor.index;
+      if (uniAny && typeof uniAny.showShareMenu === "function") {
+        uniAny.showShareMenu({ withShareTicket: true, menus: ["shareAppMessage", "shareTimeline"] });
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const wxAny = typeof common_vendor.wx$1 !== "undefined" ? common_vendor.wx$1 : null;
+      if (wxAny && typeof wxAny.showShareMenu === "function") {
+        wxAny.showShareMenu({ withShareTicket: true, menus: ["shareAppMessage", "shareTimeline"] });
+      }
+    } catch (e) {
+    }
+  },
   created() {
     try {
       const h = () => {
@@ -101,6 +119,20 @@ const _sfc_main = {
       this._globalLoginHandler = null;
     } catch (e) {
     }
+  },
+  onShareAppMessage() {
+    var _a, _b, _c;
+    const id = this.shareProductId || ((_a = this.product) == null ? void 0 : _a.id) || "";
+    const title = ((_b = this.product) == null ? void 0 : _b.title) || "商品详情";
+    const imageUrl = ((_c = this.product) == null ? void 0 : _c.image) || "/static/logo.png";
+    return { title, path: "/pages/product/index?id=" + encodeURIComponent(id), imageUrl };
+  },
+  onShareTimeline() {
+    var _a, _b, _c;
+    const id = this.shareProductId || ((_a = this.product) == null ? void 0 : _a.id) || "";
+    const title = ((_b = this.product) == null ? void 0 : _b.title) || "商品详情";
+    const imageUrl = ((_c = this.product) == null ? void 0 : _c.image) || "/static/logo.png";
+    return { title, query: "id=" + encodeURIComponent(id), imageUrl };
   },
   computed: {
     selectorType() {
@@ -1334,5 +1366,6 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);
+_sfc_main.__runtimeHooks = 6;
 wx.createPage(MiniProgramPage);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/product/index.js.map

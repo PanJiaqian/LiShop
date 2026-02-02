@@ -341,9 +341,10 @@ import LoginPrompt from '@/components/LoginPrompt.vue'
 
 export default {
   components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
-  data() { return { hls: null, product: null, current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false } },
+  data() { return { hls: null, product: null, shareProductId: '', current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
+    this.shareProductId = id
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
     getProductDetail({ available_product_id: id })
       .then((res) => {
@@ -408,6 +409,21 @@ export default {
         })
       })
   },
+  onShow() {
+    try {
+      const uniAny = uni
+      if (uniAny && typeof uniAny.showShareMenu === 'function') {
+        uniAny.showShareMenu({ withShareTicket: true, menus: ['shareAppMessage', 'shareTimeline'] })
+        return
+      }
+    } catch (e) {}
+    try {
+      const wxAny = typeof wx !== 'undefined' ? wx : null
+      if (wxAny && typeof wxAny.showShareMenu === 'function') {
+        wxAny.showShareMenu({ withShareTicket: true, menus: ['shareAppMessage', 'shareTimeline'] })
+      }
+    } catch (e) {}
+  },
   created() {
     try {
       const h = () => { this.showLoginModal = true }
@@ -420,6 +436,18 @@ export default {
       if (this._globalLoginHandler) uni.$off('global-login-prompt', this._globalLoginHandler)
       this._globalLoginHandler = null
     } catch (e) {}
+  },
+  onShareAppMessage() {
+    const id = this.shareProductId || this.product?.id || ''
+    const title = this.product?.title || '商品详情'
+    const imageUrl = this.product?.image || '/static/logo.png'
+    return { title, path: '/pages/product/index?id=' + encodeURIComponent(id), imageUrl }
+  },
+  onShareTimeline() {
+    const id = this.shareProductId || this.product?.id || ''
+    const title = this.product?.title || '商品详情'
+    const imageUrl = this.product?.image || '/static/logo.png'
+    return { title, query: 'id=' + encodeURIComponent(id), imageUrl }
   },
   computed: {
     selectorType() {

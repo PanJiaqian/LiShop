@@ -5,6 +5,10 @@
 			"style": {
 				"navigationBarTitleText": "诺米",
 				"enablePullDownRefresh": true,
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -14,6 +18,10 @@
 			"path": "pages/login/index",
 			"style": {
 				"navigationBarTitleText": "登录",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -23,6 +31,10 @@
 			"path": "pages/announcement/index",
 			"style": {
 				"navigationBarTitleText": "公告",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -33,6 +45,10 @@
 			"style": {
 				"navigationBarTitleText": "我的收藏",
 				"enablePullDownRefresh": true,
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -41,7 +57,11 @@
 		{
 			"path": "pages/category/index",
 			"style": {
-				"navigationBarTitleText": "分类"
+				"navigationBarTitleText": "分类",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				}
 			}
 		},
 		{
@@ -49,6 +69,10 @@
 			"style": {
 				"navigationBarTitleText": "购物车",
 				"enablePullDownRefresh": true,
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -59,6 +83,10 @@
 			"style": {
 				"navigationBarTitleText": "我的",
 				"enablePullDownRefresh": true,
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -69,6 +97,10 @@
 			"style": {
 				"navigationBarTitleText": "商品详情",
 				"enablePullDownRefresh": true,
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -79,6 +111,10 @@
 			"style": {
 				"navigationBarTitleText": "我的订单",
 				"enablePullDownRefresh": true,
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -87,19 +123,31 @@
 		{
 			"path": "pages/settings/index",
 			"style": {
-				"navigationBarTitleText": "设置"
+				"navigationBarTitleText": "设置",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				}
 			}
 		},
 		{
 			"path": "pages/messages/index",
 			"style": {
-				"navigationBarTitleText": "消息"
+				"navigationBarTitleText": "消息",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				}
 			}
 		},
 		{
 			"path": "pages/search/index",
 			"style": {
-				"navigationBarTitleText": "诺米"
+				"navigationBarTitleText": "诺米",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				}
 			}
 		},
 		{
@@ -107,6 +155,10 @@
 			"style": {
 				"navigationBarTitleText": "分类商品",
 				"enablePullDownRefresh": true,
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				},
 				"h5": {
 					"navigationStyle": "custom"
 				}
@@ -115,19 +167,31 @@
 		{
 			"path": "pages/address/index",
 			"style": {
-				"navigationBarTitleText": "收货地址"
+				"navigationBarTitleText": "收货地址",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				}
 			}
 		},
 		{
 			"path": "pages/address/edit",
 			"style": {
-				"navigationBarTitleText": "编辑收货地址"
+				"navigationBarTitleText": "编辑收货地址",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				}
 			}
 		},
 		{
 			"path": "pages/webview/index",
 			"style": {
-				"navigationBarTitleText": "物流详情"
+				"navigationBarTitleText": "物流详情",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				}
 			}
 		}
 	],

@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "物流详情",
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
   "usingComponents": {}
 }

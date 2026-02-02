@@ -1,6 +1,8 @@
 {
   "navigationBarTitleText": "诺米",
   "enablePullDownRefresh": true,
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
   "usingComponents": {
     "search-bar": "../../components/SearchBar",
     "banner-swiper": "../../components/BannerSwiper",

@@ -69,8 +69,38 @@ const _sfc_main = {
     common_vendor.index.__f__("log", "at App.vue:39", "App Hide");
   }
 };
+const toQueryString = (obj = {}) => {
+  return Object.keys(obj).filter((key) => obj[key] !== void 0 && obj[key] !== null && obj[key] !== "").map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(String(obj[key]))}`).join("&");
+};
+const getShareLocation = () => {
+  const pages = typeof getCurrentPages === "function" ? getCurrentPages() : [];
+  const page = pages.length ? pages[pages.length - 1] : null;
+  const route = (page == null ? void 0 : page.route) || "pages/home/index";
+  const query = toQueryString((page == null ? void 0 : page.options) || {});
+  const path = `/${route}${query ? `?${query}` : ""}`;
+  return { path, query };
+};
+const shareMixin = {
+  onShow() {
+    if (typeof common_vendor.index !== "undefined" && typeof common_vendor.index.showShareMenu === "function") {
+      common_vendor.index.showShareMenu({
+        withShareTicket: true,
+        menus: ["shareAppMessage", "shareTimeline"]
+      });
+    }
+  },
+  onShareAppMessage() {
+    const { path } = getShareLocation();
+    return { title: "诺米", path, imageUrl: "/static/logo.png" };
+  },
+  onShareTimeline() {
+    const { query } = getShareLocation();
+    return { title: "诺米", query, imageUrl: "/static/logo.png" };
+  }
+};
 function createApp() {
   const app = common_vendor.createSSRApp(_sfc_main);
+  app.mixin(shareMixin);
   return {
     app
   };

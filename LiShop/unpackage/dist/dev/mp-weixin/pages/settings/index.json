@@ -1,5 +1,7 @@
 {
   "navigationBarTitleText": "设置",
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
   "usingComponents": {
     "skeleton": "../../components/Skeleton"
   }
