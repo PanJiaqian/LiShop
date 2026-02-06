@@ -418,11 +418,8 @@ export default {
       try { isMp = typeof wx !== 'undefined' } catch (e) { isMp = false }
       if (!isMp) return
       try {
-        const prevSig = uni.getStorageSync('share_poster_sig') || ''
-        const sig = this.getSharePosterSignature()
-        const cachedUrl = uni.getStorageSync('share_image_url') || ''
-        const hasLocalPoster = typeof cachedUrl === 'string' && (cachedUrl.startsWith('wxfile://') || cachedUrl.startsWith('file://'))
-        if (hasLocalPoster && prevSig && prevSig === sig) return
+        const lastTs = Number(uni.getStorageSync('share_poster_ts') || 0) || 0
+        if (lastTs && Date.now() - lastTs < 30 * 1000) return
       } catch (e) {}
       if (this._sharePosterGenerating) return
       this._sharePosterGenerating = true
@@ -562,6 +559,7 @@ export default {
                     if (url) {
                       uni.setStorageSync('share_image_url', url)
                       uni.setStorageSync('share_poster_sig', this.getSharePosterSignature())
+                      uni.setStorageSync('share_poster_ts', Date.now())
                     }
                   } catch (e) {}
                   resolve(true)

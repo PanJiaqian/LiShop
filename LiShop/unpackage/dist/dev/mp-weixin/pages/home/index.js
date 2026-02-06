@@ -219,11 +219,8 @@ const _sfc_main = {
       if (!isMp)
         return;
       try {
-        const prevSig = common_vendor.index.getStorageSync("share_poster_sig") || "";
-        const sig = this.getSharePosterSignature();
-        const cachedUrl = common_vendor.index.getStorageSync("share_image_url") || "";
-        const hasLocalPoster = typeof cachedUrl === "string" && (cachedUrl.startsWith("wxfile://") || cachedUrl.startsWith("file://"));
-        if (hasLocalPoster && prevSig && prevSig === sig)
+        const lastTs = Number(common_vendor.index.getStorageSync("share_poster_ts") || 0) || 0;
+        if (lastTs && Date.now() - lastTs < 30 * 1e3)
           return;
       } catch (e) {
       }
@@ -367,6 +364,7 @@ const _sfc_main = {
                     if (url) {
                       common_vendor.index.setStorageSync("share_image_url", url);
                       common_vendor.index.setStorageSync("share_poster_sig", this.getSharePosterSignature());
+                      common_vendor.index.setStorageSync("share_poster_ts", Date.now());
                     }
                   } catch (e) {
                   }
@@ -786,7 +784,7 @@ const _sfc_main = {
         common_vendor.index.setStorageSync("cart", cart);
         common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/home/index.vue:927", e);
+        common_vendor.index.__f__("error", "at pages/home/index.vue:925", e);
       }
     },
     goLogin() {
