@@ -1,21 +1,46 @@
 import App from './App'
 
 // #ifdef MP-WEIXIN
-const toQueryString = (obj = {}) => {
-  return Object.keys(obj)
-    .filter((key) => obj[key] !== undefined && obj[key] !== null && obj[key] !== '')
-    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(String(obj[key]))}`)
-    .join('&')
+const SHARE_TITLE = '诺米灯光定制'
+const SHARE_PATH = '/pages/home/index'
+const SHARE_QUERY = ''
+const FALLBACK_SHARE_IMAGE_URL = '/static/logo.png'
+const SHARE_IMAGE_STORAGE_KEY = 'share_image_url'
+
+const cleanUrl = (u) => (typeof u === 'string' ? u.replace(/`/g, '').trim() : '')
+
+const getShareImageUrl = () => {
+  try {
+    const cached = uni.getStorageSync(SHARE_IMAGE_STORAGE_KEY)
+    if (cached) return cached
+  } catch (e) {}
+  return FALLBACK_SHARE_IMAGE_URL
 }
 
-const getShareLocation = () => {
-  const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
-  const page = pages.length ? pages[pages.length - 1] : null
-  const route = page?.route || 'pages/home/index'
-  const query = toQueryString(page?.options || {})
-  const path = `/${route}${query ? `?${query}` : ''}`
-  return { path, query }
-}
+try {
+  if (typeof uni !== 'undefined' && typeof uni.request === 'function') {
+    uni.request({
+      url: 'https://www.nuomi-light.com:6149/api/carousel',
+      method: 'GET',
+      success: (res) => {
+        try {
+          let existing = ''
+          try { existing = uni.getStorageSync(SHARE_IMAGE_STORAGE_KEY) || '' } catch (e) { existing = '' }
+          const hasLocalPoster = typeof existing === 'string' && (existing.startsWith('wxfile://') || existing.startsWith('file://'))
+          if (hasLocalPoster) return
+          let data = res?.data
+          if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) {} }
+          const items = Array.isArray(data?.data?.items) ? data.data.items : (Array.isArray(data?.items) ? data.items : [])
+          const first = items && items.length ? items[0] : null
+          const img = cleanUrl(first?.image || first?.thumbnail || first?.url || '')
+          if (img) {
+            try { uni.setStorageSync(SHARE_IMAGE_STORAGE_KEY, img) } catch (e) {}
+          }
+        } catch (e) {}
+      }
+    })
+  }
+} catch (e) {}
 
 const shareMixin = {
   onShow() {
@@ -27,12 +52,10 @@ const shareMixin = {
     }
   },
   onShareAppMessage() {
-    const { path } = getShareLocation()
-    return { title: '诺米', path, imageUrl: '/static/logo.png' }
+    return { title: SHARE_TITLE, path: SHARE_PATH, imageUrl: getShareImageUrl() }
   },
   onShareTimeline() {
-    const { query } = getShareLocation()
-    return { title: '诺米', query, imageUrl: '/static/logo.png' }
+    return { title: SHARE_TITLE, query: SHARE_QUERY, imageUrl: getShareImageUrl() }
   }
 }
 // #endif

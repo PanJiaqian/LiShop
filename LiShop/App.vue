@@ -1,8 +1,13 @@
 <script>
 	export default {
-		onLaunch: function() {
+		onLaunch: function(args) {
 			console.log('App Launch')
 			try {
+				const scene = Number(args && args.scene) || 0
+				const fromShare = scene === 1007 || scene === 1008 || scene === 1044 || scene === 1096 || scene === 1154 || scene === 1155
+				if (fromShare) {
+					try { uni.reLaunch({ url: '/pages/home/index' }) } catch (e) {}
+				}
 				const allowed = new Set(['/pages/search/index', '/pages/category/list'])
 				allowed.add('/pages/category/index')
 				allowed.add('/pages/home/index')
@@ -32,8 +37,15 @@
 				}
 			} catch (e) {}
 		},
-		onShow: function() {
+		onShow: function(args) {
 			console.log('App Show')
+			try {
+				const scene = Number(args && args.scene) || 0
+				const fromShare = scene === 1007 || scene === 1008 || scene === 1044 || scene === 1096 || scene === 1154 || scene === 1155
+				if (fromShare) {
+					try { uni.reLaunch({ url: '/pages/home/index' }) } catch (e) {}
+				}
+			} catch (e) {}
 		},
 		onHide: function() {
 			console.log('App Hide')

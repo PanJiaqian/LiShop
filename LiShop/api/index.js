@@ -290,11 +290,12 @@ export function getProductSpecs(options = {}) {
     available_product_id,
     length,
     quantity,
+    color_temperature,
     inventory,
     has_length,
     token
   } = options
-  const query = toQuery({ page, page_size, sort_by, sort_order, available_product_id, length, quantity, inventory, has_length })
+  const query = toQuery({ page, page_size, sort_by, sort_order, available_product_id, length, quantity, color_temperature, inventory, has_length })
   const url = `${BASE_URL}/api/products/get${query ? `?${query}` : ''}`
 
   return new Promise((resolve, reject) => {

@@ -438,16 +438,14 @@ export default {
     } catch (e) {}
   },
   onShareAppMessage() {
-    const id = this.shareProductId || this.product?.id || ''
-    const title = this.product?.title || '商品详情'
-    const imageUrl = this.product?.image || '/static/logo.png'
-    return { title, path: '/pages/product/index?id=' + encodeURIComponent(id), imageUrl }
+    let imageUrl = '/static/logo.png'
+    try { imageUrl = uni.getStorageSync('share_image_url') || imageUrl } catch (e) {}
+    return { title: '诺米灯光定制', path: '/pages/home/index', imageUrl }
   },
   onShareTimeline() {
-    const id = this.shareProductId || this.product?.id || ''
-    const title = this.product?.title || '商品详情'
-    const imageUrl = this.product?.image || '/static/logo.png'
-    return { title, query: 'id=' + encodeURIComponent(id), imageUrl }
+    let imageUrl = '/static/logo.png'
+    try { imageUrl = uni.getStorageSync('share_image_url') || imageUrl } catch (e) {}
+    return { title: '诺米灯光定制', query: '', imageUrl }
   },
   computed: {
     selectorType() {
@@ -940,13 +938,23 @@ export default {
             name: it.name || '',
             unit: it.unit || '',
             length_unit: it.length_unit || '',
-            price: Number(it.price ?? 0) || 0,
-            original_price: Number(it.original_price ?? 0) || 0,
+            price: (it.price === undefined || it.price === null || it.price === '') ? '-' : it.price,
+            original_price: (it.original_price === undefined || it.original_price === null || it.original_price === '') ? 0 : (Number(it.original_price) || 0),
             image_url: clean(it.image_url) || '',
             inventory: it.inventory || 0,
             has_length: it.has_length || 0,
             specification: it.specification || '',
-            product_type: it.product_type || it.type || ''
+            product_type: it.product_type || it.type || '',
+            message: it.message || '',
+            product_category: it.product_category || '',
+            color: it.color || '',
+            model: it.model || '',
+            color_temperature: it.color_temperature || '',
+            has_custom_params: it.has_custom_params || 0,
+            custom_param1_name: it.custom_param1_name || '',
+            custom_param2_name: it.custom_param2_name || '',
+            custom_param1_value: it.custom_param1_value || '',
+            custom_param2_value: it.custom_param2_value || ''
           }))
         })
         .catch(() => { this.specs = [] })

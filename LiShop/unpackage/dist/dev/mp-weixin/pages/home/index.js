@@ -163,6 +163,10 @@ const _sfc_main = {
       });
       Promise.allSettled([p1, p2, p3]).then(() => {
         this.loading = false;
+        try {
+          this.generateSharePosterIfNeeded();
+        } catch (e) {
+        }
       });
     } catch (e) {
       this.loading = false;
@@ -195,6 +199,188 @@ const _sfc_main = {
     this.showOnboarding = false;
   },
   methods: {
+    getSharePosterSignature() {
+      try {
+        const v = "v2";
+        const banner = this.banners && this.banners[0] && (this.banners[0].image || this.banners[0]) || "";
+        const cats = (this.subCategoryList || []).slice(0, 4).map((x) => (x && (x.name || "")) + "|" + (x && (x.icon || ""))).join(",");
+        return [v, String(banner || ""), String(cats || "")].join("||");
+      } catch (e) {
+        return "";
+      }
+    },
+    generateSharePosterIfNeeded() {
+      let isMp = false;
+      try {
+        isMp = typeof common_vendor.wx$1 !== "undefined";
+      } catch (e) {
+        isMp = false;
+      }
+      if (!isMp)
+        return;
+      try {
+        const prevSig = common_vendor.index.getStorageSync("share_poster_sig") || "";
+        const sig = this.getSharePosterSignature();
+        const cachedUrl = common_vendor.index.getStorageSync("share_image_url") || "";
+        const hasLocalPoster = typeof cachedUrl === "string" && (cachedUrl.startsWith("wxfile://") || cachedUrl.startsWith("file://"));
+        if (hasLocalPoster && prevSig && prevSig === sig)
+          return;
+      } catch (e) {
+      }
+      if (this._sharePosterGenerating)
+        return;
+      this._sharePosterGenerating = true;
+      Promise.resolve().then(() => this.generateSharePoster()).finally(() => {
+        this._sharePosterGenerating = false;
+      });
+    },
+    generateSharePoster() {
+      const ORIGIN = "https://www.nuomi-light.com:6149";
+      const normalize = (src) => {
+        const s = typeof src === "string" ? src.replace(/`/g, "").trim() : "";
+        if (!s)
+          return "";
+        if (s.startsWith("wxfile://") || s.startsWith("file://") || s.startsWith("data:"))
+          return s;
+        if (s.startsWith("/static/"))
+          return s;
+        if (s.startsWith("//"))
+          return "https:" + s;
+        if (s.startsWith("http://"))
+          return "https://" + s.slice(7);
+        if (s.startsWith("https://"))
+          return s;
+        if (s.startsWith("/"))
+          return ORIGIN + s;
+        if (s.includes("://"))
+          return s;
+        return ORIGIN + "/" + s;
+      };
+      const load = (src) => new Promise((resolve) => {
+        const s = normalize(src) || "/static/logo.png";
+        try {
+          if (/^https?:\/\//i.test(s)) {
+            common_vendor.index.downloadFile({
+              url: s,
+              success: (r) => resolve(r && r.statusCode === 200 && r.tempFilePath ? r.tempFilePath : "/static/logo.png"),
+              fail: () => resolve("/static/logo.png")
+            });
+          } else {
+            resolve(s);
+          }
+        } catch (e) {
+          resolve("/static/logo.png");
+        }
+      });
+      const roundRect = (ctx2, x, y, w, h, r) => {
+        const rr = Math.min(r, w / 2, h / 2);
+        ctx2.beginPath();
+        ctx2.moveTo(x + rr, y);
+        ctx2.arcTo(x + w, y, x + w, y + h, rr);
+        ctx2.arcTo(x + w, y + h, x, y + h, rr);
+        ctx2.arcTo(x, y + h, x, y, rr);
+        ctx2.arcTo(x, y, x + w, y, rr);
+        ctx2.closePath();
+      };
+      const W = 750;
+      const H = 680;
+      const pad = 20;
+      const ctx = common_vendor.index.createCanvasContext("sharePoster", this);
+      const bannerUrl = this.banners && this.banners[0] && (this.banners[0].image || this.banners[0]) || "/static/logo.png";
+      const cats = (this.subCategoryList || []).slice(0, 4).map((x) => ({
+        name: x && x.name ? String(x.name) : "",
+        icon: x && x.icon ? String(x.icon) : "/static/logo.png"
+      }));
+      while (cats.length < 4)
+        cats.push({ name: "", icon: "/static/logo.png" });
+      return Promise.all([
+        load(bannerUrl),
+        load(cats[0].icon),
+        load(cats[1].icon),
+        load(cats[2].icon),
+        load(cats[3].icon)
+      ]).then((imgs) => {
+        const bannerPath = imgs[0];
+        const catPaths = imgs.slice(1, 5);
+        ctx.setFillStyle("#f7f7f7");
+        ctx.fillRect(0, 0, W, H);
+        const searchY = 20;
+        const searchH = 82;
+        const searchW = W - pad * 2;
+        roundRect(ctx, pad, searchY, searchW, searchH, 41);
+        ctx.setFillStyle("#ffffff");
+        ctx.fill();
+        ctx.setFillStyle("#999999");
+        ctx.setFontSize(28);
+        ctx.fillText("搜索商品、店铺", pad + 26, searchY + 54);
+        const btnW = 140;
+        const btnX = pad + searchW - btnW - 10;
+        const btnY = searchY + 10;
+        const btnH = searchH - 20;
+        roundRect(ctx, btnX, btnY, btnW, btnH, btnH / 2);
+        ctx.setFillStyle("#111111");
+        ctx.fill();
+        ctx.setFillStyle("#ffffff");
+        ctx.setFontSize(30);
+        ctx.fillText("搜索", btnX + 42, btnY + 46);
+        const bannerY = searchY + searchH + 18;
+        const bannerH = 310;
+        roundRect(ctx, pad, bannerY, searchW, bannerH, 20);
+        ctx.save();
+        ctx.clip();
+        ctx.drawImage(bannerPath, pad, bannerY, searchW, bannerH);
+        ctx.restore();
+        const cateY = bannerY + bannerH + 18;
+        const cateBoxH = 170;
+        roundRect(ctx, pad, cateY, searchW, cateBoxH, 18);
+        ctx.setFillStyle("#ffffff");
+        ctx.fill();
+        const cellW = searchW / 4;
+        for (let i = 0; i < 4; i++) {
+          const cx = pad + cellW * i;
+          const iconSize = 76;
+          const iconX = cx + (cellW - iconSize) / 2;
+          const iconY = cateY + 20;
+          roundRect(ctx, iconX, iconY, iconSize, iconSize, 12);
+          ctx.save();
+          ctx.clip();
+          ctx.drawImage(catPaths[i], iconX, iconY, iconSize, iconSize);
+          ctx.restore();
+          ctx.setFillStyle("#333333");
+          ctx.setFontSize(28);
+          const name = cats[i].name || "";
+          const tx = cx + (cellW - name.length * 28) / 2;
+          ctx.fillText(name, Math.max(cx + 10, tx), iconY + iconSize + 46);
+        }
+        return new Promise((resolve) => {
+          ctx.draw(false, () => {
+            try {
+              common_vendor.index.canvasToTempFilePath({
+                canvasId: "sharePoster",
+                width: W,
+                height: H,
+                destWidth: W,
+                destHeight: H,
+                success: (res) => {
+                  try {
+                    const url = (res == null ? void 0 : res.tempFilePath) || "";
+                    if (url) {
+                      common_vendor.index.setStorageSync("share_image_url", url);
+                      common_vendor.index.setStorageSync("share_poster_sig", this.getSharePosterSignature());
+                    }
+                  } catch (e) {
+                  }
+                  resolve(true);
+                },
+                fail: () => resolve(false)
+              }, this);
+            } catch (e) {
+              resolve(false);
+            }
+          });
+        });
+      });
+    },
     ensureLoggedIn() {
       try {
         const u = common_vendor.index.getStorageSync("user") || null;
@@ -600,7 +786,7 @@ const _sfc_main = {
         common_vendor.index.setStorageSync("cart", cart);
         common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/home/index.vue:754", e);
+        common_vendor.index.__f__("error", "at pages/home/index.vue:927", e);
       }
     },
     goLogin() {
