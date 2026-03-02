@@ -259,6 +259,11 @@
 </template>
 
 <script>
+/**
+ * 购物车页面模块
+ * - 拉取/展示购物车条目，支持数量修改、删除、清空等操作
+ * - 按房间分组并支持房间/地址选择，创建订单与导出订单数据
+ */
 import FloatingNav from '@/components/FloatingNav.vue'
 import RoomSelector from '@/components/RoomSelector.vue'
 import Skeleton from '@/components/Skeleton.vue'

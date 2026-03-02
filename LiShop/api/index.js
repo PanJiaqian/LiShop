@@ -1,3 +1,9 @@
+/**
+ * API 请求封装模块
+ * - 统一维护后端 BASE_URL
+ * - 提供 token 读取/过期处理与 Bearer Header 生成
+ * - 将各业务接口封装为 Promise，供页面/组件直接调用
+ */
 const BASE_URL = 'https://www.nuomi-light.com:6149'
 
 function getBearer(token) {

@@ -8,6 +8,10 @@
 </template>
 
 <script>
+/**
+ * 示例页面模块
+ * - uni-app 默认模板页面（当前项目中通常不作为主入口）
+ */
 export default {
 	data() {
 		return {

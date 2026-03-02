@@ -212,6 +212,11 @@
 </template>
 
 <script>
+/**
+ * 首页页面模块
+ * - 负责加载轮播图、分类、推荐商品与公告等首页数据
+ * - 提供搜索入口与新手引导，并集成若干通用组件（导航/骨架屏/登录提示等）
+ */
 import SearchBar from '@/components/SearchBar.vue'
 import BannerSwiper from '@/components/BannerSwiper.vue'
 import CategoryGrid from '@/components/CategoryGrid.vue'

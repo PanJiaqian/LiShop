@@ -51,6 +51,11 @@
 </template>
 
 <script>
+/**
+ * 公告页面模块
+ * - 拉取并展示当前公告内容
+ * - 提供返回与展开/收起内容的交互
+ */
 import Skeleton from '@/components/Skeleton.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import { getCurrentAnnouncement } from '../../api/index.js'

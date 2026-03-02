@@ -21,6 +21,11 @@
 </template>
 
 <script>
+/**
+ * 悬浮快捷导航组件
+ * - 提供“首页/购物车/客服/回到顶部”等常用入口
+ * - 根据运行端与全局开关决定是否显示（H5 默认显示）
+ */
 export default {
   name: 'FloatingNav',
   props: {

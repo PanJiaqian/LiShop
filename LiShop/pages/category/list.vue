@@ -48,6 +48,11 @@
 </template>
 
 <script>
+/**
+ * 子分类商品列表页模块
+ * - 根据父分类/子分类参数加载可见商品列表
+ * - 支持分页加载与切换子分类筛选
+ */
 import ProductCard from '@/components/ProductCard.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'

@@ -5,6 +5,10 @@
 </template>
 
 <script>
+/**
+ * ICP 备案信息展示组件（H5 使用）
+ * - 提供工信部备案链接与备案号展示
+ */
 export default {
   name: 'IcpFooter'
 }

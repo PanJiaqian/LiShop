@@ -31,6 +31,11 @@
 </template>
 
 <script>
+/**
+ * 地址列表页面模块
+ * - 登录态下加载收货地址列表
+ * - 提供新增/编辑/删除地址入口
+ */
 import Skeleton from '@/components/Skeleton.vue'
 import { getAddresses, deleteAddress } from '../../api/index.js'
 

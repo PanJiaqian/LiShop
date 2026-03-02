@@ -11,6 +11,11 @@
 </template>
 
 <script>
+/**
+ * 搜索栏组件
+ * - 使用 v-model（modelValue / update:modelValue）同步输入值
+ * - 触发 search 事件交由父组件执行搜索逻辑
+ */
 export default {
   name: 'SearchBar',
   props: {

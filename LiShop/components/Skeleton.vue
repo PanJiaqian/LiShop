@@ -13,6 +13,11 @@
 </template>
 
 <script>
+/**
+ * 骨架屏组件
+ * - loading 为 true 时展示占位内容
+ * - rows/showTitle/showGrid 控制占位结构，用于页面加载阶段的视觉反馈
+ */
 export default {
   name: 'Skeleton',
   props: {

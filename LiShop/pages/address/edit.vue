@@ -41,6 +41,11 @@
 </template>
 
 <script>
+/**
+ * 地址编辑页面模块
+ * - 新增/编辑收货地址表单，并支持设为默认地址
+ * - 根据运行端选择地区选择器（小程序 region / H5 multiSelector）
+ */
 import Skeleton from '@/components/Skeleton.vue'
 import { addAddress, updateAddress, getAddresses, deleteAddress } from '../../api/index.js'
 

@@ -30,6 +30,11 @@
 </template>
 
 <script>
+/**
+ * 分类页模块
+ * - 左侧展示一级分类，右侧展示当前分类的子分类入口
+ * - 支持从其他页面带入“待激活分类”，以便直接定位到指定分类
+ */
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { getVisibleCategories } from '../../api/index.js'

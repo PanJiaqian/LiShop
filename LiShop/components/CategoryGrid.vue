@@ -8,6 +8,11 @@
 </template>
 
 <script>
+/**
+ * 分类宫格组件
+ * - 展示分类入口（图标+名称）
+ * - 点击后跳转/切换到分类页
+ */
 export default {
   name: 'CategoryGrid',
   props: {

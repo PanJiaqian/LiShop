@@ -22,6 +22,11 @@
 </template>
 
 <script>
+/**
+ * 搜索结果页面模块
+ * - 接收关键词/分类名参数并调用搜索接口
+ * - 支持分页、跳页与加载态展示
+ */
 import ProductCard from '@/components/ProductCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { searchProducts } from '../../api/index.js'

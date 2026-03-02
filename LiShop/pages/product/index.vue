@@ -332,6 +332,11 @@
 </template>
 
 <script>
+/**
+ * 商品详情页面模块
+ * - 负责拉取商品详情/规格、收藏状态，并提供加入购物车/下单等交互
+ * - 同时兼容 H5 与小程序端的规格/房间/地址选择流程（通过条件编译与弹窗组件实现）
+ */
 import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress, createDirectOrder, addFavorite, deleteFavorite } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'

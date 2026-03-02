@@ -241,6 +241,11 @@
 </template>
 
 <script>
+/**
+ * 个人中心页面模块
+ * - 展示并编辑用户资料（头像/公司信息/地区等），以及账号安全相关修改
+ * - 加载并管理收货地址列表，提供新手引导与公告弹窗
+ */
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import OnboardingGuide from '@/components/OnboardingGuide.vue'

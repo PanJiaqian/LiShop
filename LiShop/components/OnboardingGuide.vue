@@ -20,6 +20,11 @@
   </view>
 </template>
 <script>
+/**
+ * 新手引导组件
+ * - 通过 targets 接收页面元素位置信息，渲染高亮框与指引面板
+ * - 通过 steps 提供每一步文案，并通过事件通知父组件前进/后退/结束
+ */
 export default {
   name: 'OnboardingGuide',
   props: {

@@ -11,6 +11,10 @@
 </template>
 
 <script>
+/**
+ * 设置页面模块
+ * - 展示应用设置入口/说明（当前为轻量占位页）
+ */
 import Skeleton from '@/components/Skeleton.vue'
 export default {
   components: { Skeleton },

@@ -12,6 +12,11 @@
   </template>
   
   <script>
+  /**
+   * 登录提示弹窗组件
+   * - 用于在用户未登录时拦截关键操作（如查看价格/进入详情等）
+   * - 通过 visible 控制显示，通过 close/confirm 事件由父组件处理跳转
+   */
   export default {
     name: 'LoginPrompt',
     props: {

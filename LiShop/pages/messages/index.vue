@@ -17,6 +17,10 @@
 </template>
 
 <script>
+/**
+ * 消息页面模块
+ * - 展示本地缓存的消息列表（当前从 storage 读取）
+ */
 import Skeleton from '@/components/Skeleton.vue'
 export default {
   components: { Skeleton },

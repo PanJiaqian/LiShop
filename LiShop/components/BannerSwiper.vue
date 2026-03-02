@@ -21,6 +21,12 @@
 </template>
 
 <script>
+/**
+ * 轮播图组件
+ * - 接收图片/对象数组并渲染 swiper
+ * - 通过拖拽阈值区分“滑动翻页”和“点击跳转”，避免误触
+ * - 点击带有 id 的 banner 时进入商品详情页
+ */
 export default {
   name: 'BannerSwiper',
   props: {

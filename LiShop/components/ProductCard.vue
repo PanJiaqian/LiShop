@@ -22,6 +22,11 @@
 </template>
 
 <script>
+/**
+ * 商品卡片组件
+ * - 展示商品封面、标题、销量与价格（未登录时显示提示文案）
+ * - 点击进入商品详情；需要登录态时弹出 LoginPrompt
+ */
 import LoginPrompt from '@/components/LoginPrompt.vue'
 export default {
   name: 'ProductCard',

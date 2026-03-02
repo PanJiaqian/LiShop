@@ -17,6 +17,11 @@
 </template>
 
 <script>
+/**
+ * 收藏页面模块
+ * - 仅在登录态下拉取用户收藏列表
+ * - 未登录时通过全局事件触发登录提示弹窗
+ */
 import Skeleton from '@/components/Skeleton.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
 import { getFavorites } from '../../api/index.js'

@@ -29,6 +29,11 @@
 </template>
 
 <script>
+/**
+ * 登录页面模块
+ * - 提供账号密码登录，并在成功后写入本地缓存的 user/token_expiration
+ * - 已登录且未过期时自动跳转回首页
+ */
 import Skeleton from '@/components/Skeleton.vue'
 import { loginAdmin } from '../../api/index.js'
 export default {

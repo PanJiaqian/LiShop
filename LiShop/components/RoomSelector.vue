@@ -103,6 +103,11 @@
 </template>
 
 <script>
+/**
+ * 房间/地址选择弹窗组件
+ * - 根据 type 切换“房间选择”或“收货地址选择”模式
+ * - 支持创建房间、滑动删除房间；地址模式支持创建/保存地址表单
+ */
 import { deleteRoom as apiDeleteRoom } from '../api/index.js'
 export default {
   name: 'RoomSelector',

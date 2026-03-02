@@ -1,4 +1,10 @@
 <script>
+	/**
+	 * 应用根模块
+	 * - 统一处理应用生命周期（Launch/Show/Hide）
+	 * - 拦截路由跳转实现登录态守卫：未登录仅允许访问白名单页面，并触发全局登录弹窗事件
+	 * - 分享场景进入时回到首页，避免落在不支持的深链页面
+	 */
 	export default {
 		onLaunch: function(args) {
 			console.log('App Launch')

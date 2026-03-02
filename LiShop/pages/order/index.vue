@@ -154,6 +154,11 @@
 </template>
 
 <script>
+/**
+ * 订单页面模块
+ * - 列表模式：按状态拉取订单列表（待付款/待发货/待收货/历史）
+ * - 详情模式：展示单个订单详情、物流信息与相关操作（确认收货/取消等）
+ */
 import { getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, cancelOrder, exportOrderExcel } from '../../api/index.js'
 import FloatingNav from '../../components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
