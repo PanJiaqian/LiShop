@@ -81,7 +81,7 @@ const _sfc_main = {
         });
         return Object.keys(map).map((name) => ({ name, items: map[name] }));
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:325", "groups computed error", e);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:330", "groups computed error", e);
         return [];
       }
     }
@@ -276,7 +276,7 @@ const _sfc_main = {
         this.fetchSummary();
         this.loading = false;
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:488", "Get cart failed", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:493", "Get cart failed", err);
         try {
           this.cart = common_vendor.index.getStorageSync("cart") || [];
         } catch (e) {
@@ -300,7 +300,7 @@ const _sfc_main = {
         if (res && res.success && res.data) {
           this.summaryData = res.data;
         }
-      }).catch((e) => common_vendor.index.__f__("error", "at pages/cart/index.vue:508", e));
+      }).catch((e) => common_vendor.index.__f__("error", "at pages/cart/index.vue:513", e));
     },
     sync() {
       common_vendor.index.setStorageSync("cart", this.cart);
@@ -344,7 +344,7 @@ const _sfc_main = {
           common_vendor.index.showToast({ title: "更新失败", icon: "none" });
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:547", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:552", err);
         common_vendor.index.showToast({ title: "更新出错", icon: "none" });
       });
     },
@@ -517,7 +517,7 @@ const _sfc_main = {
         }
       }).catch((err) => {
         common_vendor.index.showToast({ title: "下单出错", icon: "none" });
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:688", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:693", err);
       });
     },
     handleExportExcel() {
@@ -555,7 +555,7 @@ const _sfc_main = {
           name: r.name
         }));
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:780", "Get rooms failed", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:785", "Get rooms failed", err);
         this.rooms = (common_vendor.index.getStorageSync("rooms") || []).map((n) => ({ id: n, name: n }));
       });
     },

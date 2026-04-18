@@ -582,7 +582,7 @@ const _sfc_main = {
           this.avatarError = false;
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/profile/index.vue:716", "Fetch user profile failed", err);
+        common_vendor.index.__f__("error", "at pages/profile/index.vue:721", "Fetch user profile failed", err);
       });
     },
     login() {
@@ -651,7 +651,7 @@ const _sfc_main = {
         }
       }).catch((err) => {
         common_vendor.index.hideLoading();
-        common_vendor.index.__f__("error", "at pages/profile/index.vue:784", err);
+        common_vendor.index.__f__("error", "at pages/profile/index.vue:789", err);
         common_vendor.index.showToast({ title: "更新出错", icon: "none" });
       });
     },
@@ -708,7 +708,7 @@ const _sfc_main = {
         }
       }).catch((err) => {
         common_vendor.index.hideLoading();
-        common_vendor.index.__f__("error", "at pages/profile/index.vue:834", err);
+        common_vendor.index.__f__("error", "at pages/profile/index.vue:839", err);
         common_vendor.index.showToast({ title: "发送出错", icon: "none" });
       });
     },
@@ -749,7 +749,7 @@ const _sfc_main = {
           }
         }).catch((err) => {
           common_vendor.index.hideLoading();
-          common_vendor.index.__f__("error", "at pages/profile/index.vue:870", err);
+          common_vendor.index.__f__("error", "at pages/profile/index.vue:875", err);
           common_vendor.index.showToast({ title: err && err.message || "修改出错", icon: "none" });
         });
       }

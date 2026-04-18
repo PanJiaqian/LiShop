@@ -18,11 +18,11 @@
 }
 .og-panel.data-v-b416fa2a {
   position: fixed;
-  background: #ffffff;
+  background: #2c2c2c;
   border-radius: 20rpx;
   box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.18);
   padding: 16rpx 14rpx;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #444;
 }
 .og-content.data-v-b416fa2a {
   padding: 8rpx 6rpx 12rpx 6rpx;
@@ -30,7 +30,7 @@
 .og-step-title.data-v-b416fa2a {
   font-size: 28rpx;
   font-weight: 700;
-  color: #111;
+  color: #fff;
   margin-bottom: 8rpx;
 }
 .og-step-body.data-v-b416fa2a {
@@ -38,7 +38,7 @@
 }
 .og-step-text.data-v-b416fa2a {
   font-size: 26rpx;
-  color: #333;
+  color: #ddd;
   line-height: 1.6;
 }
 .og-actions.data-v-b416fa2a {
@@ -49,11 +49,11 @@
 }
 .og-index.data-v-b416fa2a {
   font-size: 24rpx;
-  color: #666;
+  color: #aaa;
 }
 .og-skip.data-v-b416fa2a {
   font-size: 24rpx;
-  color: #999;
+  color: #888;
   margin-left: -55rpx;
   margin-right: 30px;
 }
@@ -63,8 +63,8 @@
   padding: 0 20rpx;
   font-size: 24rpx;
   border-radius: 12rpx;
-  background: #f7f7f7;
-  color: #222;
+  background: #444;
+  color: #fff;
 }
 .og-btn.primary.data-v-b416fa2a {
   background: #000;
@@ -75,8 +75,8 @@
   position: absolute;
   width: 16rpx;
   height: 16rpx;
-  background: #ffffff;
-  border: 1px solid #f0f0f0;
+  background: #2c2c2c;
+  border: 1px solid #444;
   box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.12);
   transform: rotate(45deg);
 }

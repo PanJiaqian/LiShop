@@ -1,7 +1,7 @@
 
 .skeleton-container.data-v-bb68c843 {
   padding: 30rpx;
-  background: #fff;
+  background: #1a1a1a;
   width: 100%;
   box-sizing: border-box;
   position: absolute;
@@ -12,7 +12,7 @@
 }
 .skeleton-row.data-v-bb68c843 {
   height: 32rpx;
-  background: #f2f2f2;
+  background: #333;
   margin-bottom: 24rpx;
   border-radius: 4rpx;
   animation: pulse-bb68c843 1.5s infinite;
@@ -30,7 +30,7 @@
 }
 .skeleton-grid-item.data-v-bb68c843 {
   height: 300rpx;
-  background: #f2f2f2;
+  background: #333;
   border-radius: 12rpx;
   animation: pulse-bb68c843 1.5s infinite;
 }

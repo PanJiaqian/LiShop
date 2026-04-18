@@ -11,6 +11,7 @@ const SHARE_PATH = '/pages/home/index'
 const SHARE_QUERY = ''
 const FALLBACK_SHARE_IMAGE_URL = '/static/logo.png'
 const SHARE_IMAGE_STORAGE_KEY = 'share_image_url'
+const FLOATING_BALL_STORAGE_KEY = 'floatingBallPos'
 
 const cleanUrl = (u) => (typeof u === 'string' ? u.replace(/`/g, '').trim() : '')
 
@@ -48,6 +49,16 @@ try {
 } catch (e) {}
 
 const shareMixin = {
+  onLoad() {
+    try {
+      const app = typeof getApp === 'function' ? getApp() : null
+      if (!app || !app.globalData) return
+      const cached = (typeof wx !== 'undefined' && typeof wx.getStorageSync === 'function')
+        ? (wx.getStorageSync(FLOATING_BALL_STORAGE_KEY) || null)
+        : ((typeof uni !== 'undefined' && typeof uni.getStorageSync === 'function') ? (uni.getStorageSync(FLOATING_BALL_STORAGE_KEY) || null) : null)
+      if (cached && cached.x !== undefined && cached.y !== undefined) app.globalData.floatingBallPos = { x: cached.x, y: cached.y }
+    } catch (e) {}
+  },
   onShow() {
     if (typeof uni !== 'undefined' && typeof uni.showShareMenu === 'function') {
       uni.showShareMenu({
@@ -55,6 +66,16 @@ const shareMixin = {
         menus: ['shareAppMessage', 'shareTimeline']
       })
     }
+  },
+  onHide() {
+    try {
+      const app = typeof getApp === 'function' ? getApp() : null
+      const gd = app && app.globalData ? app.globalData : null
+      const pos = gd && gd.floatingBallPos ? gd.floatingBallPos : null
+      if (!pos || pos.x === undefined || pos.y === undefined) return
+      if (typeof wx !== 'undefined' && typeof wx.setStorageSync === 'function') wx.setStorageSync(FLOATING_BALL_STORAGE_KEY, { x: pos.x, y: pos.y })
+      else if (typeof uni !== 'undefined' && typeof uni.setStorageSync === 'function') uni.setStorageSync(FLOATING_BALL_STORAGE_KEY, { x: pos.x, y: pos.y })
+    } catch (e) {}
   },
   onShareAppMessage() {
     return { title: SHARE_TITLE, path: SHARE_PATH, imageUrl: getShareImageUrl() }

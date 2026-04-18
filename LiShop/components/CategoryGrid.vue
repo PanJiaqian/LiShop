@@ -37,7 +37,7 @@ export default {
   grid-row-gap: 24rpx;
   grid-column-gap: 12rpx;
   padding: 20rpx;
-  background: #ffffff;
+  background: #1a1a1a;
 }
 
 .item {
@@ -50,12 +50,12 @@ export default {
   width: 100rpx;
   height: 100rpx;
   border-radius: 20rpx;
-  background: #f5f5f5;
+  background: #333;
 }
 
 .name {
   margin-top: 12rpx;
   font-size: 26rpx;
-  color: #333;
+  color: #fff;
 }
 </style>

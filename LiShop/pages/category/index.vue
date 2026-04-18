@@ -165,21 +165,14 @@ export default {
 
 <style scoped>
 .page {
-  background: #f7f7f7;
+  background: #1a1a1a;
   min-height: 100vh;
 }
 
 /* #ifdef MP-WEIXIN */
 .page { position: relative; z-index: 1; }
 .page-bg {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
+  display: none;
 }
 /* #endif */
 
@@ -190,24 +183,26 @@ export default {
 
 .left {
   width: 220rpx;
-  background: #f5f5f5;
+  background: #2c2c2c;
 }
 
 .left-item {
   padding: 24rpx;
   border-left: 6rpx solid transparent;
+  color: #aaa;
 }
 
 .left-item.active {
-  background: #ddd;
+  background: #444;
   /* border-left-color: #333; */
   border-radius: 10px;
   font-weight: 600;
+  color: #fff;
 }
 
 .right {
   flex: 1;
-  background: #fff;
+  background: #1a1a1a;
 }
 
 .right-wrap {
@@ -217,7 +212,7 @@ export default {
 .sub-title {
   font-size: 33rpx;
   font-weight: 600;
-  color: #333;
+  color: #fff;
   margin-bottom: 12rpx;
 }
 
@@ -237,12 +232,13 @@ export default {
   width: 140rpx;
   height: 140rpx;
   border-radius: 12rpx;
-  background: #f5f5f5;
+  background: #333;
 }
 
 .sub-name {
   margin-top: 12rpx;
   font-size: 26rpx;
+  color: #fff;
 }
 
 /* #ifdef MP-WEIXIN */

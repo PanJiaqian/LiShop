@@ -119,7 +119,7 @@ export default {
 
 <style scoped>
 .page {
-  background: #f7f7f7;
+  background: #1a1a1a;
   min-height: 100vh;
   width: 100vw;
   box-sizing: border-box;
@@ -127,8 +127,9 @@ export default {
 
 /* #ifdef MP-WEIXIN */
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed; */
+  /* background-size: cover; */
+  background-color: #1a1a1a;
 }
 /* #endif */
 .header {
@@ -136,8 +137,8 @@ export default {
   align-items: baseline;
   padding: 20rpx;
 }
-.title { font-size: 32rpx; font-weight: 600; margin-right: 16rpx; }
-.kw { font-size: 28rpx; color: #666; }
+.title { font-size: 32rpx; font-weight: 600; margin-right: 16rpx; color: #ffffff; }
+.kw { font-size: 28rpx; color: #aaaaaa; }
 
 .grid2 {
   display: grid;
@@ -145,11 +146,11 @@ export default {
   grid-gap: 16rpx;
   padding: 20rpx;
 }
-.grid2-item { background: #fff; border-radius: 12rpx; overflow: hidden; }
+.grid2-item { background: #2c2c2c; border-radius: 12rpx; overflow: hidden; }
 
-.loading { text-align: center; color: #999; padding: 20rpx; }
-.empty { height: 40vh; display: flex; align-items: center; justify-content: center; color: #999; }
-.nomore { text-align: center; color: #999; padding: 12rpx; }
+.loading { text-align: center; color: #777777; padding: 20rpx; }
+.empty { height: 40vh; display: flex; align-items: center; justify-content: center; color: #777777; }
+.nomore { text-align: center; color: #777777; padding: 12rpx; }
 
 /* #ifdef H5 */
 .grid2 { 

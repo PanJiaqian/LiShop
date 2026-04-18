@@ -35,6 +35,7 @@
               <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" @click="openDetail(it)" />
               <text class="title" @click="openDetail(it)">{{ it.title }}</text>
               <text class="attr-txt">{{ it.attr }}</text>
+              <text class="attr-txt" v-if="it.package_capacity > 0">包装容量：{{ it.package_capacity }} | 包装价：¥{{ Number(it.package_price).toFixed(2) }}</text>
               <text class="price">¥{{ it.price.toFixed(2) }}</text>
               <view class="qty-box">
                   <view class="qty-btn" @click.stop="decById(it.id)">-</view>
@@ -125,8 +126,8 @@
       <button size="mini" class="bar-btn" @click="openAddressPicker">选择收货地址</button>
     </view>
     <view class="mp-note-bar" style="margin: 16rpx 20rpx;">
-      <text style="font-size: 26rpx; color: #333;">备注</text>
-      <input v-model="mpOrderNote" placeholder="填写订单备注" style="width: 100%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx;" />
+      <text style="font-size: 26rpx; color: #fff;">备注</text>
+      <input v-model="mpOrderNote" placeholder="填写订单备注" placeholder-style="color:#777" style="width: 100%; padding: 12rpx; border: 1rpx solid #444; border-radius: 8rpx; margin-top: 8rpx; background: #333; color: #fff;" />
     </view>
     <view v-if="cart.length" class="list">
       <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
@@ -836,41 +837,61 @@ export default {
 .page {
   min-height: 100vh;
   padding-bottom: 120rpx;
+  background-color: #1a1a1a;
 }
 /* #ifdef H5 */
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover; */
+  background-color: #1a1a1a;
 }
 /* #endif */
 
 .review-title {
   font-size: 36rpx;
   font-weight: bold;
-  color: #333;
+  color: #fff;
 }
 
 .addr-sub-title {
   font-size: 24rpx;
-  color: #666;
+  color: #aaa;
   margin-bottom: 10rpx;
 }
 
 .list {
-  background: #fff;
+  background: #1a1a1a;
+}
+
+.group {
+  /* #ifdef H5 */
+  background: #ffffff;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+  padding: 10rpx;
+  /* #endif */
+  /* #ifdef MP-WEIXIN */
+  background: #1a1a1a;
+  margin-bottom: 20rpx;
+  /* #endif */
 }
 
 .item {
   display: flex;
   padding: 20rpx;
-  border-bottom: 1px solid #f0f0f0;
   position: relative;
+  /* #ifdef H5 */
+  border-bottom: 1px solid #eeeeee;
+  /* #endif */
+  /* #ifdef MP-WEIXIN */
+  border-bottom: 1px solid #333333;
+  /* #endif */
 }
 
 .out-stock-mask {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255,255,255,0.6);
+  background: rgba(0,0,0,0.6);
   z-index: 5;
   pointer-events: none;
 }
@@ -879,7 +900,7 @@ export default {
   position: absolute;
   right: 20rpx;
   bottom: 20rpx;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.8);
   color: #fff;
   padding: 4rpx 12rpx;
   font-size: 24rpx;
@@ -888,8 +909,8 @@ export default {
 }
 
 .chk-ico.disabled {
-  background: #eee;
-  border-color: #ddd;
+  background: #444;
+  border-color: #555;
 }
 
 .item.out-of-stock .chk { pointer-events: none; }
@@ -897,8 +918,8 @@ export default {
 .cover {
   width: 160rpx;
   height: 160rpx;
-  border-radius: 12rpx;
-  background: #f5f5f5;
+  /* border-radius: 12rpx; */
+  background: #333;
 }
 
 .meta {
@@ -908,8 +929,13 @@ export default {
 
 .title {
   font-size: 28rpx;
-  color: #333;
   display: block;
+  /* #ifdef H5 */
+  color: #333333;
+  /* #endif */
+  /* #ifdef MP-WEIXIN */
+  color: #ffffff;
+  /* #endif */
 }
 
 .price {
@@ -944,8 +970,8 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #fff;
-  box-shadow: 0 -8rpx 20rpx rgba(0, 0, 0, .06);
+  background: #2c2c2c;
+  box-shadow: 0 -8rpx 20rpx rgba(0, 0, 0, .2);
   padding: 20rpx;
   display: flex;
   justify-content: space-between;
@@ -979,9 +1005,9 @@ export default {
 .action-buttons .export-btn {
   flex: 1;
   margin: 0;
-  background: #fff;
-  color: #333;
-  border: 1px solid #ddd;
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
   height: 80rpx;
   line-height: 80rpx;
   border-radius: 40rpx;
@@ -1011,16 +1037,28 @@ export default {
   height: 28rpx;
   border-radius: 50%;
   border: 2rpx solid #ccc;
+  /* #ifdef MP-WEIXIN */
+  border-color: #666;
+  /* #endif */
 }
 
 .chk-ico.on {
   background: #333;
+  /* #ifdef MP-WEIXIN */
+  background: #fff;
+  border-color: #fff;
+  /* #endif */
   /* border-color: #ff5500; */
 }
 
 .chk-txt {
   margin-left: 8rpx;
+  /* #ifdef H5 */
   color: #333;
+  /* #endif */
+  /* #ifdef MP-WEIXIN */
+  color: #ffffff;
+  /* #endif */
 }
 
 .chk.btn-style {
@@ -1457,7 +1495,7 @@ export default {
   /* border-radius: 50%; */
   /* background: rgba(255,255,255,0.7); */
   /* box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); */
-  color: #333;
+  color: #ffffff;
   font-size: 36rpx;
   z-index: 999;
   -webkit-backdrop-filter: blur(8px);
@@ -1535,7 +1573,14 @@ export default {
   height: 44rpx;
 }
 .qty-btn { width: 44rpx; height: 44rpx; display: flex; align-items: center; justify-content: center; color: #333; }
-.qty-num { padding: 0 12rpx; font-size: 24rpx; color: #333; }
+.qty-num { padding: 0 12rpx; font-size: 24rpx; 
+  /* #ifdef H5 */
+  color: #333; 
+  /* #endif */
+  /* #ifdef MP-WEIXIN */
+  color: #fff;
+  /* #endif */
+}
 
 .actions-col {
   display: flex;
@@ -1702,17 +1747,17 @@ export default {
   justify-content: space-between;
   padding: 24rpx 20rpx;
   /* background: #fff; */
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #333;
 }
 .bar-left { display: flex; align-items: center; gap: 12rpx; }
-.addr-icon { font-size: 28rpx; color: #000; }
-.bar-info { display: flex; flex-direction: column; font-size: 24rpx; color: #555; }
+.addr-icon { font-size: 28rpx; color: #fff; }
+.bar-info { display: flex; flex-direction: column; font-size: 24rpx; color: #aaa; }
 .bar-line { white-space: nowrap; }
-.bar-btn { background: #fff; border: 1rpx solid #ddd; color: #333; border-radius: 999rpx; }
+.bar-btn { background: #333; border: 1rpx solid #555; color: #fff; border-radius: 999rpx; }
 .mp-room {
   margin: 0 30rpx;
-  background: #ddd;
-  color: #333;
+  background: #333;
+  color: #fff;
   padding: 16rpx;
   border-radius: 8rpx;
   display: block;
@@ -1722,10 +1767,11 @@ export default {
 
 .mp-qty-box {
   height: 60rpx;
-  background: #f8f8f8;
+  background: #333;
   border-radius: 8rpx;
   display: flex;
   align-items: center;
+  color: #fff;
 }
 
 .mp-qty-btn {
@@ -1736,36 +1782,31 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #fff;
 }
 
 .mp-qty-box .count {
   font-size: 32rpx;
   font-weight: bold;
   margin: 0 10rpx;
+  color: #fff;
 }
 
 .act-txt.del {
   font-size: 32rpx;
   margin-top: 10rpx;
+  color: #999;
 }
 
-.price { color: #000; }
-.sum { color: #000; }
-.spec-price { color: #000; }
-.price-box .price { color: #000; }
+.price { color: #e1251b; }
+.sum { color: #e1251b; }
+.spec-price { color: #e1251b; }
+.price-box .price { color: #e1251b; }
 /* #endif */
 /* #ifdef MP-WEIXIN */
-.page { position: relative; }
+.page { position: relative; background-color: #1a1a1a; min-height: 100vh; }
 .page-bg {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  pointer-events: none;
+  display: none;
 }
 /* #endif */
 </style>

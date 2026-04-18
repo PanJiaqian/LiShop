@@ -26,36 +26,38 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #f7f7f7;
+  background: #1a1a1a;
 }
 
 /* #ifdef MP-WEIXIN */
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed; */
+  /* background-size: cover; */
+  background-color: #1a1a1a;
 }
 /* #endif */
 
 .header {
   padding: 32rpx;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: #2c2c2c;
+  border-bottom: 1px solid #444444;
 }
 
 .title {
   font-size: 32rpx;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .content {
   margin: 24rpx;
   padding: 32rpx;
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 16rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .06);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, .3);
 }
 
 .tip {
-  color: #666;
+  color: #aaaaaa;
 }
 </style>

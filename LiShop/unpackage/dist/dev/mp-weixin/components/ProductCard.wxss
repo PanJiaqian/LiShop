@@ -1,13 +1,13 @@
 
 .card.data-v-fe52aa40 {
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 12rpx;
   overflow: hidden;
 }
 .cover.data-v-fe52aa40 {
   width: 100%;
   height: 300rpx;
-  background: #f5f5f5;
+  background: #333;
   display: block;
 }
 .info.data-v-fe52aa40 {
@@ -15,7 +15,7 @@
 }
 .title.data-v-fe52aa40 {
   font-size: 28rpx;
-  color: #333;
+  color: #fff;
   line-height: 1.4;
   display: block;
   height: 80rpx;
@@ -33,29 +33,29 @@
   gap: 12rpx;
 }
 .price-icon.data-v-fe52aa40 {
-  color: #000;
+  color: #fff;
   font-size: 28rpx;
   font-weight: 600;
 }
 .price-amount.data-v-fe52aa40 {
-  color: #000;
+  color: #fff;
   font-size: 30rpx;
   font-weight: 700;
 }
 .price-text.data-v-fe52aa40 {
-  color: #000;
+  color: #fff;
   font-size: 28rpx;
   font-weight: 600;
 }
-.price-icon.data-v-fe52aa40 { color: #000;
+.price-icon.data-v-fe52aa40 { color: #fff;
 }
-.price-amount.data-v-fe52aa40 { color: #000;
+.price-amount.data-v-fe52aa40 { color: #fff;
 }
-.price-text.data-v-fe52aa40 { color: #000;
+.price-text.data-v-fe52aa40 { color: #fff;
 }
 .sales.data-v-fe52aa40 {
   font-size: 24rpx;
-  color: #999;
+  color: #aaa;
 }
 .actions.data-v-fe52aa40 {
   margin-top: 12rpx;

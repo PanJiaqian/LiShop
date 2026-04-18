@@ -207,22 +207,67 @@ const _sfc_main = {
       }
     },
     displayTopPrice() {
-      var _a;
-      const sel = this.selectedSpec;
-      const rawBase = sel ? sel.price : (_a = this.product) == null ? void 0 : _a.price;
-      if (rawBase === "-" || rawBase === "—")
-        return "-";
-      const basePerM = Number(rawBase || 0) || 0;
-      if (sel && sel.has_length === 1) {
-        const rawStr = (this.specLength || "").replace(/[^0-9.]/g, "");
-        const raw = rawStr ? Number(rawStr) : 0;
-        if (raw > 0) {
-          const meters = this.toMeters(raw, this.lengthUnitText);
-          return (basePerM * meters).toFixed(2);
-        }
-        return `${basePerM.toFixed(2)}/m`;
+      var _a, _b, _c;
+      const sel = this.selectedSpec || this.specs && this.specs[0] || null;
+      const formula = String((sel == null ? void 0 : sel.formula) || "").trim();
+      let isH5 = false;
+      try {
+        isH5 = typeof window !== "undefined";
+      } catch (e) {
+        isH5 = false;
       }
-      return basePerM.toFixed(2);
+      const lengthRaw = isH5 ? this.specLength : this.mpLength;
+      const lengthStr = String(lengthRaw || "").replace(/[^0-9.]/g, "");
+      const lengthVal = lengthStr ? Number(lengthStr) : 1;
+      const qtyRaw = isH5 ? this.qty : this.mpQty;
+      const qty = Math.max(1, Number(qtyRaw || 1));
+      const usesLength = /\blength\b/.test(formula) || Number((sel == null ? void 0 : sel.has_length) || 0) === 1;
+      if (usesLength && lengthStr && isNaN(lengthVal))
+        return "-";
+      const fallbackNum = Number((sel == null ? void 0 : sel.price) ?? (sel == null ? void 0 : sel.unit_price) ?? ((_a = this.product) == null ? void 0 : _a.price) ?? 0);
+      if (!formula) {
+        if (isNaN(fallbackNum))
+          return "-";
+        const defaultText = fallbackNum.toFixed(2);
+        if (usesLength && !lengthStr)
+          return `${defaultText}/m`;
+        return defaultText;
+      }
+      const ctx = {
+        unit_price: (sel == null ? void 0 : sel.unit_price) ?? (sel == null ? void 0 : sel.price) ?? ((_b = this.product) == null ? void 0 : _b.price) ?? 0,
+        additional_price: (sel == null ? void 0 : sel.additional_price) ?? 0,
+        discount: (sel == null ? void 0 : sel.discount) ?? 1,
+        price: (sel == null ? void 0 : sel.price) ?? ((_c = this.product) == null ? void 0 : _c.price) ?? 0,
+        original_price: (sel == null ? void 0 : sel.original_price) ?? 0,
+        length: lengthVal,
+        quantity: qty
+      };
+      const val = this.evaluateFormula(formula, ctx);
+      if (isH5) {
+        try {
+          common_vendor.index.__f__("log", "at pages/product/index.vue:547", "[价格计算]", {
+            formula,
+            lengthRaw,
+            lengthVal,
+            qty,
+            context: ctx,
+            result: val
+          });
+        } catch (e) {
+        }
+      }
+      if (val === null) {
+        if (isNaN(fallbackNum))
+          return "-";
+        const defaultText = fallbackNum.toFixed(2);
+        if (usesLength && !lengthStr)
+          return `${defaultText}/m`;
+        return defaultText;
+      }
+      const numText = Number(val).toFixed(2);
+      if (usesLength && !lengthStr)
+        return `${numText}/m`;
+      return numText;
     },
     displayTopPriceWithSymbol() {
       const s = this.displayTopPrice;
@@ -703,8 +748,12 @@ const _sfc_main = {
           name: it.name || "",
           unit: it.unit || "",
           length_unit: it.length_unit || "",
+          unit_price: it.unit_price === void 0 || it.unit_price === null || it.unit_price === "" ? 0 : it.unit_price,
+          additional_price: it.additional_price === void 0 || it.additional_price === null || it.additional_price === "" ? 0 : it.additional_price,
+          discount: it.discount === void 0 || it.discount === null || it.discount === "" ? 1 : it.discount,
           price: it.price === void 0 || it.price === null || it.price === "" ? "-" : it.price,
           original_price: it.original_price === void 0 || it.original_price === null || it.original_price === "" ? 0 : Number(it.original_price) || 0,
+          formula: it.formula || "",
           image_url: clean(it.image_url) || "",
           inventory: it.inventory || 0,
           has_length: it.has_length || 0,
@@ -1132,6 +1181,30 @@ const _sfc_main = {
       this.roomSelectorVisible = false;
       this.lockScroll = false;
     },
+    evaluateFormula(formula, context) {
+      try {
+        const raw = String(formula || "");
+        if (!raw)
+          return null;
+        if (!/^[0-9+\-*/().\s_a-zA-Z]+$/.test(raw))
+          return null;
+        const expr = raw.replace(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g, (key) => {
+          if (Object.prototype.hasOwnProperty.call(context, key)) {
+            const v = Number(context[key]);
+            return isNaN(v) ? "0" : String(v);
+          }
+          return "0";
+        });
+        if (!/^[0-9+\-*/().\s]+$/.test(expr))
+          return null;
+        const val = Function(`"use strict"; return (${expr})`)();
+        if (typeof val !== "number" || isNaN(val))
+          return null;
+        return val;
+      } catch (e) {
+        return null;
+      }
+    },
     formatPriceWithSymbol(val) {
       try {
         if (val === "-" || val === "—")
@@ -1266,7 +1339,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.t($data.isFavorite ? "★" : "☆"),
     h: $data.isFavorite ? 1 : "",
     i: common_vendor.o((...args) => $options.favProduct && $options.favProduct(...args)),
-    j: common_vendor.t($options.formatPriceWithSymbol($data.product.price)),
+    j: common_vendor.t($options.displayTopPriceWithSymbol),
     k: common_vendor.t($data.product.sales),
     l: common_vendor.t($data.product.id || "默认款"),
     m: common_vendor.t($data.product.title),
@@ -1281,23 +1354,27 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     q: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
     r: $data.mpSheet
+  }, $data.mpSheet ? {
+    s: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args))
+  } : {}, {
+    t: $data.mpSheet
   }, $data.mpSheet ? common_vendor.e({
-    s: $data.selectedAddress
+    v: $data.selectedAddress
   }, $data.selectedAddress ? {
-    t: common_vendor.t($data.selectedAddress.receiver),
-    v: common_vendor.t($data.selectedAddress.phone)
+    w: common_vendor.t($data.selectedAddress.receiver),
+    x: common_vendor.t($data.selectedAddress.phone)
   } : {}, {
-    w: $data.selectedAddress
+    y: $data.selectedAddress
   }, $data.selectedAddress ? {
-    x: common_vendor.t($data.selectedAddress.province),
-    y: common_vendor.t($data.selectedAddress.city),
-    z: common_vendor.t($data.selectedAddress.district),
-    A: common_vendor.t($data.selectedAddress.detail_address)
+    z: common_vendor.t($data.selectedAddress.province),
+    A: common_vendor.t($data.selectedAddress.city),
+    B: common_vendor.t($data.selectedAddress.district),
+    C: common_vendor.t($data.selectedAddress.detail_address)
   } : {}, {
-    B: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
-    C: $data.specsLoading
+    D: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
+    E: $data.specsLoading
   }, $data.specsLoading ? {} : $data.specs && $data.specs.length ? common_vendor.e({
-    E: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 2) : $data.specs, (it, i, i0) => {
+    G: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 4) : $data.specs, (it, i, i0) => {
       return common_vendor.e({
         a: common_vendor.t(it.name),
         b: common_vendor.t($options.formatPriceWithSymbol(it.price)),
@@ -1316,63 +1393,58 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         k: common_vendor.o(($event) => $options.onClickSpec(it, i), "mpsp" + i)
       });
     }),
-    F: $data.specs.length >= 3
-  }, $data.specs.length >= 3 ? {
-    G: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
-    H: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
-    I: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
+    H: $data.specs.length > 4
+  }, $data.specs.length > 4 ? {
+    I: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
+    J: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
+    K: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
   } : {}) : {}, {
-    D: $data.specs && $data.specs.length,
-    J: common_vendor.t($data.mpRoom || "请选择房间"),
-    K: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
-    L: $options.selectedSpec && $options.selectedSpec.has_length === 1
+    F: $data.specs && $data.specs.length,
+    L: common_vendor.t($data.mpRoom || "请选择房间"),
+    M: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
+    N: $options.selectedSpec && $options.selectedSpec.has_length === 1
   }, $options.selectedSpec && $options.selectedSpec.has_length === 1 ? common_vendor.e({
-    M: $data.mpLength,
-    N: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
-    O: $options.selectedSpec.length_unit
+    O: $data.mpLength,
+    P: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
+    Q: $options.selectedSpec.length_unit
   }, $options.selectedSpec.length_unit ? {
-    P: common_vendor.t($options.selectedSpec.length_unit)
+    R: common_vendor.t($options.selectedSpec.length_unit)
   } : {}) : {}, {
-    Q: $data.mpOrderNote,
-    R: common_vendor.o(($event) => $data.mpOrderNote = $event.detail.value),
-    S: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
-    T: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
-    U: $data.mpQty,
-    V: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
-    W: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
-    X: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    Y: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args)),
-    Z: common_vendor.o(() => {
-    }),
-    aa: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    ab: common_vendor.o(() => {
-    })
+    S: $data.mpOrderNote,
+    T: common_vendor.o(($event) => $data.mpOrderNote = $event.detail.value),
+    U: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
+    V: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
+    W: $data.mpQty,
+    X: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
+    Y: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
+    Z: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    aa: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args))
   }) : {}) : {}, {
-    ac: common_vendor.o($options.closeRoomSheet),
-    ad: common_vendor.o($options.onRoomSelect),
-    ae: common_vendor.o($options.onRoomCreate),
-    af: common_vendor.o($options.onCreateAddress),
-    ag: common_vendor.p({
+    ab: common_vendor.o($options.closeRoomSheet),
+    ac: common_vendor.o($options.onRoomSelect),
+    ad: common_vendor.o($options.onRoomCreate),
+    ae: common_vendor.o($options.onCreateAddress),
+    af: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    ah: $data.mpSheet || $data.roomSelectorVisible ? 1 : "",
-    ai: $data.showOnboarding
+    ag: $data.mpSheet || $data.roomSelectorVisible ? 1 : "",
+    ah: $data.showOnboarding
   }, $data.showOnboarding ? {
-    aj: common_vendor.o($options.handleOnboardingNext),
-    ak: common_vendor.o($options.handleOnboardingPrev),
-    al: common_vendor.o($options.closeOnboarding),
-    am: common_vendor.p({
+    ai: common_vendor.o($options.handleOnboardingNext),
+    aj: common_vendor.o($options.handleOnboardingPrev),
+    ak: common_vendor.o($options.closeOnboarding),
+    al: common_vendor.p({
       steps: $data.onboardingSteps,
       targets: $data.onboardingRects,
       initialIndex: $data.onboardingIndex
     })
   } : {}, {
-    an: common_vendor.o($options.closeLoginModal),
-    ao: common_vendor.o($options.goLogin),
-    ap: common_vendor.p({
+    am: common_vendor.o($options.closeLoginModal),
+    an: common_vendor.o($options.goLogin),
+    ao: common_vendor.p({
       visible: $data.showLoginModal
     })
   });

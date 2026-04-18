@@ -106,14 +106,15 @@ export default {
 <style>
 .page {
   padding-bottom: 100rpx;
-  background-color: #f7f7f7;
+  background-color: #1a1a1a;
   min-height: 100vh;
 }
 
 /* #ifdef MP-WEIXIN */
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed; */
+  /* background-size: cover; */
+  background-color: #1a1a1a;
 }
 /* #endif */
 
@@ -122,7 +123,7 @@ export default {
 }
 
 .address-item {
-  background-color: #fff;
+  background-color: #2c2c2c;
   border-radius: 10rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
@@ -145,10 +146,11 @@ export default {
   font-size: 32rpx;
   font-weight: bold;
   margin-right: 20rpx;
+  color: #ffffff;
 }
 
 .phone {
-  color: #666;
+  color: #aaaaaa;
   font-size: 28rpx;
   margin-right: 20rpx;
 }
@@ -163,7 +165,7 @@ export default {
 }
 
 .address-detail {
-  color: #333;
+  color: #dddddd;
   font-size: 28rpx;
   line-height: 1.4;
 }
@@ -180,15 +182,15 @@ export default {
   display: inline-block;
   padding: 10rpx 30rpx;
   border-radius: 30rpx;
-  border: 1rpx solid #ccc;
+  border: 1rpx solid #444444;
   margin-bottom: 10rpx;
   text-align: center;
   font-size: 26rpx;
 }
 
 .btn-edit {
-  color: #666;
-  border-color: #ddd;
+  color: #dddddd;
+  border-color: #444444;
 }
 
 .btn-delete {
@@ -200,7 +202,7 @@ export default {
 .empty-state {
   padding: 100rpx;
   text-align: center;
-  color: #999;
+  color: #777777;
 }
 
 .footer {
@@ -209,8 +211,8 @@ export default {
   left: 0;
   right: 0;
   padding: 20rpx;
-  background-color: #fff;
-  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  background-color: #2c2c2c;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.3);
 }
 
 .btn-add {

@@ -4,6 +4,8 @@ const common_vendor = require("./common/vendor.js");
 if (!Math) {
   "./pages/home/index.js";
   "./pages/login/index.js";
+  "./pages/agreement/service.js";
+  "./pages/agreement/privacy.js";
   "./pages/announcement/index.js";
   "./pages/favorites/index.js";
   "./pages/category/index.js";
@@ -21,7 +23,7 @@ if (!Math) {
 }
 const _sfc_main = {
   onLaunch: function(args) {
-    common_vendor.index.__f__("log", "at App.vue:4", "App Launch");
+    common_vendor.index.__f__("log", "at App.vue:10", "App Launch");
     try {
       const scene = Number(args && args.scene) || 0;
       const fromShare = scene === 1007 || scene === 1008 || scene === 1044 || scene === 1096 || scene === 1154 || scene === 1155;
@@ -35,6 +37,8 @@ const _sfc_main = {
       allowed.add("/pages/category/index");
       allowed.add("/pages/home/index");
       allowed.add("/pages/login/index");
+      allowed.add("/pages/agreement/service");
+      allowed.add("/pages/agreement/privacy");
       const isLoggedIn = () => {
         try {
           const u = common_vendor.index.getStorageSync("user") || null;
@@ -71,7 +75,7 @@ const _sfc_main = {
     }
   },
   onShow: function(args) {
-    common_vendor.index.__f__("log", "at App.vue:41", "App Show");
+    common_vendor.index.__f__("log", "at App.vue:49", "App Show");
     try {
       const scene = Number(args && args.scene) || 0;
       const fromShare = scene === 1007 || scene === 1008 || scene === 1044 || scene === 1096 || scene === 1154 || scene === 1155;
@@ -85,7 +89,7 @@ const _sfc_main = {
     }
   },
   onHide: function() {
-    common_vendor.index.__f__("log", "at App.vue:51", "App Hide");
+    common_vendor.index.__f__("log", "at App.vue:59", "App Hide");
   }
 };
 const SHARE_TITLE = "诺米灯光定制";
@@ -93,6 +97,7 @@ const SHARE_PATH = "/pages/home/index";
 const SHARE_QUERY = "";
 const FALLBACK_SHARE_IMAGE_URL = "/static/logo.png";
 const SHARE_IMAGE_STORAGE_KEY = "share_image_url";
+const FLOATING_BALL_STORAGE_KEY = "floatingBallPos";
 const cleanUrl = (u) => typeof u === "string" ? u.replace(/`/g, "").trim() : "";
 const getShareImageUrl = () => {
   try {
@@ -144,12 +149,37 @@ try {
 } catch (e) {
 }
 const shareMixin = {
+  onLoad() {
+    try {
+      const app = typeof getApp === "function" ? getApp() : null;
+      if (!app || !app.globalData)
+        return;
+      const cached = typeof common_vendor.wx$1 !== "undefined" && typeof common_vendor.wx$1.getStorageSync === "function" ? common_vendor.wx$1.getStorageSync(FLOATING_BALL_STORAGE_KEY) || null : typeof common_vendor.index !== "undefined" && typeof common_vendor.index.getStorageSync === "function" ? common_vendor.index.getStorageSync(FLOATING_BALL_STORAGE_KEY) || null : null;
+      if (cached && cached.x !== void 0 && cached.y !== void 0)
+        app.globalData.floatingBallPos = { x: cached.x, y: cached.y };
+    } catch (e) {
+    }
+  },
   onShow() {
     if (typeof common_vendor.index !== "undefined" && typeof common_vendor.index.showShareMenu === "function") {
       common_vendor.index.showShareMenu({
         withShareTicket: true,
         menus: ["shareAppMessage", "shareTimeline"]
       });
+    }
+  },
+  onHide() {
+    try {
+      const app = typeof getApp === "function" ? getApp() : null;
+      const gd = app && app.globalData ? app.globalData : null;
+      const pos = gd && gd.floatingBallPos ? gd.floatingBallPos : null;
+      if (!pos || pos.x === void 0 || pos.y === void 0)
+        return;
+      if (typeof common_vendor.wx$1 !== "undefined" && typeof common_vendor.wx$1.setStorageSync === "function")
+        common_vendor.wx$1.setStorageSync(FLOATING_BALL_STORAGE_KEY, { x: pos.x, y: pos.y });
+      else if (typeof common_vendor.index !== "undefined" && typeof common_vendor.index.setStorageSync === "function")
+        common_vendor.index.setStorageSync(FLOATING_BALL_STORAGE_KEY, { x: pos.x, y: pos.y });
+    } catch (e) {
     }
   },
   onShareAppMessage() {

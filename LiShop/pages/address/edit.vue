@@ -315,27 +315,28 @@ export default {
 
 <style>
 .page {
-  background-color: #f7f7f7;
+  background-color: #1a1a1a;
   min-height: 100vh;
   padding-top: 20rpx;
 }
 
 /* #ifdef MP-WEIXIN */
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed; */
+  /* background-size: cover; */
+  background-color: #1a1a1a;
 }
 /* #endif */
 
 .form {
-  background-color: #fff;
+  background-color: #2c2c2c;
   padding: 0 30rpx;
 }
 
 .form-item {
   display: flex;
   align-items: center;
-  border-bottom: 1rpx solid #eee;
+  border-bottom: 1rpx solid #444444;
   padding: 30rpx 0;
 }
 
@@ -346,12 +347,13 @@ export default {
 .label {
   width: 160rpx;
   font-size: 30rpx;
-  color: #333;
+  color: #aaaaaa;
 }
 
 .input {
   flex: 1;
   font-size: 30rpx;
+  color: #ffffff;
 }
 
 .region-inputs {
@@ -368,11 +370,11 @@ export default {
   flex: 1;
   height: 64rpx;
   line-height: 64rpx;
-  border: 1rpx solid #e6e6e6;
+  border: 1rpx solid #444444;
   border-radius: 12rpx;
   padding: 0 14rpx;
   font-size: 30rpx;
-  color: #333;
+  color: #ffffff;
 }
 
 .textarea {
@@ -380,6 +382,7 @@ export default {
   height: 120rpx;
   font-size: 30rpx;
   padding-top: 10rpx;
+  color: #ffffff;
 }
 
 .switch-item {
@@ -396,7 +399,7 @@ export default {
 .btn-save {
   flex: 1;
   height: 80rpx;
-  background-color: #000;
+  background-color: #e1251b;
   color: #fff;
   border-radius: 40rpx;
   font-size: 32rpx;
@@ -408,7 +411,7 @@ export default {
 .btn-delete {
   flex: 1;
   height: 80rpx;
-  background-color: #434343;
+  background-color: #444444;
   color: #fff;
   border-radius: 40rpx;
   font-size: 32rpx;

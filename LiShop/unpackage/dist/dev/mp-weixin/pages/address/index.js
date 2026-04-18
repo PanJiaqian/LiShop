@@ -29,7 +29,7 @@ const _sfc_main = {
           this.addressList = res.data.items || [];
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/address/index.vue:65", err);
+        common_vendor.index.__f__("error", "at pages/address/index.vue:70", err);
         common_vendor.index.showToast({ title: "获取地址失败", icon: "none" });
       }).finally(() => {
         this.loading = false;

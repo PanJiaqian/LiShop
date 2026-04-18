@@ -37,7 +37,7 @@ export default {
 <style scoped>
 .skeleton-container {
   padding: 30rpx;
-  background: #fff;
+  background: #1a1a1a;
   width: 100%;
   box-sizing: border-box;
   position: absolute;
@@ -48,7 +48,7 @@ export default {
 }
 .skeleton-row {
   height: 32rpx;
-  background: #f2f2f2;
+  background: #333;
   margin-bottom: 24rpx;
   border-radius: 4rpx;
   animation: pulse 1.5s infinite;
@@ -66,7 +66,7 @@ export default {
 }
 .skeleton-grid-item {
   height: 300rpx;
-  background: #f2f2f2;
+  background: #333;
   border-radius: 12rpx;
   animation: pulse 1.5s infinite;
 }

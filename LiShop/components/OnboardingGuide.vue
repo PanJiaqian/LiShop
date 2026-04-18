@@ -186,11 +186,11 @@ export default {
 
 .og-panel {
   position: fixed;
-  background: #ffffff;
+  background: #2c2c2c;
   border-radius: 20rpx;
   box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.18);
   padding: 16rpx 14rpx;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #444;
 }
 
 .og-content {
@@ -200,7 +200,7 @@ export default {
 .og-step-title {
   font-size: 28rpx;
   font-weight: 700;
-  color: #111;
+  color: #fff;
   margin-bottom: 8rpx;
 }
 
@@ -210,7 +210,7 @@ export default {
 
 .og-step-text {
   font-size: 26rpx;
-  color: #333;
+  color: #ddd;
   line-height: 1.6;
 }
 
@@ -223,12 +223,12 @@ export default {
 
 .og-index {
   font-size: 24rpx;
-  color: #666;
+  color: #aaa;
 }
 
 .og-skip {
   font-size: 24rpx;
-  color: #999;
+  color: #888;
   margin-left: -55rpx;
   margin-right: 30px;
 }
@@ -239,8 +239,8 @@ export default {
   padding: 0 20rpx;
   font-size: 24rpx;
   border-radius: 12rpx;
-  background: #f7f7f7;
-  color: #222;
+  background: #444;
+  color: #fff;
 }
 
 .og-btn.primary {
@@ -253,8 +253,8 @@ export default {
   position: absolute;
   width: 16rpx;
   height: 16rpx;
-  background: #ffffff;
-  border: 1px solid #f0f0f0;
+  background: #2c2c2c;
+  border: 1px solid #444;
   box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.12);
   transform: rotate(45deg);
 }

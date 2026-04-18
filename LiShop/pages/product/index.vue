@@ -94,22 +94,29 @@
                 <view>
                   <text class="pd-section-title" selectable="true">规格明细</text>
                   <view v-if="specsLoading"><text class="pd-meta">加载中...</text></view>
-                  <view v-else-if="specs && specs.length" class="specs-list">
-                    <view class="spec-item" v-for="(it, i) in specs" :key="'h5sp' + i"
-                      :class="{ active: selectedSpecIndex === i, disabled: isSpecDisabled(it) }" @click="onClickSpec(it, i)">
-                      <!-- <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" /> -->
-                      <view class="spec-info">
-                        <text class="spec-name" selectable="true">{{ it.name }}</text>
-                        <view class="spec-price-row">
-                          <text class="spec-price" selectable="true">{{ formatPriceWithSymbol(it.price) }}</text>
-                          <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
-                            Number(it.original_price).toFixed(2) }}</text>
+                  <view v-else-if="specs && specs.length">
+                    <view class="specs-list">
+                      <view class="spec-item" v-for="(it, i) in (isSpecsCollapsed ? specs.slice(0, 4) : specs)" :key="'h5sp' + i"
+                        :class="{ active: selectedSpecIndex === i, disabled: isSpecDisabled(it) }" @click="onClickSpec(it, i)">
+                        <!-- <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" /> -->
+                        <view class="spec-info">
+                          <text class="spec-name" selectable="true">{{ it.name }}</text>
+                          <view class="spec-price-row">
+                            <text class="spec-price" selectable="true">{{ formatPriceWithSymbol(it.price) }}</text>
+                            <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
+                              Number(it.original_price).toFixed(2) }}</text>
+                          </view>
+                          <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
+                          <text v-if="it.package_capacity > 0" class="spec-unit" selectable="true">包装容量：{{ it.package_capacity }} | 包装价：¥{{ Number(it.package_price).toFixed(2) }}</text>
                         </view>
-                        <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
+                        <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
+                          <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
+                        </view>
                       </view>
-                      <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
-                        <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
-                      </view>
+                    </view>
+                    <view v-if="specs.length > 4" class="specs-toggle h5-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
+                      <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
+                      <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
                     </view>
                   </view>
                   <view v-else><text class="pd-meta">暂无规格数据</text></view>
@@ -195,7 +202,7 @@
           <text class="fav-star" :class="{ active: isFavorite }" @click="favProduct">{{ isFavorite ? '★' : '☆' }}</text>
         </view>
         <view class="mp-price-row">
-          <text class="price" selectable="true">{{ formatPriceWithSymbol(product.price) }}</text>
+          <text class="price" selectable="true">{{ displayTopPriceWithSymbol }}</text>
           <text class="sales" selectable="true">销量 {{ product.sales }}</text>
         </view>
       </view>
@@ -233,82 +240,81 @@
       </view>
 
       <!-- #ifdef MP-WEIXIN -->
-      <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet" catchtouchmove="true"
-        @touchmove.stop.prevent="() => { }">
-        <view class="mp-sheet" @click.stop>
-          <view class="mp-title" selectable="true">填写规格</view>
-          <scroll-view scroll-y class="mp-scroll-view">
-            <view class="mp-address-bar" @click="openMpAddressSheet">
-              <view class="bar-left">
-                <text class="addr-icon">📍</text>
-                <view class="bar-info">
-                  <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone
-                  }}</text>
-                  <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.province }} {{ selectedAddress.city
-                  }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
-                  <text v-else class="bar-line">请选择收货地址</text>
-                </view>
-              </view>
-              <button size="mini" class="bar-btn">选择收货地址</button>
-            </view>
-            <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
-            <view class="mp-title" selectable="true">规格明细</view>
-            <view v-if="specsLoading" class="mp-param-grid">
-              <view class="mp-param-item"><text class="key">加载中...</text><text class="val"></text></view>
-            </view>
-            <view v-else-if="specs && specs.length" class="specs-list">
-              <view class="spec-item" v-for="(it, i) in (isSpecsCollapsed ? specs.slice(0, 2) : specs)"
-                :key="'mpsp' + i" :class="{ active: selectedSpecIndex === i, disabled: isSpecDisabled(it) }" @click="onClickSpec(it, i)">
-                <!-- <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" /> -->
-                <view class="spec-info">
-                  <text class="spec-name" selectable="true">{{ it.name }}</text>
-                  <view class="spec-price-row">
-                    <text class="spec-price" selectable="true">{{ formatPriceWithSymbol(it.price) }}</text>
-                    <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
-                      Number(it.original_price).toFixed(2) }}</text>
-                  </view>
-                  <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
-                </view>
-                <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
-                  <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
-                </view>
-              </view>
-              <!-- 展开/收起按钮 -->
-              <view v-if="specs.length >= 3" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
-                <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
-                <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
+      <view v-if="mpSheet" class="mp-mask" @click="closeSpecSheet" catchtouchmove="true"></view>
+      <view v-if="mpSheet" class="mp-sheet">
+        <view class="mp-title" selectable="true">填写规格</view>
+        <scroll-view scroll-y class="mp-scroll-view">
+          <view class="mp-address-bar" @click="openMpAddressSheet">
+            <view class="bar-left">
+              <text class="addr-icon">📍</text>
+              <view class="bar-info">
+                <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.receiver }} {{ selectedAddress.phone
+                }}</text>
+                <text v-if="selectedAddress" class="bar-line">{{ selectedAddress.province }} {{ selectedAddress.city
+                }} {{ selectedAddress.district }} {{ selectedAddress.detail_address }}</text>
+                <text v-else class="bar-line">请选择收货地址</text>
               </view>
             </view>
-            <view v-else class="mp-param-grid">
-              <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
-            </view>
-
-            <view class="mp-field"><text class="label">房间</text>
-              <view id="og-mp-room-select" class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
-            </view>
-            <!-- <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
-              placeholder="如 3000K" /></view> -->
-            <view class="mp-field" v-if="selectedSpec && selectedSpec.has_length === 1">
-              <text class="label">长度</text>
-              <input class="mp-input" v-model="mpLength" placeholder="填写数字" />
-              <text v-if="selectedSpec.length_unit" class="unit-tip">{{ selectedSpec.length_unit }}</text>
-            </view>
-            <view class="mp-field">
-              <text class="label">备注</text>
-              <input class="mp-input" v-model="mpOrderNote" placeholder="填写备注" />
-            </view>
-            <view class="mp-field">
-              <view class="qty-stepper">
-                <button class="step" @click="mpQty = Math.max(1, Number(mpQty) - 1)">-</button>
-                <input class="count-input" v-model="mpQty" type="number" placeholder="填写数量" @blur="normalizeMpQty" />
-                <button class="step" @click="mpQty = Math.max(1, Number(mpQty) + 1)">+</button>
-              </view>
-            </view>
-          </scroll-view>
-          <view class="mp-actions">
-            <button class="mp-btn ghost" @click="closeSpecSheet">取消</button>
-            <button class="mp-btn primary" @click="confirmSpecToCart">确定加入</button>
+            <button size="mini" class="bar-btn">选择收货地址</button>
           </view>
+          <!-- 规格明细（适配 data.children），参考淘宝/京东样式 -->
+          <view class="mp-title" selectable="true">规格明细</view>
+          <view v-if="specsLoading" class="mp-param-grid">
+            <view class="mp-param-item"><text class="key">加载中...</text><text class="val"></text></view>
+          </view>
+          <view v-else-if="specs && specs.length" class="specs-list">
+            <view class="spec-item" v-for="(it, i) in (isSpecsCollapsed ? specs.slice(0, 4) : specs)"
+              :key="'mpsp' + i" :class="{ active: selectedSpecIndex === i, disabled: isSpecDisabled(it) }" @click="onClickSpec(it, i)">
+              <!-- <image class="spec-thumb" :src="it.image_url || '/static/logo.png'" mode="aspectFill" /> -->
+              <view class="spec-info">
+                <text class="spec-name" selectable="true">{{ it.name }}</text>
+                <view class="spec-price-row">
+                  <text class="spec-price" selectable="true">{{ formatPriceWithSymbol(it.price) }}</text>
+                  <text v-if="Number(it.original_price) > 0" class="spec-oprice">¥{{
+                    Number(it.original_price).toFixed(2) }}</text>
+                </view>
+                <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
+                <text v-if="it.package_capacity > 0" class="spec-unit" selectable="true">包装容量：{{ it.package_capacity }} | 包装价：¥{{ Number(it.package_price).toFixed(2) }}</text>
+              </view>
+              <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
+                <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
+              </view>
+            </view>
+            <!-- 展开/收起按钮 -->
+            <view v-if="specs.length > 4" class="specs-toggle" @click="isSpecsCollapsed = !isSpecsCollapsed">
+              <text>{{ isSpecsCollapsed ? '展开更多' : '收起' }}</text>
+              <text class="toggle-icon">{{ isSpecsCollapsed ? '▼' : '▲' }}</text>
+            </view>
+          </view>
+          <view v-else class="mp-param-grid">
+            <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
+          </view>
+
+          <view class="mp-field"><text class="label">房间</text>
+            <view id="og-mp-room-select" class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
+          </view>
+          <!-- <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
+            placeholder="如 3000K" /></view> -->
+          <view class="mp-field" v-if="selectedSpec && selectedSpec.has_length === 1">
+            <text class="label">长度</text>
+            <input class="mp-input" v-model="mpLength" placeholder="填写数字" />
+            <text v-if="selectedSpec.length_unit" class="unit-tip">{{ selectedSpec.length_unit }}</text>
+          </view>
+          <view class="mp-field">
+            <text class="label">备注</text>
+            <input class="mp-input" v-model="mpOrderNote" placeholder="填写备注" />
+          </view>
+          <view class="mp-field">
+            <view class="qty-stepper">
+              <button class="step" @click="mpQty = Math.max(1, Number(mpQty) - 1)">-</button>
+              <input class="count-input" v-model="mpQty" type="number" placeholder="填写数量" @blur="normalizeMpQty" />
+              <button class="step" @click="mpQty = Math.max(1, Number(mpQty) + 1)">+</button>
+            </view>
+          </view>
+        </scroll-view>
+        <view class="mp-actions">
+          <button class="mp-btn ghost" @click="closeSpecSheet">取消</button>
+          <button class="mp-btn primary" @click="confirmSpecToCart">确定加入</button>
         </view>
       </view>
       <!-- MP Room Selection Modal -->
@@ -510,20 +516,57 @@ export default {
       } catch (e) { return 'm' }
     },
     displayTopPrice() {
-      const sel = this.selectedSpec
-      const rawBase = sel ? sel.price : this.product?.price
-      if (rawBase === '-' || rawBase === '—') return '-'
-      const basePerM = Number(rawBase || 0) || 0
-      if (sel && sel.has_length === 1) {
-        const rawStr = (this.specLength || '').replace(/[^0-9.]/g, '')
-        const raw = rawStr ? Number(rawStr) : 0
-        if (raw > 0) {
-          const meters = this.toMeters(raw, this.lengthUnitText)
-          return (basePerM * meters).toFixed(2)
-        }
-        return `${basePerM.toFixed(2)}/m`
+      const sel = this.selectedSpec || (this.specs && this.specs[0]) || null
+      const formula = String(sel?.formula || '').trim()
+      let isH5 = false
+      try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+      const lengthRaw = isH5 ? this.specLength : this.mpLength
+      const lengthStr = String(lengthRaw || '').replace(/[^0-9.]/g, '')
+      const lengthVal = lengthStr ? Number(lengthStr) : 1
+      const qtyRaw = isH5 ? this.qty : this.mpQty
+      const qty = Math.max(1, Number(qtyRaw || 1))
+      const usesLength = /\blength\b/.test(formula) || Number(sel?.has_length || 0) === 1
+      if (usesLength && lengthStr && isNaN(lengthVal)) return '-'
+      const fallbackNum = Number(sel?.price ?? sel?.unit_price ?? this.product?.price ?? 0)
+      if (!formula) {
+        if (isNaN(fallbackNum)) return '-'
+        const defaultText = fallbackNum.toFixed(2)
+        if (usesLength && !lengthStr) return `${defaultText}/m`
+        return defaultText
       }
-      return basePerM.toFixed(2)
+      const ctx = {
+        unit_price: sel?.unit_price ?? sel?.price ?? this.product?.price ?? 0,
+        additional_price: sel?.additional_price ?? 0,
+        discount: sel?.discount ?? 1,
+        price: sel?.price ?? this.product?.price ?? 0,
+        original_price: sel?.original_price ?? 0,
+        length: lengthVal,
+        quantity: qty,
+        package_price: sel?.package_price ?? 0,
+        package_capacity: sel?.package_capacity ?? 0
+      }
+      const val = this.evaluateFormula(formula, ctx)
+      if (isH5) {
+        try {
+          console.log('[价格计算]', {
+            formula,
+            lengthRaw,
+            lengthVal,
+            qty,
+            context: ctx,
+            result: val
+          })
+        } catch (e) {}
+      }
+      if (val === null) {
+        if (isNaN(fallbackNum)) return '-'
+        const defaultText = fallbackNum.toFixed(2)
+        if (usesLength && !lengthStr) return `${defaultText}/m`
+        return defaultText
+      }
+      const numText = Number(val).toFixed(2)
+      if (usesLength && !lengthStr) return `${numText}/m`
+      return numText
     },
     displayTopPriceWithSymbol() {
       const s = this.displayTopPrice
@@ -943,8 +986,12 @@ export default {
             name: it.name || '',
             unit: it.unit || '',
             length_unit: it.length_unit || '',
+            unit_price: (it.unit_price === undefined || it.unit_price === null || it.unit_price === '') ? 0 : it.unit_price,
+            additional_price: (it.additional_price === undefined || it.additional_price === null || it.additional_price === '') ? 0 : it.additional_price,
+            discount: (it.discount === undefined || it.discount === null || it.discount === '') ? 1 : it.discount,
             price: (it.price === undefined || it.price === null || it.price === '') ? '-' : it.price,
             original_price: (it.original_price === undefined || it.original_price === null || it.original_price === '') ? 0 : (Number(it.original_price) || 0),
+            formula: it.formula || '',
             image_url: clean(it.image_url) || '',
             inventory: it.inventory || 0,
             has_length: it.has_length || 0,
@@ -955,6 +1002,8 @@ export default {
             color: it.color || '',
             model: it.model || '',
             color_temperature: it.color_temperature || '',
+            package_capacity: it.package_capacity || 0,
+            package_price: it.package_price || 0,
             has_custom_params: it.has_custom_params || 0,
             custom_param1_name: it.custom_param1_name || '',
             custom_param2_name: it.custom_param2_name || '',
@@ -1314,6 +1363,24 @@ export default {
       this.loadAddresses()
     },
     closeMpRoomSheet() { this.roomSelectorVisible = false; this.lockScroll = false },
+    evaluateFormula(formula, context) {
+      try {
+        const raw = String(formula || '')
+        if (!raw) return null
+        if (!/^[0-9+\-*/().\s_a-zA-Z]+$/.test(raw)) return null
+        const expr = raw.replace(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g, (key) => {
+          if (Object.prototype.hasOwnProperty.call(context, key)) {
+            const v = Number(context[key])
+            return isNaN(v) ? '0' : String(v)
+          }
+          return '0'
+        })
+        if (!/^[0-9+\-*/().\s]+$/.test(expr)) return null
+        const val = Function(`"use strict"; return (${expr})`)()
+        if (typeof val !== 'number' || isNaN(val)) return null
+        return val
+      } catch (e) { return null }
+    },
     formatPriceWithSymbol(val) {
       try {
         if (val === '-' || val === '—') return '-'
@@ -1379,30 +1446,33 @@ export default {
 
 <style scoped>
 .page {
-  background: #f7f7f7;
+  background: #1a1a1a;
   min-height: 100vh;
   padding-bottom: 120rpx;
 }
 
 /* #ifdef MP-WEIXIN */
 .product-page { position: relative; z-index: 1; }
-/* 背景图样式已移除 */
+.cover { background: #1a1a1a; }
+.info { background: #1a1a1a; }
+.title { color: #ffffff; }
 /* #endif */
 
 .cover {
   width: 100%;
   height: 500rpx;
-  background: #f5f5f5;
+  background: #2c2c2c;
 }
 
 .info {
-  background: #fff;
+  background: #322f2f;
   padding: 20rpx;
 }
 
 .title {
   font-size: 32rpx;
   display: block;
+  color: #ffffff;
 }
 
 .pd-title-row {
@@ -1421,7 +1491,7 @@ export default {
 
 .fav-star {
   font-size: 48rpx;
-  color: #ccc;
+  color: #777;
 }
 .fav-star.active {
   /* background: #ffec99; */
@@ -1431,14 +1501,14 @@ export default {
 }
 
 .price {
-  color: #000;
+  color: #ffffff;
   font-size: 34rpx;
   margin-top: 8rpx;
   display: block;
 }
 
 .sales {
-  color: #999;
+  color: #999999;
   font-size: 26rpx;
   margin-top: 8rpx;
   display: block;
@@ -1449,18 +1519,18 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #fff;
-  box-shadow: 0 -8rpx 20rpx rgba(0, 0, 0, .06);
+  background: #2c2c2c;
+  box-shadow: 0 -8rpx 20rpx rgba(0, 0, 0, .3);
   padding: 20rpx;
 }
 
 .btn-cart {
   width: 100%;
   /* #ifndef H5 */
-  background: #000;
+  background: #e1251b;
   /* #endif */
   /* #ifdef H5 */
-  background: #ff8c3a;
+  background: #e1251b;
   /* #endif */
   color: #fff;
   border-radius: 999rpx;
@@ -1480,7 +1550,7 @@ export default {
 .login-mask {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1489,10 +1559,10 @@ export default {
 .login-modal {
   width: 720rpx;
   max-width: 90vw;
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 24rpx;
   padding: 48rpx 40rpx;
-  box-shadow: 0 20rpx 40rpx rgba(0,0,0,0.12);
+  box-shadow: 0 20rpx 40rpx rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
   gap: 32rpx;
@@ -1500,12 +1570,12 @@ export default {
 .login-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
   text-align: center;
 }
 .login-desc {
   font-size: 28rpx;
-  color: #666;
+  color: #aaaaaa;
   text-align: center;
 }
 .login-actions {
@@ -1525,14 +1595,14 @@ export default {
   font-weight: 600;
 }
 .btn-pill.confirm {
-  background: #000;
+  background: #e1251b;
   color: #fff;
-  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.15);
+  box-shadow: 0 8rpx 20rpx rgba(225, 37, 27, 0.2);
 }
 .btn-pill.cancel {
-  background: #fff;
-  color: #999;
-  border: 2rpx solid #e5e5e5;
+  background: #333333;
+  color: #999999;
+  border: 2rpx solid #444444;
 }
 
 .spec-item {
@@ -1540,7 +1610,7 @@ export default {
   align-items: center;
   gap: 12rpx;
   padding: 12rpx;
-  border: 1rpx solid #eee;
+  border: 1rpx solid #444444;
   border-radius: 12rpx;
   /* background: #fafafa; */
   transition: all .2s;
@@ -1549,12 +1619,13 @@ export default {
 }
 
 .spec-item.active {
-  border-color: #8d8a8a;
+  border-color: #e1251b;
   /* background: #fff5f0; */
 }
 
 .spec-item.disabled {
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .spec-mask {
@@ -1563,7 +1634,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.3);
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -1579,7 +1650,7 @@ export default {
   width: 120rpx;
   height: 120rpx;
   border-radius: 10rpx;
-  background: #f5f5f5;
+  background: #333333;
 }
 
 .spec-info {
@@ -1591,7 +1662,7 @@ export default {
 
 .spec-name {
   font-size: 28rpx;
-  color: #333;
+  color: #333333;
   line-height: 1.4;
 }
 
@@ -1602,19 +1673,19 @@ export default {
 }
 
 .spec-price {
-  color: #000;
+  color: #e1251b;
   font-size: 32rpx;
   font-weight: 700;
 }
 
 .spec-oprice {
-  color: #999;
+  color: #777777;
   font-size: 24rpx;
   text-decoration: line-through;
 }
 
 .spec-unit {
-  color: #666;
+  color: #aaaaaa;
   font-size: 24rpx;
 }
 
@@ -1624,8 +1695,8 @@ export default {
   justify-content: center;
   padding: 16rpx;
   font-size: 24rpx;
-  color: #666;
-  background: #fafafa;
+  color: #aaaaaa;
+  background: #333333;
   border-radius: 0 0 12rpx 12rpx;
 }
 
@@ -1645,22 +1716,22 @@ export default {
 }
 
 .rooms-title {
-  color: #666;
+  color: #aaaaaa;
   font-size: 26rpx;
   margin-bottom: 8rpx;
 }
 
 .room-item {
   padding: 12rpx 14rpx;
-  border: 1rpx solid #eee;
+  border: 1rpx solid #444444;
   border-radius: 10rpx;
-  background: #fafafa;
+  background: #333333;
   display: flex;
   align-items: center;
 }
 
 .room-name {
-  color: #333;
+  color: #dddddd;
   font-size: 28rpx;
 }
 
@@ -1685,7 +1756,8 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/static/product_detail_background.jpg');
+  background-color: #1a1a1a;
+  /* background-image: url('/static/product_detail_background.jpg'); */
   background-size: cover;
   background-position: center;
   z-index: 0;
@@ -1714,7 +1786,7 @@ export default {
   background: transparent !important;
   box-shadow: none !important;
   outline: none;
-  color: #000;
+  color: #ffffff;
   font-size: 44rpx;
   transition: background .2s, transform .2s, color .2s;
 }
@@ -1765,7 +1837,7 @@ export default {
 .qty-box {
   display: flex;
   align-items: center;
-  background: #f7f7f7;
+  background: #333333;
   border-radius: 6rpx;
   height: 60rpx;
 }
@@ -1776,7 +1848,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #333;
+  color: #ffffff;
   font-size: 36rpx;
   cursor: pointer;
 }
@@ -1784,31 +1856,31 @@ export default {
 .qty-num {
   padding: 0 12rpx;
   font-size: 24rpx;
-  color: #333;
+  color: #ffffff;
 }
 
 .pd-left {
   height: 100%;
-  background: transparent;
+  background: #ffffff;
   /* border: 1rpx solid rgba(255,255,255,0.35); */
   border-radius: 16rpx;
   padding: 24rpx;
   box-sizing: border-box;
   /* box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.08); */
-  -webkit-backdrop-filter: saturate(120%) blur(8px);
-  backdrop-filter: saturate(120%) blur(8px);
+  /* -webkit-backdrop-filter: saturate(120%) blur(8px); */
+  /* backdrop-filter: saturate(120%) blur(8px); */
 }
 
 .pd-right {
   height: 100%;
-  background: transparent;
-  border: 1rpx solid rgba(255, 255, 255, 0.35);
+  background: #ffffff;
+  border: 1rpx solid #eeeeee;
   border-radius: 16rpx;
   padding: 24rpx;
   box-sizing: border-box;
-  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
-  -webkit-backdrop-filter: saturate(120%) blur(8px);
-  backdrop-filter: saturate(120%) blur(8px);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.05);
+  /* -webkit-backdrop-filter: saturate(120%) blur(8px); */
+  /* backdrop-filter: saturate(120%) blur(8px); */
 }
 
 /* 右侧卡片置顶且自适应高度，仅影响 H5 */
@@ -1832,15 +1904,15 @@ export default {
   border-radius: 12rpx;
   /* padding: 20rpx; */
   position: relative;
-  border: 1rpx solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
+  border: 1rpx solid #444444;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.3);
 }
 
 .pd-main {
   width: 100%;
   height: 520rpx;
   border-radius: 8rpx;
-  background: #f5f5f5;
+  background: #1a1a1a;
 }
 
 .pd-thumbs {
@@ -1868,28 +1940,28 @@ export default {
   width: 88rpx;
   height: 88rpx;
   border-radius: 8rpx;
-  background: #f5f5f5;
-  border: 1rpx solid #eee;
+  background: #333333;
+  border: 1rpx solid #444444;
 }
 
 .pd-thumb.active {
-  outline: 3rpx solid #333;
+  outline: 3rpx solid #e1251b;
 }
 
 .pd-card {
-  background: transparent;
+  background: #ffffff;
   border-radius: 12rpx;
   padding: 20rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
-  -webkit-backdrop-filter: saturate(120%) blur(8px);
-  backdrop-filter: saturate(120%) blur(8px);
+  border: 1rpx solid #eeeeee;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.05);
+  /* -webkit-backdrop-filter: saturate(120%) blur(8px); */
+  /* backdrop-filter: saturate(120%) blur(8px); */
 }
 
 .pd-section-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #333;
+  color: #333333;
   display: block;
   margin-bottom: 12rpx;
 }
@@ -1914,13 +1986,13 @@ export default {
 }
 
 .pd-param-item .key {
-  color: #999;
+  color: #aaaaaa;
   font-size: 24rpx;
   min-width: 80rpx;
 }
 
 .pd-param-item .val {
-  color: #333;
+  color: #333333;
   font-size: 26rpx;
   margin-top: 0rpx;
   flex: 1;
@@ -1937,7 +2009,7 @@ export default {
 .pd-detail-img {
   width: 100%;
   border-radius: 8rpx;
-  background: #f5f5f5;
+  background: #1a1a1a;
   margin-top: 12rpx;
 }
 
@@ -1956,21 +2028,21 @@ export default {
   justify-content: space-between;
   gap: 12rpx;
   padding: 12rpx;
-  background: #fafafa;
-  border: 1rpx solid #eee;
+  background: #f8f8f8;
+  border: 1rpx solid #eeeeee;
   border-radius: 10rpx;
 }
 
 .pd-address .addr-line {
   display: block;
-  color: #333;
+  color: #333333;
   font-size: 24rpx;
 }
 
 .pd-address .addr-btn {
-  background: #f7f7f7;
-  color: #333;
-  border: 1rpx solid #e6e6e6;
+  background: #ffffff;
+  color: #333333;
+  border: 1rpx solid #cccccc;
   border-radius: 8rpx;
 }
 
@@ -2059,11 +2131,11 @@ export default {
   flex: 1;
   min-height: 64rpx;
   line-height: 64rpx;
-  background: white;
-  border: 1rpx solid #e5e5e5;
+  background: #ffffff;
+  border: 1rpx solid #cccccc;
   border-radius: 10rpx;
   padding: 0 14rpx;
-  color: #666;
+  color: #333333;
   max-width: 30%;
 }
 
@@ -2071,11 +2143,12 @@ export default {
   width: 100%;
   height: 64rpx;
   line-height: 64rpx;
-  background: white;
-  border: 1rpx solid #e5e5e5;
+  background: #ffffff;
+  border: 1rpx solid #cccccc;
   border-radius: 10rpx;
   padding: 0 14rpx;
   max-width: 30%;
+  color: #333333;
 }
 
 /* H5 内联字段输入宽度缩小 */
@@ -2088,12 +2161,12 @@ export default {
 .unit-tip {
   margin-left: 12rpx;
   font-size: 24rpx;
-  color: #666;
+  color: #aaaaaa;
 }
 
 .pd-title {
   font-size: 40rpx;
-  color: #222;
+  color: #333333;
   font-weight: 700;
   display: block;
   padding: 10rpx;
@@ -2107,7 +2180,7 @@ export default {
 }
 
 .pd-price {
-  color: #000;
+  color: #e1251b;
   font-size: 50rpx;
   font-weight: 700;
 }
@@ -2121,7 +2194,7 @@ export default {
 }
 
 .pd-meta {
-  color: #777;
+  color: #777777;
   font-size: 24rpx;
   /* margin-top: 12rpx; */
 }
@@ -2132,8 +2205,8 @@ export default {
   justify-content: space-between;
   margin-top: 20rpx;
   padding: 12rpx;
-  background: #fafafa;
-  border: 1rpx solid #eee;
+  background: #f8f8f8;
+  border: 1rpx solid #eeeeee;
   border-radius: 10rpx;
 }
 
@@ -2143,7 +2216,7 @@ export default {
 }
 
 .pd-qty-row .label {
-  color: #333;
+  color: #333333;
   margin-right: 16rpx;
 }
 
@@ -2250,7 +2323,7 @@ export default {
   right: 0;
   top: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, .55);
+  background: rgba(0, 0, 0, .7);
   display: flex;
   align-items: flex-end;
   /* 底部弹窗 */
@@ -2259,13 +2332,18 @@ export default {
 }
 
 .mp-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
   width: 100vw;
   max-width: none;
-  background: #fff;
+  background: #2c2c2c;
   border-top-left-radius: 24rpx;
   border-top-right-radius: 24rpx;
   padding: 24rpx;
-  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   max-height: 80vh;
@@ -2293,7 +2371,7 @@ export default {
 .mp-title {
   font-size: 32rpx;
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
 }
 .count-input {
   width: 72rpx;
@@ -2304,7 +2382,7 @@ export default {
   text-align: center;
   font-size: 30rpx;
   background: transparent;
-  color: #333;
+  color: #ffffff;
   margin: 0 12rpx;
 }
   /* padding-bottom: 12rpx;
@@ -2324,10 +2402,11 @@ export default {
   width: 60%;
   height: 64rpx;
   line-height: 64rpx;
-  background: #fff;
-  border: 1rpx solid #e6e6e6;
+  background: #333333;
+  border: 1rpx solid #444444;
   border-radius: 12rpx;
   padding: 0 14rpx;
+  color: #ffffff;
 }
 
 .mp-actions {
@@ -2336,7 +2415,7 @@ export default {
   margin-top: auto;
   /* 固定在底部 */
   padding-top: 16rpx;
-  border-top: 1rpx solid #f0f0f0;
+  border-top: 1rpx solid #444444;
 }
 
 .mp-btn {
@@ -2347,13 +2426,13 @@ export default {
 }
 
 .mp-btn.ghost {
-  background: #f7f7f7;
-  color: #333;
-  border: 1rpx solid #e6e6e6;
+  background: #333333;
+  color: #dddddd;
+  border: 1rpx solid #444444;
 }
 
 .mp-btn.primary {
-  background: #000;
+  background: #e1251b;
   color: #fff;
 }
 
@@ -2362,7 +2441,7 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  background: #f7f7f7;
+  background: #333333;
   border-radius: 40rpx;
   height: 80rpx;
   padding: 0 4rpx;
@@ -2375,7 +2454,7 @@ export default {
   border-radius: 0;
   background: transparent;
   border: none;
-  color: #333;
+  color: #ffffff;
   font-size: 40rpx;
   display: flex;
   align-items: center;
@@ -2394,7 +2473,7 @@ export default {
   width: 80rpx;
   text-align: center;
   font-size: 28rpx;
-  color: #333;
+  color: #ffffff;
 }
 
 @keyframes mpSlideUp {
@@ -2409,7 +2488,7 @@ export default {
 
 /* 参数与图文详情样式 */
 .mp-section {
-  background: #fff;
+  background: #ffffff;
   border-radius: 12rpx;
   padding: 20rpx;
   margin: 20rpx;
@@ -2418,7 +2497,7 @@ export default {
 .mp-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: #333;
+  color: #333333;
   margin-bottom: 12rpx;
 }
 
@@ -2427,7 +2506,7 @@ export default {
   flex-direction: column;
   gap: 12rpx;
   border-radius: 10rpx;
-  background: #fafafa;
+  background: #f8f8f8;
 }
 
 .mp-param-item {
@@ -2440,12 +2519,12 @@ export default {
 }
 
 .mp-param-item .key {
-  color: #666;
+  color: #666666;
   font-size: 24rpx;
 }
 
 .mp-param-item .val {
-  color: #333;
+  color: #333333;
   font-size: 26rpx;
   margin-top: 0rpx;
 }
@@ -2453,7 +2532,7 @@ export default {
 .mp-detail-img {
   width: 100%;
   border-radius: 8rpx;
-  background: #f5f5f5;
+  background: #f8f8f8;
   margin-top: 12rpx;
 }
 
@@ -2480,7 +2559,7 @@ export default {
   justify-content: space-between;
   width: 100%;
   margin-top: 12rpx;
-  border-top: 1rpx solid #eee;
+  border-top: 1rpx solid #444444;
   padding-top: 12rpx;
 }
 
@@ -2537,13 +2616,13 @@ export default {
 
 .address-card .addr-title {
   font-weight: 600;
-  color: #333;
+  color: #333333;
   font-size: 28rpx;
 }
 
 .address-card .addr-body {
   margin-top: 8rpx;
-  color: #555;
+  color: #666666;
   font-size: 24rpx;
   display: flex;
   flex-direction: column;
@@ -2552,12 +2631,12 @@ export default {
 
 .address-card .addr-line {
   font-size: 26rpx;
-  color: #333;
+  color: #333333;
 }
 
 .address-card .addr-empty {
   margin-top: 8rpx;
-  color: #999;
+  color: #777777;
   font-size: 24rpx;
 }
 
@@ -2572,29 +2651,14 @@ export default {
 }
 
 .address-card .addr-btn {
-  background: #fff;
-  border: 1rpx solid #ddd;
-  color: #333;
+  background: #333333;
+  border: 1rpx solid #555555;
+  color: #dddddd;
   border-radius: 999rpx;
   font-size: 24rpx;
   padding: 0 20rpx;
   height: 50rpx;
   line-height: 48rpx;
-}
-
-.address-card .addr-btn {
-  background: #fff;
-  border: 1rpx solid #ddd;
-  color: #333;
-  border-radius: 999rpx;
-  font-size: 30rpx;
-  padding: 0 40rpx;
-  height: 72rpx;
-  line-height: 70rpx;
-}
-
-.address-card {
-  padding-right: 220rpx;
 }
 
 /* MP Address Bar Style from Cart Page */
@@ -2604,7 +2668,7 @@ export default {
   justify-content: space-between;
   padding: 20rpx;
   /* background: #fff; */
-  border: 1rpx solid #e6e6e6;
+  border: 1rpx solid #eeeeee;
   border-radius: 12rpx;
   margin: 16rpx 0;
 }
@@ -2619,7 +2683,7 @@ export default {
 
 .addr-icon {
   font-size: 28rpx;
-  color: #000;
+  color: #333333;
   flex-shrink: 0;
 }
 
@@ -2627,7 +2691,7 @@ export default {
   display: flex;
   flex-direction: column;
   font-size: 24rpx;
-  color: #555;
+  color: #666666;
   flex: 1;
   overflow: hidden;
 }
@@ -2639,9 +2703,9 @@ export default {
 }
 
 .bar-btn {
-  background: #fff;
-  border: 1rpx solid #ddd;
-  color: #333;
+  background: #ffffff;
+  border: 1rpx solid #cccccc;
+  color: #333333;
   border-radius: 999rpx;
   margin: 0;
   font-size: 24rpx;
@@ -2665,7 +2729,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   height: 80rpx;
-  background: #f7f7f7;
+  background: #f0f0f0;
   border-radius: 40rpx;
   padding: 0 4rpx;
 }
@@ -2677,13 +2741,13 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 40rpx;
-  color: #333;
+  color: #333333;
 }
 
 .qty-box-large .qty-num {
   font-size: 30rpx;
   font-weight: 600;
-  color: #333;
+  color: #333333;
 }
 .qty-box-large .qty-input {
   width: 72rpx;
@@ -2692,7 +2756,7 @@ export default {
   background: transparent;
   text-align: center;
   font-size: 30rpx;
-  color: #333;
+  color: #333333;
 }
 
 .btn-action {
@@ -2709,12 +2773,43 @@ export default {
 }
 
 .btn-action.btn-cart {
-  background: #d9d9d9;
-  color: #333;
+  background: #444444;
+  color: #ffffff;
 }
 
 .btn-action.btn-buy {
-  background: #000;
+  background: #e1251b;
   color: #fff;
 }
+
+/* #ifdef MP-WEIXIN */
+.mp-sheet .spec-name { color: #ffffff !important; }
+.mp-sheet .spec-unit { color: #cccccc !important; }
+.mp-sheet .addr-icon { color: #ffffff !important; }
+.mp-sheet .bar-info { color: #dddddd !important; }
+.mp-sheet .bar-line { color: #ffffff !important; }
+.mp-sheet .bar-btn { color: #ffffff !important; background: #444444 !important; border-color: #666666 !important; }
+.mp-sheet .mp-param-item .key { color: #aaaaaa !important; }
+.mp-sheet .mp-param-item .val { color: #ffffff !important; }
+.mp-sheet .label { color: #ffffff !important; }
+.mp-sheet .unit-tip { color: #cccccc !important; }
+.mp-sheet .spec-item { border-color: #555555 !important; background: transparent !important; }
+.mp-sheet .spec-item.active { border-color: #ff6b35 !important; border-width: 2rpx !important; box-shadow: 0 0 8rpx 2rpx rgba(255, 107, 53, 0.5) !important; }
+.mp-sheet .mp-address-bar { border-color: #555555 !important; }
+.mp-sheet .mp-title { color: #ffffff !important; }
+/* #endif */
+
+/* #ifdef H5 */
+.h5-toggle {
+  background: #f7f7f7 !important;
+  color: #666 !important;
+  border-radius: 8rpx;
+  margin-top: 12rpx;
+  cursor: pointer;
+  border: 1rpx solid #eeeeee;
+}
+.h5-toggle:hover {
+  background: #eeeeee !important;
+}
+/* #endif */
 </style>

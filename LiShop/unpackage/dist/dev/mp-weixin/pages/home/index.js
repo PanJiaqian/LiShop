@@ -11,8 +11,20 @@ const Skeleton = () => "../../components/Skeleton.js";
 const OnboardingGuide = () => "../../components/OnboardingGuide.js";
 const LoginPrompt = () => "../../components/LoginPrompt.js";
 const IcpFooter = () => "../../components/IcpFooter.js";
+const AnnouncementFloatingBall = () => "../../components/AnnouncementFloatingBall.js";
 const _sfc_main = {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt, IcpFooter },
+  components: {
+    SearchBar,
+    BannerSwiper,
+    CategoryGrid,
+    ProductCard,
+    FloatingNav,
+    Skeleton,
+    OnboardingGuide,
+    LoginPrompt,
+    IcpFooter,
+    AnnouncementFloatingBall
+  },
   data() {
     return {
       loading: true,
@@ -784,7 +796,7 @@ const _sfc_main = {
         common_vendor.index.setStorageSync("cart", cart);
         common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/home/index.vue:925", e);
+        common_vendor.index.__f__("error", "at pages/home/index.vue:940", e);
       }
     },
     goLogin() {
@@ -837,7 +849,8 @@ if (!Array) {
   const _component_ProductCard = common_vendor.resolveComponent("ProductCard");
   const _component_OnboardingGuide = common_vendor.resolveComponent("OnboardingGuide");
   const _component_LoginPrompt = common_vendor.resolveComponent("LoginPrompt");
-  (_component_Skeleton + _component_SearchBar + _component_BannerSwiper + _component_ProductCard + _component_OnboardingGuide + _component_LoginPrompt)();
+  const _component_AnnouncementFloatingBall = common_vendor.resolveComponent("AnnouncementFloatingBall");
+  (_component_Skeleton + _component_SearchBar + _component_BannerSwiper + _component_ProductCard + _component_OnboardingGuide + _component_LoginPrompt + _component_AnnouncementFloatingBall)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({

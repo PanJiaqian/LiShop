@@ -18,6 +18,8 @@
 				allowed.add('/pages/category/index')
 				allowed.add('/pages/home/index')
 				allowed.add('/pages/login/index')
+				allowed.add('/pages/agreement/service')
+				allowed.add('/pages/agreement/privacy')
 				const isLoggedIn = () => {
 					try {
 						const u = uni.getStorageSync('user') || null
@@ -61,4 +63,8 @@
 
 <style>
 	/*每个页面公共css */
+	page {
+		background-color: #1a1a1a;
+		color: #ffffff;
+	}
 </style>

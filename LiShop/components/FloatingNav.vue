@@ -107,7 +107,7 @@ export default {
   height: 90rpx;
   overflow: visible !important;
   border-radius: 12rpx;
-  background: #ffffff;
+  background: #2c2c2c;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, .08);
   display: flex;
   flex-direction: column;
@@ -122,7 +122,7 @@ export default {
 
 .txt {
   font-size: 22rpx;
-  color: #666;
+  color: #fff;
   margin-top: 6rpx;
 }
 
@@ -144,6 +144,6 @@ export default {
 }
 
 .to-top {
-  background: #fffbf2;
+  background: #3a3a2a;
 }
 </style>

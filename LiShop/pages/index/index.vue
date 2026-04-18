@@ -33,6 +33,8 @@ export default {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	min-height: 100vh;
+	background-color: #1a1a1a;
 }
 
 .logo {
@@ -51,6 +53,6 @@ export default {
 
 .title {
 	font-size: 36rpx;
-	color: #8f8f94;
+	color: #ffffff;
 }
 </style>

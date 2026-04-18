@@ -4,7 +4,7 @@
   align-items: center;
   padding: 4rpx;
   background-color: #ffffff;
-  border: 3rpx solid #000;
+  border: 3rpx solid #eeeeee;
   border-radius: 40rpx;
   margin: 10rpx 20rpx;
 }
@@ -24,10 +24,11 @@
 .input.data-v-2334f7bd {
   flex: 1;
   font-size: 28rpx;
+  color: #333333;
 }
 .search-btn.data-v-2334f7bd {
-  background: #000;
-  color: #fff;
+  background: #1a1a1a;
+  color: #ffffff;
   border-radius: 36rpx;
   font-size: 30rpx;
   font-weight: bold;
@@ -37,3 +38,46 @@
   margin-right: 4rpx;
   margin-left: 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

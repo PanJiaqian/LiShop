@@ -88,6 +88,7 @@
               <view class="meta">
                 <text class="title">{{ x.available_product_name }}</text>
                 <text class="spec">型号：{{ x.title }}｜色温：{{ x.specTemp || '-' }}｜长度：{{ x.specLength || '-' }}</text>
+                <text class="spec" v-if="x.package_capacity > 0">包装容量：{{ x.package_capacity }} | 包装价：¥{{ Number(x.package_price).toFixed(2) }}</text>
               </view>
               <view class="price-row">
                 <text class="price">¥{{ x.price.toFixed(2) }}</text>
@@ -480,7 +481,7 @@ export default {
                   data: res.blob,
                   success: () => {
                     uni.showToast({ title: '文件已保存', icon: 'success' })
-                    try { if (typeof wx !== 'undefined' && typeof wx.openDocument === 'function') wx.openDocument({ filePath }) } catch (e) { }
+                    try { if (typeof wx !== 'undefined' && typeof wx.openDocument === 'function') wx.openDocument({ filePath, showMenu: true }) } catch (e) { }
                   },
                   fail: () => {
                     uni.showToast({ title: '文件保存失败', icon: 'none' })
@@ -498,7 +499,20 @@ export default {
             try { window.open(url, '_blank') } catch (e) { window.location.href = url }
             // #endif
             // #ifndef H5
-            uni.setClipboardData({ data: url, success: () => uni.showToast({ title: '下载链接已复制', icon: 'none' }) })
+            uni.downloadFile({
+              url,
+              success: (dres) => {
+                const filePath = dres && dres.tempFilePath
+                if (filePath) {
+                  try { if (typeof wx !== 'undefined' && typeof wx.openDocument === 'function') wx.openDocument({ filePath, showMenu: true }) } catch (e) { }
+                } else {
+                  uni.setClipboardData({ data: url, success: () => uni.showToast({ title: '下载链接已复制', icon: 'none' }) })
+                }
+              },
+              fail: () => {
+                uni.setClipboardData({ data: url, success: () => uni.showToast({ title: '下载链接已复制', icon: 'none' }) })
+              }
+            })
             // #endif
           } else {
             uni.showToast({ title: '未获取到导出链接', icon: 'none' })
@@ -742,12 +756,14 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
+  background-color: #1a1a1a;
 }
 
 /* #ifdef H5 */
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed; */
+  /* background-size: cover; */
+  background-color: #1a1a1a;
 }
 
 /* #endif */
@@ -756,9 +772,9 @@ export default {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  background: #fff;
+  background: #2c2c2c;
   height: 88rpx;
-  border-bottom: 1rpx solid #f5f5f5;
+  border-bottom: 1rpx solid #444444;
   margin-bottom: 20rpx;
   position: sticky;
   top: 0;
@@ -772,12 +788,12 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 28rpx;
-  color: #333;
+  color: #aaaaaa;
   padding: 0 10rpx;
 }
 
 .nav-item.active {
-  color: #333;
+  color: #ffffff;
   font-weight: bold;
   font-size: 30rpx;
 }
@@ -790,7 +806,7 @@ export default {
   transform: translateX(-50%);
   width: 40rpx;
   height: 4rpx;
-  background: #ff5000;
+  background: #e1251b;
   border-radius: 4rpx;
 }
 
@@ -810,7 +826,7 @@ export default {
 /* #endif */
 .order {
   margin: 20rpx 0;
-  background: #fff;
+  background: #ffffff;
   border-radius: 12rpx;
   padding: 20rpx;
   position: relative;
@@ -826,10 +842,11 @@ export default {
 .title {
   font-size: 28rpx;
   font-weight: 600;
+  color: #333333;
 }
 
 .time {
-  color: #999;
+  color: #aaaaaa;
   font-size: 24rpx;
   /* #ifdef MP-WEIXIN */
   white-space: nowrap;
@@ -837,7 +854,7 @@ export default {
 }
 
 .total {
-  color: #333;
+  color: #333333;
   font-size: 28rpx;
   font-weight: 600;
 }
@@ -850,10 +867,10 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ddd;
+  background: #f8f8f8;
   padding: 12rpx;
   border-radius: 10rpx;
-  color: #333;
+  color: #333333;
 }
 
 .items {
@@ -865,7 +882,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 12rpx 8rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #eeeeee;
 }
 
 .item:last-child {
@@ -880,14 +897,14 @@ export default {
 .meta .title {
   display: block;
   font-size: 26rpx;
-  color: #333;
+  color: #333333;
   margin-bottom: 10rpx;
 }
 
 .meta .spec {
   display: block;
   font-size: 22rpx;
-  color: #777;
+  color: #aaaaaa;
   margin-top: 4rpx;
 }
 
@@ -895,7 +912,7 @@ export default {
   display: flex;
   gap: 12rpx;
   align-items: center;
-  color: #333;
+  color: #333333;
 }
 
 .ops {
@@ -909,7 +926,7 @@ export default {
 .total-text {
   font-size: 28rpx;
   font-weight: 600;
-  color: #333;
+  color: #333333;
 }
 
 .btns {
@@ -918,7 +935,7 @@ export default {
 }
 
 .btn {
-  background: #333;
+  background: #444444;
   color: #fff;
   border-radius: 100rpx;
   margin: 0;
@@ -931,7 +948,7 @@ export default {
 .empty {
   padding: 40rpx;
   text-align: center;
-  color: #999;
+  color: #777777;
 }
 
 /* 列表样式 */
@@ -945,10 +962,10 @@ export default {
 }
 
 .order-card {
-  background: #fff;
+  background: #ffffff;
   border-radius: 12rpx;
   padding: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .04);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .3);
 }
 
 .card-hd {
@@ -959,10 +976,11 @@ export default {
 
 .card-hd .id {
   font-weight: 600;
+  color: #333333;
 }
 
 .card-hd .total {
-  color: #333;
+  color: #333333;
   font-weight: 700;
 }
 
@@ -982,7 +1000,7 @@ export default {
   width: 120rpx;
   height: 120rpx;
   border-radius: 8rpx;
-  background: #f5f5f5;
+  background: #1a1a1a;
 }
 
 .actions {
@@ -992,9 +1010,9 @@ export default {
 
 .btn-action {
   margin: 0;
-  background: #ddd;
+  background: #444444;
   /* border: 1rpx solid #ddd; */
-  color: #333;
+  color: #ffffff;
   border-radius: 100rpx;
   padding: 0 24rpx;
   height: 56rpx;
@@ -1004,7 +1022,7 @@ export default {
 
 .btn-action.primary {
   /* border-color: #333; */
-  background-color: #333;
+  background-color: #e1251b;
   color: #fff;
 }
 
@@ -1013,22 +1031,25 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
+  background: #ffffff;
   border-radius: 10rpx;
   padding: 12rpx;
   margin: 10rpx 0;
+  border: 1rpx solid #eeeeee;
 }
 
 .waybill .copy {
-  background: #eee;
+  background: #f0f0f0;
+  color: #333333;
   margin: 0;
 }
 
 .logistics {
-  background: #fff;
+  background: #ffffff;
   border-radius: 10rpx;
   padding: 12rpx;
   margin-bottom: 8rpx;
+  border: 1rpx solid #eeeeee;
 }
 
 .log-header {
@@ -1036,19 +1057,19 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding-bottom: 8rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #eeeeee;
 }
 
 .log-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: #333;
+  color: #333333;
 }
 
 .log-toggle {
   margin: 0;
-  background: #eee;
-  color: #333;
+  background: #f0f0f0;
+  color: #333333;
   border-radius: 100rpx;
   padding: 0 20rpx;
   height: 50rpx;
@@ -1071,12 +1092,12 @@ export default {
   top: 36rpx;
   bottom: 0;
   width: 2rpx;
-  background: #eee;
+  background: #eeeeee;
 }
 
 .log-empty {
   padding: 16rpx 8rpx;
-  color: #999;
+  color: #777777;
   font-size: 26rpx;
 }
 
@@ -1089,7 +1110,7 @@ export default {
   height: 420rpx;
   border-radius: 10rpx;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #1a1a1a;
 }
 
 .map-iframe {
@@ -1101,7 +1122,7 @@ export default {
 .map-image {
   width: 100%;
   border-radius: 10rpx;
-  background: #f5f5f5;
+  background: #1a1a1a;
 }
 
 .map-webview {
@@ -1118,7 +1139,7 @@ export default {
 }
 
 .map-link {
-  color: #007aff;
+  color: #e1251b;
   font-size: 26rpx;
 }
 
@@ -1131,7 +1152,7 @@ export default {
 
 .toggle-icon {
   font-size: 28rpx;
-  color: #333;
+  color: #333333;
   font-weight: 700;
 }
 
@@ -1143,7 +1164,7 @@ export default {
   height: 80rpx;
   line-height: 80rpx;
   text-align: center;
-  color: #333;
+  color: #ffffff;
   font-size: 36rpx;
   z-index: 999;
   -webkit-backdrop-filter: blur(8px);
@@ -1158,14 +1179,14 @@ export default {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #bbb;
+  background: #777777;
   margin: 8rpx 0 0 0;
   font-size: 0;
   line-height: 16rpx;
 }
 
 .log-item:first-child .dot {
-  background: #333;
+  background: #e1251b;
 }
 
 .log-meta {
@@ -1185,31 +1206,31 @@ export default {
 .log-status {
   font-size: 30rpx;
   font-weight: 600;
-  color: #333;
+  color: #333333;
 }
 
 .log-time {
   font-size: 26rpx;
-  color: #999;
+  color: #666666;
 }
 
 .log-desc {
   font-size: 26rpx;
-  color: #999;
+  color: #666666;
   line-height: 1.5;
 }
 
 .log-item:first-child .log-status {
-  color: #54D1F4 ;
+  color: #e1251b ;
   font-size: 32rpx;
 }
 
 .log-item:first-child .log-time {
-  color: #54D1F4 ;
+  color: #e1251b ;
 }
 
 .log-item:first-child .log-desc {
-  color: #333;
+  color: #333333;
 }
 
 .log-status {
@@ -1220,13 +1241,14 @@ export default {
 .waybill {
   position: static;
   margin: 10rpx 0;
-  background: #fff;
+  background: #ffffff;
   padding: 12rpx;
   border-radius: 10rpx;
   flex-direction: row;
   align-items: center;
   gap: 20rpx;
   justify-content: flex-start;
+  border: 1rpx solid #eeeeee;
 }
 
 .item {
@@ -1328,7 +1350,7 @@ export default {
 }
 
 .price-row .price {
-  color: #000;
+  color: #e1251b;
 }
 
 /* #endif */
@@ -1347,6 +1369,7 @@ export default {
   height: 100vh;
   z-index: -1;
   pointer-events: none;
+  opacity: 0.2;
 }
 
 /* #endif */

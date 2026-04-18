@@ -6,7 +6,7 @@ const Skeleton = () => "../../components/Skeleton.js";
 const _sfc_main = {
   components: { Skeleton },
   data() {
-    return { username: "", password: "", loading: true };
+    return { username: "", password: "", loading: true, agree: false };
   },
   onShow() {
     try {
@@ -28,9 +28,33 @@ const _sfc_main = {
     this.loading = false;
   },
   methods: {
+    toggleAgree() {
+      this.agree = !this.agree;
+    },
+    openAgreement(type) {
+      const map = {
+        service: "/pages/agreement/service",
+        privacy: "/pages/agreement/privacy"
+      };
+      const url = map[type] || map.service;
+      if (common_vendor.index && common_vendor.index.navigateTo) {
+        common_vendor.index.navigateTo({ url });
+        return;
+      }
+      try {
+        const base = typeof location !== "undefined" && location.href ? location.href.split("#")[0] : "";
+        if (base)
+          location.href = base + "#" + url;
+      } catch (e) {
+      }
+    },
     login() {
       if (!this.username || !this.password) {
         common_vendor.index.showToast({ title: "Please enter username and password", icon: "none" });
+        return;
+      }
+      if (!this.agree) {
+        common_vendor.index.showToast({ title: "请先阅读并同意协议", icon: "none" });
         return;
       }
       const payload = { phone: this.username, password: this.password };
@@ -72,7 +96,7 @@ const _sfc_main = {
           }
         }, 300);
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/login/index.vue:81", "login error", err);
+        common_vendor.index.__f__("error", "at pages/login/index.vue:112", "login error", err);
         common_vendor.index.showToast({ title: "账号或密码错误", icon: "none" });
       }).finally(() => {
         try {
@@ -98,7 +122,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.o(($event) => $data.username = $event.detail.value),
     f: $data.password,
     g: common_vendor.o(($event) => $data.password = $event.detail.value),
-    h: common_vendor.o((...args) => $options.login && $options.login(...args))
+    h: $data.agree ? 1 : "",
+    i: common_vendor.o((...args) => $options.toggleAgree && $options.toggleAgree(...args)),
+    j: common_vendor.o(($event) => $options.openAgreement("service")),
+    k: common_vendor.o(($event) => $options.openAgreement("privacy")),
+    l: !$data.agree ? 1 : "",
+    m: !$data.agree,
+    n: common_vendor.o((...args) => $options.login && $options.login(...args))
   };
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-d08ef7d4"]]);

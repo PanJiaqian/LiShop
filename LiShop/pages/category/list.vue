@@ -6,7 +6,7 @@
     <view class="h5-topbar">
       <button class="back-btn" @click="goBack">←</button>
       <view class="h5-search">
-         <image src="/static/logo.png?v=20251211" style="width:240rpx;height:60rpx;margin-right:20rpx;" mode="aspectFit" />
+         <image src="/static/logo.png" style="width:280rpx;height:70rpx;margin-right:20rpx;max-width:200px;" mode="aspectFit" />
         <view class="search-bar-box">
           <view class="search-type">宝贝<text class="arrow-down">∨</text></view>
           <view class="divider-v"></view>
@@ -187,17 +187,11 @@ export default {
   min-height: 100vh;
   width: 100vw;
   box-sizing: border-box;
+  background-color: #1a1a1a;
 }
 
 .page-bg {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
+  display: none;
 }
 
 .h5-topbar {
@@ -214,15 +208,16 @@ export default {
   font-size: 32rpx;
   font-weight: 600;
   margin-right: 16rpx;
+  color: #fff;
 }
 
 .kw {
   font-size: 28rpx;
-  color: #666;
+  color: #aaa;
 }
 
 .sub-nav {
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #333;
 }
 
 .nav-wrap {
@@ -242,11 +237,11 @@ export default {
 
 .nav-text {
   font-size: 26rpx;
-  color: #333;
+  color: #aaa;
 }
 
 .nav-item.active .nav-text {
-  color: #333;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -258,7 +253,7 @@ export default {
 }
 
 .grid2-item {
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 12rpx;
   overflow: hidden;
 }
@@ -297,6 +292,7 @@ export default {
   gap: 20rpx;
   height: 120rpx;
   padding: 20rpx;
+  background-color: #1a1a1a;
 }
 
 .back-btn {
@@ -309,7 +305,7 @@ export default {
   background: transparent !important;
   box-shadow: none !important;
   outline: none;
-  color: #000;
+  color: #fff;
   font-size: 44rpx;
   transition: background .2s, transform .2s, color .2s;
   margin-left: 20rpx;
@@ -340,7 +336,7 @@ export default {
   /* max-width: 900rpx; */
   /* margin: 0 auto; */
   height: 80rpx;
-  border: 3rpx solid #000;
+  border: 3rpx solid #555;
   border-radius: 40rpx;
   padding: 4rpx;
   background: transparent !important;
@@ -349,7 +345,7 @@ export default {
 .search-type {
   padding: 0 30rpx;
   font-size: 30rpx;
-  color: #333;
+  color: #fff;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -358,13 +354,13 @@ export default {
 .arrow-down {
   font-size: 20rpx;
   margin-left: 10rpx;
-  color: #666;
+  color: #aaa;
 }
 
 .divider-v {
   width: 2rpx;
   height: 30rpx;
-  background: #ddd;
+  background: #555;
   margin-right: 16rpx;
 }
 
@@ -373,12 +369,12 @@ export default {
   height: 100%;
   font-size: 30rpx;
   background: transparent !important;
-  color: #000;
+  color: #fff;
 }
 
 .search-btn-black {
-  background: #000;
-  color: #fff;
+  background: #fff;
+  color: #000;
   border-radius: 36rpx;
   font-size: 30rpx;
   font-weight: 700;
@@ -432,7 +428,8 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/static/product_detail_background.jpg');
+  /* background-image: url('/static/product_detail_background.jpg'); */
+  background-color: #1a1a1a;
   background-size: cover;
   background-position: center;
   z-index: 0;

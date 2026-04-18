@@ -114,10 +114,10 @@
                 <text>我的收藏</text>
                 <text class="arrow">›</text>
               </navigator>
-              <navigator url="/pages/settings/index" class="menu-row">
+              <!-- <navigator url="/pages/settings/index" class="menu-row">
                 <text>设置</text>
                 <text class="arrow">›</text>
-              </navigator>
+              </navigator> -->
               <!-- #ifdef MP-WEIXIN -->
               <view class="menu-row" @click="startOnboardingFromProfile">
                 <text>新手教程</text>
@@ -136,10 +136,10 @@
                 <text class="arrow">›</text>
               </navigator>
               <!-- #endif -->
-              <navigator url="/pages/messages/index" class="menu-row">
+              <!-- <navigator url="/pages/messages/index" class="menu-row">
                 <text>消息</text>
                 <text class="arrow">›</text>
-              </navigator>
+              </navigator> -->
             </view>
           </view>
 
@@ -967,11 +967,13 @@ export default {
   min-height: 100vh;
   padding: 40rpx;
   box-sizing: border-box;
+  background-color: #1a1a1a;
 }
 /* #ifdef H5 */
 .page {
-  background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed;
+  background-size: cover; */
+  background-color: #1a1a1a;
 }
 /* #endif */
 
@@ -981,7 +983,7 @@ export default {
   grid-gap: 30rpx;
   max-width: 1800rpx;
   margin: 0 auto;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   margin-top: 80rpx;
   /* min-height: calc(100vh - 100rpx); */
@@ -994,8 +996,8 @@ export default {
 }
 
 .info-card, .right-card {
-  background: rgba(255,255,255,0.6);
-  border: 1rpx solid rgba(255,255,255,0.7);
+  background: #2c2c2c;
+  border: 1rpx solid #444;
   border-radius: 20rpx;
   padding: 40rpx;
   box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
@@ -1017,13 +1019,13 @@ export default {
 .card-title {
   font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: #fff;
   margin-bottom: 0;
 }
 
 .card-header-row {
   margin-bottom: 40rpx;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #444;
   padding-bottom: 20rpx;
 }
 
@@ -1038,7 +1040,7 @@ export default {
   width: 160rpx;
   height: 160rpx;
   border-radius: 50%;
-  background: #f0f0f0;
+  background: #333;
 }
 .avatar-initial {
   display: flex;
@@ -1084,18 +1086,18 @@ export default {
 
 .label {
   font-size: 24rpx;
-  color: #666;
+  color: #aaa;
   margin-bottom: 16rpx;
   font-weight: 500;
 }
 
 .input-box {
-  border: 1px solid #eee;
-  background: #f9f9f9;
+  border: 1px solid #555;
+  background: #333;
   padding: 14rpx 20rpx;
   border-radius: 8rpx;
   font-size: 28rpx;
-  color: #333;
+  color: #fff;
   min-height: 40rpx;
 }
 .input-box.static {
@@ -1111,7 +1113,7 @@ export default {
 }
 
 .form-actions {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #444;
   padding-top: 30rpx;
   text-align: right;
 }
@@ -1130,8 +1132,8 @@ export default {
 }
 
 .btn-save {
-  background: #000;
-  color: #fff;
+  background: #fff;
+  color: #000;
   padding: 0 60rpx;
   height: 80rpx;
   line-height: 80rpx;
@@ -1141,14 +1143,15 @@ export default {
 }
 
 .btn-cancel {
-  background: #f5f5f5;
-  color: #333;
+  background: #333;
+  color: #fff;
   padding: 0 60rpx;
   height: 80rpx;
   line-height: 80rpx;
   border-radius: 40rpx;
   font-size: 28rpx;
   margin: 0;
+  border: 1rpx solid #555;
 }
 
 /* Right Side */
@@ -1156,9 +1159,9 @@ export default {
   display: flex;
   align-items: center;
   padding: 18rpx 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #444;
   font-size: 28rpx;
-  color: #333;
+  color: #fff;
   cursor: pointer;
   position: relative;
 }
@@ -1172,18 +1175,19 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30rpx;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #444;
   padding-bottom: 20rpx;
 }
 
 .btn-add-addr {
   font-size: 24rpx;
-  background: #f0f0f0;
-  color: #333;
+  background: #333;
+  color: #fff;
   margin: 0;
   padding: 0 20rpx;
   height: 50rpx;
   line-height: 50rpx;
+  border: 1rpx solid #555;
 }
 
 .addr-item {
@@ -1191,7 +1195,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 18rpx 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #444;
   position: relative;
 }
 
@@ -1207,13 +1211,13 @@ export default {
 .addr-txt {
   font-size: 28rpx;
   font-weight: bold;
-  color: #333;
+  color: #fff;
   margin-bottom: 8rpx;
 }
 
 .addr-sub {
   font-size: 24rpx;
-  color: #999;
+  color: #aaa;
 }
 
 .arrow {
@@ -1241,7 +1245,7 @@ export default {
   /* border-radius: 50%; */
   /* background: rgba(255,255,255,0.7); */
   /* box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); */
-  color: #333;
+  color: #fff;
   font-size: 36rpx;
   z-index: 999;
   -webkit-backdrop-filter: blur(8px);
@@ -1252,7 +1256,7 @@ export default {
 .modal-mask {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.7);
   z-index: 999;
   display: flex;
   align-items: center;
@@ -1260,30 +1264,31 @@ export default {
 }
 .modal-content {
   width: 600rpx;
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 24rpx;
   overflow: hidden;
+  border: 1rpx solid #444;
 }
 .modal-header {
   padding: 30rpx;
   text-align: center;
-  border-bottom: 1rpx solid #eee;
+  border-bottom: 1rpx solid #444;
 }
 .modal-title {
   font-weight: 600;
   font-size: 32rpx;
-  color: #333;
+  color: #fff;
 }
 .modal-body {
   padding: 40rpx 30rpx;
 }
 .modal-input {
-  background: #f5f5f5;
+  background: #333;
   height: 80rpx;
   border-radius: 8rpx;
   padding: 0 20rpx;
   font-size: 28rpx;
-  color: #333;
+  color: #fff;
   margin-bottom: 20rpx;
 }
 .code-box {
@@ -1304,12 +1309,12 @@ export default {
   border-radius: 8rpx;
 }
 .btn-code[disabled] {
-  background: #ccc;
-  color: #fff;
+  background: #555;
+  color: #aaa;
 }
 .modal-footer {
   display: flex;
-  border-top: 1rpx solid #eee;
+  border-top: 1rpx solid #444;
 }
 .modal-btn {
   flex: 1;
@@ -1317,11 +1322,11 @@ export default {
   line-height: 100rpx;
   text-align: center;
   font-size: 30rpx;
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 0;
 }
 .modal-btn::after { border: none; }
-.modal-btn.cancel { color: #666; border-right: 1rpx solid #eee; }
+.modal-btn.cancel { color: #aaa; border-right: 1rpx solid #444; }
 .modal-btn.confirm { color: #e1251b; font-weight: 600; }
 
 /* #ifdef H5 */
@@ -1365,9 +1370,6 @@ export default {
   transform: rotate(45deg);
 }
 
-.profile-grid { align-items: center; }
-.info-card, .right-card { justify-content: center; }
-
 /* .page {
   padding-left: 300rpx;
   padding-right: 300rpx;
@@ -1379,35 +1381,35 @@ export default {
 /* #ifdef MP-WEIXIN */
 .profile-grid { grid-template-columns: 1fr; }
 .info-card, .right-card {
-  background: #fff;
-  border: 1rpx solid #eee;
+  background: #2c2c2c;
+  border: 1rpx solid #444;
   box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.06);
   height: auto;
   overflow: visible;
 }
 .menu-row { padding: 24rpx 0; }
-.btn-add-addr { background: #000; color: #fff; border-radius: 30rpx; }
-.arrow { color: #999; }
-.page-bg { position: fixed; left: 0; right: 0; top: 0; bottom: 0; width: 100vw; height: 100vh; z-index: -1; }
+.btn-add-addr { background: #333; color: #fff; border-radius: 30rpx; border: 1rpx solid #555; }
+.arrow { color: #aaa; }
+.page-bg { display: none; }
 .edit-under { margin-top: 12rpx; }
 .link-under { color: #007aff; font-size: 24rpx; }
 /* #endif */
 
 
-.h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.h5-modal { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; height: 60vh; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #f0f0f0; margin-bottom: 16rpx; }
-.modal-title { font-size: 32rpx; font-weight: 700; color: #333; }
-.modal-close { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #999; cursor: pointer; }
-.modal-close:active { color: #333; }
+.h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.h5-modal { width: 820rpx; max-width: 90vw; background: #2c2c2c; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; height: 60vh; border: 1rpx solid #444; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #444; margin-bottom: 16rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; color: #fff; }
+.modal-close { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #aaa; cursor: pointer; }
+.modal-close:active { color: #fff; }
 .modal-body { flex: 1; min-height: 0; overflow-y: auto; }
 .modal-body-two { display: flex; gap: 16rpx; height: 100%; }
-.two-left { width: 280rpx; flex-shrink: 0; padding-right: 16rpx; border-right: 1rpx solid #f0f0f0; display: flex; flex-direction: column; gap: 12rpx; cursor: pointer; }
-.two-label { font-size: 24rpx; color: #999; }
-.two-title { font-size: 30rpx; color: #333; font-weight: 600; }
+.two-left { width: 280rpx; flex-shrink: 0; padding-right: 16rpx; border-right: 1rpx solid #444; display: flex; flex-direction: column; gap: 12rpx; cursor: pointer; }
+.two-label { font-size: 24rpx; color: #aaa; }
+.two-title { font-size: 30rpx; color: #fff; font-weight: 600; }
 .two-right { flex: 1; min-height: 0; overflow-y: auto; padding-left: 16rpx; }
-.two-hint { height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 26rpx; }
-.a-title { font-size: 34rpx; font-weight: 600; color: #333; display: block; }
-.a-time { font-size: 24rpx; color: #999; display: block; margin-top: 8rpx; margin-bottom: 16rpx; }
-.a-content { font-size: 28rpx; color: #333; line-height: 1.6; white-space: pre-wrap; }
+.two-hint { height: 100%; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 26rpx; }
+.a-title { font-size: 34rpx; font-weight: 600; color: #fff; display: block; }
+.a-time { font-size: 24rpx; color: #aaa; display: block; margin-top: 8rpx; margin-bottom: 16rpx; }
+.a-content { font-size: 28rpx; color: #ddd; line-height: 1.6; white-space: pre-wrap; }
 </style>

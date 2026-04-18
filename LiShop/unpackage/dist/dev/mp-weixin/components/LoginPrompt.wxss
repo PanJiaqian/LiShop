@@ -14,7 +14,7 @@
 .login-modal.data-v-58c6c595 {
     width: 640rpx;
     max-width: 90vw;
-    background: #fff;
+    background: #2c2c2c;
     border-radius: 32rpx;
     padding: 76rpx 44rpx;
     box-shadow: 0 28rpx 64rpx rgba(0,0,0,0.16);
@@ -31,12 +31,12 @@
 .login-title.data-v-58c6c595 {
     font-size: 36rpx;
     font-weight: 800;
-    color: #111;
+    color: #fff;
     text-align: center;
 }
 .login-desc.data-v-58c6c595 {
     font-size: 30rpx;
-    color: #5f5f5f;
+    color: #aaa;
     text-align: center;
 }
 .login-actions.data-v-58c6c595 {
@@ -61,9 +61,9 @@
     box-shadow: 0 10rpx 24rpx rgba(47,128,237,0.3);
 }
 .btn-pill.cancel.data-v-58c6c595 {
-    background: #fff;
-    color: #999;
-    border: 2rpx solid #e5e5e5;
+    background: #333;
+    color: #fff;
+    border: 2rpx solid #555;
 }
 .btn-pill.mp.data-v-58c6c595 {
     min-width: 200rpx;

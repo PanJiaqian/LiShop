@@ -1,2 +1,1 @@
-<!-- WebView 页面：a 为渲染函数导出的 url，用于绑定到 web-view 的 src -->
-<web-view src="{{a}}"></web-view>
+<view class="page data-v-a96d96f3"><web-view class="data-v-a96d96f3" src="{{a}}"></web-view></view>

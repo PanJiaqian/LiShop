@@ -50,7 +50,7 @@
   .login-modal {
     width: 640rpx;
     max-width: 90vw;
-    background: #fff;
+    background: #2c2c2c;
     border-radius: 32rpx;
     padding: 76rpx 44rpx;
     box-shadow: 0 28rpx 64rpx rgba(0,0,0,0.16);
@@ -67,12 +67,12 @@
   .login-title {
     font-size: 36rpx;
     font-weight: 800;
-    color: #111;
+    color: #fff;
     text-align: center;
   }
   .login-desc {
     font-size: 30rpx;
-    color: #5f5f5f;
+    color: #aaa;
     text-align: center;
   }
   .login-actions {
@@ -97,9 +97,9 @@
     box-shadow: 0 10rpx 24rpx rgba(47,128,237,0.3);
   }
   .btn-pill.cancel {
-    background: #fff;
-    color: #999;
-    border: 2rpx solid #e5e5e5;
+    background: #333;
+    color: #fff;
+    border: 2rpx solid #555;
   }
   .btn-pill.mp {
     min-width: 200rpx;

@@ -8,7 +8,7 @@
       <!-- 顶部 Header -->
       <view class="h5-header">
         <view class="h5-logo-area">
-          <image src="/static/logo.png?v=20251211" style="width:260rpx;height:100rpx;margin-right:20rpx;"
+          <image src="/static/logo.png" style="width:320rpx;height:120rpx;margin-right:20rpx;max-width:240px;"
             mode="aspectFit" />
           <!-- <text class="logo-text">SHOP</text> -->
         </view>
@@ -31,7 +31,7 @@
         <view class="side-user">
           <view class="side-cate">
             <view class="cate-title">
-              <text style="color:#000;margin-right:8rpx;font-weight:900;">☰</text>分类
+              <text style="color:#fff;margin-right:8rpx;font-weight:900;">☰</text>分类
             </view>
             <view id="og-cate" class="cate-list" @mouseleave="onCateListLeave">
               <view class="cate-item" v-for="(c, i) in topCategories" :key="i" @mouseenter="hoverCategory(c, $event)">
@@ -70,7 +70,7 @@
             <view class="uc-header">
               <!-- <image class="uc-avatar" :src="user?.avatar || '/static/logo.png'" @click="onAvatarClick" /> -->
               <view class="uc-info">
-                <text class="uc-greet">下午好 {{ user?.username || 'XXX' }}</text>
+                <text class="uc-greet">下午好 {{ user?.username || '用户' }}</text>
               </view>
             </view>
 
@@ -208,6 +208,9 @@
     <canvas canvas-id="sharePoster" id="sharePoster"
       style="position:fixed;left:-9999px;top:-9999px;width:750px;height:680px;" />
     <!-- #endif -->
+    <!-- #ifdef MP-WEIXIN -->
+    <AnnouncementFloatingBall />
+    <!-- #endif -->
   </view>
 </template>
 
@@ -226,10 +229,17 @@ import Skeleton from '@/components/Skeleton.vue'
 import OnboardingGuide from '@/components/OnboardingGuide.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
 import IcpFooter from '@/components/IcpFooter.vue'
+// #ifdef MP-WEIXIN
+import AnnouncementFloatingBall from '@/components/AnnouncementFloatingBall.vue'
+// #endif
 import { getRecommendedProducts, getVisibleCategories, searchProducts, getCarousel, getCurrentAnnouncement } from '../../api/index.js'
 
 export default {
-  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt, IcpFooter },
+  components: { SearchBar, BannerSwiper, CategoryGrid, ProductCard, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt, IcpFooter,
+    // #ifdef MP-WEIXIN
+    AnnouncementFloatingBall
+    // #endif
+  },
   data() {
     return {
       loading: true,
@@ -969,6 +979,7 @@ export default {
 <style scoped>
 .page {
   /* background: white; */
+  background-color: #1a1a1a;
 
   /* #ifdef H5 */
   min-height: 100vh;
@@ -980,14 +991,7 @@ export default {
 }
 
 .page-bg {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
+  display: none;
 }
 
 /* H5 New Layout Styles */
@@ -1023,7 +1027,7 @@ export default {
   font-size: 48rpx;
   font-weight: bold;
   font-family: serif;
-  color: #000;
+  color: #fff;
   letter-spacing: 2rpx;
 }
 
@@ -1041,16 +1045,16 @@ export default {
   align-items: center;
   width: 100%;
   height: 80rpx;
-  border: 3rpx solid #000;
+  border: 3rpx solid #eeeeee;
   border-radius: 40rpx;
   padding: 4rpx;
-  background: #fff;
+  background: #ffffff;
 }
 
 .search-type {
   padding: 0 8rpx;
   font-size: 30rpx;
-  color: #333;
+  color: #333333;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -1067,20 +1071,20 @@ export default {
   display: inline-block;
   font-size: 28rpx;
   margin: 0 12rpx;
-  color: #000;
-  filter: grayscale(100%) brightness(0);
+  color: #fff;
+  /* filter: grayscale(100%) brightness(0); */
 }
 
 .arrow-down {
   font-size: 30rpx;
   margin-left: 10rpx;
-  color: #666;
+  color: #aaa;
 }
 
 .divider-v {
   width: 2rpx;
   height: 30rpx;
-  background: #ddd;
+  background: #555;
   margin-right: 16rpx;
 }
 
@@ -1088,11 +1092,12 @@ export default {
   flex: 1;
   height: 100%;
   font-size: 30rpx;
+  color: #333333;
 }
 
 .search-btn-black {
-  background: #000;
-  color: #fff;
+  background: #f0f0f0;
+  color: #333;
   border-radius: 36rpx;
   font-size: 30rpx;
   font-weight: bold;
@@ -1117,7 +1122,7 @@ export default {
 }
 
 .side-cate {
-  background: #f8f8f8;
+  background: #2c2c2c;
   border-radius: 12rpx;
   padding: 20rpx;
   display: flex;
@@ -1136,8 +1141,8 @@ export default {
   display: flex;
   /* align-items: center; */
   /* justify-content: center; */
-  color: #000;
-  border-bottom: 1rpx solid #eee;
+  color: #fff;
+  border-bottom: 1rpx solid #444;
   margin-bottom: 10rpx;
 }
 
@@ -1154,7 +1159,7 @@ export default {
   align-items: center;
   padding: 16rpx 0;
   cursor: pointer;
-  color: #333;
+  color: #aaa;
   font-size: 32rpx;
   /* 分类字体加大 */
   transition: all 0.2s;
@@ -1162,14 +1167,14 @@ export default {
 }
 
 .cate-item:hover {
-  color: #000;
+  color: #fff;
   font-weight: bold;
 }
 
 .cate-dot {
   margin-right: 12rpx;
   font-size: 24rpx;
-  color: #000;
+  color: #fff;
 }
 
 .cate-name {
@@ -1209,7 +1214,7 @@ export default {
 }
 
 .user-card-new {
-  background: #f8f8f8;
+  background: #2c2c2c;
   border-radius: 24rpx;
   height: 100%;
   width: 85%;
@@ -1231,8 +1236,8 @@ export default {
   height: 80rpx;
   border-radius: 50%;
   margin-right: 20rpx;
-  background: #fff;
-  border: 2rpx solid #fff;
+  background: #333;
+  border: 2rpx solid #444;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
 
@@ -1243,7 +1248,7 @@ export default {
 .uc-greet {
   font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: #fff;
   line-height: 1.4;
 }
 
@@ -1258,14 +1263,14 @@ export default {
   display: flex;
   align-items: center;
   font-size: 30rpx;
-  color: #333;
+  color: #aaa;
   font-weight: 500;
   cursor: pointer;
   text-decoration: none;
 }
 
 .uc-link-item:hover {
-  color: #000;
+  color: #fff;
 }
 
 .uc-icon {
@@ -1273,18 +1278,18 @@ export default {
   font-size: 36rpx;
   width: 40rpx;
   text-align: center;
-  filter: grayscale(100%) brightness(0);
+  filter: brightness(100);
   opacity: 1;
 }
 
 .uc-link-item:hover .uc-icon {
-  filter: grayscale(100%) brightness(0);
+  filter: brightness(100);
   opacity: 0.8;
 }
 
 .uc-login-btn {
-  background: #000;
-  color: #fff;
+  background: #fff;
+  color: #000;
   border-radius: 999rpx;
   width: 100%;
   font-size: 32rpx;
@@ -1316,12 +1321,12 @@ export default {
 .guess-icon {
   width: 64rpx;
   height: 64rpx;
-  background: #000;
+  background: #fff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #000;
   margin-right: 24rpx;
   font-size: 32rpx;
 }
@@ -1329,7 +1334,7 @@ export default {
 .guess-title {
   font-size: 40rpx;
   font-weight: 900;
-  color: #333;
+  color: #fff;
 }
 
 .grid2 {
@@ -1342,8 +1347,8 @@ export default {
 .sub-panel {
   position: fixed;
   z-index: 999;
-  background: rgba(255, 255, 255, 0.98);
-  border: 1rpx solid #eee;
+  background: #2c2c2c;
+  border: 1rpx solid #444;
   padding: 40rpx;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
   border-radius: 12rpx;
@@ -1357,7 +1362,8 @@ export default {
   font-weight: bold;
   margin-bottom: 30rpx;
   padding-bottom: 20rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #444;
+  color: #fff;
 }
 
 .panel-columns {
@@ -1367,7 +1373,7 @@ export default {
 }
 
 .panel-link {
-  color: #666;
+  color: #aaa;
   font-size: 28rpx;
   cursor: pointer;
   white-space: nowrap;
@@ -1376,7 +1382,7 @@ export default {
 }
 
 .panel-link:hover {
-  color: #333;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -1396,7 +1402,7 @@ export default {
 
 .block {
   margin-top: 20rpx;
-  background: #fff;
+  background: #2c2c2c;
 }
 
 .block-title {
@@ -1407,10 +1413,11 @@ export default {
   font-weight: 500;
   font-size: 35rpx;
   margin-left: 10rpx;
+  color: #fff;
 }
 
 .more {
-  color: #999;
+  color: #aaa;
   font-size: 26rpx;
 }
 
@@ -1431,7 +1438,7 @@ export default {
   width: 220rpx;
   height: 220rpx;
   border-radius: 12rpx;
-  background: #f5f5f5;
+  background: #333;
 }
 
 .sk-price {
@@ -1461,7 +1468,7 @@ export default {
   right: 0;
   top: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, .45);
+  background: rgba(0, 0, 0, .7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1471,13 +1478,14 @@ export default {
 .h5-modal {
   width: 820rpx;
   max-width: 90vw;
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 16rpx;
   padding: 24rpx;
   box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   height: 60vh;
+  border: 1rpx solid #444;
 }
 
 .modal-header {
@@ -1485,14 +1493,14 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding-bottom: 12rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #444;
   margin-bottom: 16rpx;
 }
 
 .modal-title {
   font-size: 32rpx;
   font-weight: 700;
-  color: #333;
+  color: #fff;
 }
 
 .modal-close {
@@ -1502,12 +1510,12 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 32rpx;
-  color: #999;
+  color: #aaa;
   cursor: pointer;
 }
 
 .modal-close:active {
-  color: #333;
+  color: #fff;
 }
 
 .modal-body {
@@ -1526,7 +1534,7 @@ export default {
   width: 280rpx;
   flex-shrink: 0;
   padding-right: 16rpx;
-  border-right: 1rpx solid #f0f0f0;
+  border-right: 1rpx solid #444;
   display: flex;
   flex-direction: column;
   gap: 12rpx;
@@ -1538,12 +1546,12 @@ export default {
 
 .two-label {
   font-size: 24rpx;
-  color: #999;
+  color: #aaa;
 }
 
 .two-title {
   font-size: 30rpx;
-  color: #333;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -1559,20 +1567,20 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: #aaa;
   font-size: 26rpx;
 }
 
 .a-title {
   font-size: 34rpx;
   font-weight: 600;
-  color: #333;
+  color: #fff;
   display: block;
 }
 
 .a-time {
   font-size: 24rpx;
-  color: #999;
+  color: #aaa;
   display: block;
   margin-top: 8rpx;
   margin-bottom: 16rpx;
@@ -1580,7 +1588,7 @@ export default {
 
 .a-content {
   font-size: 28rpx;
-  color: #333;
+  color: #ddd;
   line-height: 1.6;
   white-space: pre-wrap;
 }
@@ -1591,31 +1599,32 @@ export default {
   align-items: center;
   gap: 12rpx;
   padding: 16rpx 20rpx;
-  background: #ffffff;
+  background: #2c2c2c;
 }
 
 .room-label {
-  color: #333;
+  color: #fff;
 }
 
 .room-input {
   flex: 1;
   height: 64rpx;
   line-height: 64rpx;
-  background: #f7f7f7;
-  border: 1rpx solid #e6e6e6;
+  background: #333;
+  border: 1rpx solid #444;
   border-radius: 12rpx;
   padding: 0 16rpx;
+  color: #fff;
 }
 
 /* H5：右侧展开的子分类面板样式 */
 .sub-panel {
   position: fixed;
   z-index: 1000;
-  background-color: #fff;
+  background-color: #2c2c2c;
   border-radius: 12rpx;
   box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.08);
-  border: 1.5rpx solid #000;
+  border: 1.5rpx solid #444;
   height: clamp(200rpx, 30vh, 480rpx);
   max-height: 50vh;
   overflow-y: auto;
@@ -1625,7 +1634,7 @@ export default {
 .panel-title {
   font-size: 36rpx;
   font-weight: 600;
-  color: #333;
+  color: #fff;
   margin-bottom: 12rpx;
 }
 
@@ -1637,7 +1646,7 @@ export default {
 
 .panel-link {
   font-size: 32rpx;
-  color: #333;
+  color: #aaa;
   line-height: 48rpx;
   display: flex;
   align-items: center;
@@ -1648,7 +1657,7 @@ export default {
 }
 
 .panel-link:hover {
-  color: #333;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -1668,7 +1677,7 @@ export default {
 .mp-cate-nav {
   white-space: nowrap;
   padding: 12rpx 20rpx;
-  background: #fff;
+  background: #1a1a1a;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -1682,8 +1691,8 @@ export default {
   padding: 14rpx 18rpx;
   margin-right: 12rpx;
   border-radius: 16rpx;
-  background: #fff;
-  color: #333;
+  background: #2c2c2c;
+  color: #fff;
   font-size: 26rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .04);
 }
@@ -1691,7 +1700,7 @@ export default {
 .mp-cate-thumb {
   width: 96rpx;
   height: 96rpx;
-  background: #f5f5f5;
+  background: #333;
   border-radius: 12rpx;
 }
 
@@ -1700,7 +1709,7 @@ export default {
 }
 
 .mp-cate-item.active {
-  background: #ffe9e3;
+  background: #444;
   color: #ff5000;
 }
 </style>

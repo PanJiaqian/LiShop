@@ -1,6 +1,7 @@
 <template>
-  <!-- WebView 页面：在小程序/APP 内承载外部 H5 页面 -->
-  <web-view :src="url"></web-view>
+  <view class="page">
+    <web-view :src="url"></web-view>
+  </view>
 </template>
 
 <script>
@@ -24,3 +25,10 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.page {
+  min-height: 100vh;
+  background-color: #1a1a1a;
+}
+</style>

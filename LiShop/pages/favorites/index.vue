@@ -1,7 +1,9 @@
 <template>
   <view class="page">
     <Skeleton :loading="loading" :showTitle="true" />
+    <!-- #ifdef H5 -->
       <view class="back-btn" @click="goBack">←</view>
+    <!-- #endif -->
     <view v-if="favorites.length" class="grid">
       <view class="item" v-for="(it, i) in favorites" :key="i" @click="openProduct(it.id)">
         <image class="thumb" :src="it.image" mode="aspectFill" />
@@ -126,11 +128,12 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 120rpx;
+  padding: 20rpx;
   box-sizing: border-box;
-  background: url('/static/product_detail_background.jpg') no-repeat center center;
-  background-size: cover;
-  background-attachment: fixed;
+  background-color: #1a1a1a;
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center; */
+  /* background-size: cover; */
+  /* background-attachment: fixed; */
 }
 .header {
   display: flex;
@@ -141,7 +144,7 @@ export default {
 .title {
   font-size: 34rpx;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
 }
 .grid {
   display: grid;
@@ -157,11 +160,13 @@ export default {
 /* #endif */
 
 .item {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1rpx solid #eee;
+  background: #2c2c2c;
+  border: 1rpx solid #444444;
   border-radius: 12rpx;
   overflow: hidden;
   transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
 }
 /* #ifdef H5 */
 .item {
@@ -176,7 +181,7 @@ export default {
 .thumb {
   width: 100%;
   height: 300rpx;
-  background: #f5f5f5;
+  background: #1a1a1a;
 }
 /* #ifdef H5 */
 .thumb {
@@ -190,6 +195,9 @@ export default {
 
 .info {
   padding: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 /* #ifdef H5 */
 .info {
@@ -203,21 +211,26 @@ export default {
 /* #endif */
 
 .name {
-  display: inline-block;
+  display: block;
   font-size: 28rpx;
-  color: #333;
+  color: #dddddd;
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .price {
-  display: inline-block;
+  display: block;
   font-size: 32rpx;
-  color: #000;
+  color: #e1251b;
   font-weight: bold;
 }
 /* #ifdef H5 */
 .page {
-  padding-left: 400rpx;
-  padding-right: 400rpx;
+  padding: 120rpx 400rpx;
+}
+.price {
+  color: #ffffff;
 }
 .h5-topbar {
   display: none;
@@ -233,7 +246,7 @@ export default {
   /* border-radius: 50%; */
   /* background: rgba(255,255,255,0.7); */
   /* box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12); */
-  color: #333;
+  color: #ffffff;
   font-size: 36rpx;
   z-index: 999;
   -webkit-backdrop-filter: blur(8px);
@@ -252,10 +265,10 @@ export default {
 /* #endif */
 .empty {
   text-align: center;
-  color: #666;
+  color: #777777;
   font-size: 28rpx;
   padding: 60rpx 0;
-  background: rgba(255,255,255,0.8);
+  background: #2c2c2c;
   border-radius: 12rpx;
   margin-top: 40rpx;
 }

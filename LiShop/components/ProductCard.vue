@@ -83,7 +83,7 @@ export default {
 
 <style scoped>
 .card {
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 12rpx;
   overflow: hidden;
 }
@@ -91,7 +91,7 @@ export default {
 .cover {
   width: 100%;
   height: 300rpx;
-  background: #f5f5f5;
+  background: #333;
   display: block;
 }
 
@@ -101,7 +101,7 @@ export default {
 
 .title {
   font-size: 28rpx;
-  color: #333;
+  color: #fff;
   line-height: 1.4;
   display: block;
   height: 80rpx;
@@ -121,30 +121,30 @@ export default {
   gap: 12rpx;
 }
 .price-icon {
-  color: #000;
+  color: #fff;
   font-size: 28rpx;
   font-weight: 600;
 }
 .price-amount {
-  color: #000;
+  color: #fff;
   font-size: 30rpx;
   font-weight: 700;
 }
 .price-text {
-  color: #000;
+  color: #fff;
   font-size: 28rpx;
   font-weight: 600;
 }
 
 /* #ifdef MP-WEIXIN */
-.price-icon { color: #000; }
-.price-amount { color: #000; }
-.price-text { color: #000; }
+.price-icon { color: #fff; }
+.price-amount { color: #fff; }
+.price-text { color: #fff; }
 /* #endif */
 
 .sales {
   font-size: 24rpx;
-  color: #999;
+  color: #aaa;
 }
 
 .actions {

@@ -2,6 +2,8 @@
   "pages": [
     "pages/home/index",
     "pages/login/index",
+    "pages/agreement/service",
+    "pages/agreement/privacy",
     "pages/announcement/index",
     "pages/favorites/index",
     "pages/category/index",
@@ -18,16 +20,16 @@
     "pages/webview/index"
   ],
   "window": {
-    "navigationBarTextStyle": "black",
+    "navigationBarTextStyle": "white",
     "navigationBarTitleText": "诺米",
-    "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#f7f7f7"
+    "navigationBarBackgroundColor": "#1a1a1a",
+    "backgroundColor": "#1a1a1a"
   },
   "tabBar": {
-    "color": "#7a7a7a",
+    "color": "#999999",
     "selectedColor": "#e1251b",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "black",
+    "backgroundColor": "#1a1a1a",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/home/index",

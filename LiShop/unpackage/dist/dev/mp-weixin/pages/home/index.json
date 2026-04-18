@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "诺米",
+  "navigationBarTitleText": "诺米智能光电",
   "enablePullDownRefresh": true,
   "enableShareAppMessage": true,
   "enableShareTimeline": true,
@@ -9,6 +9,7 @@
     "product-card": "../../components/ProductCard",
     "skeleton": "../../components/Skeleton",
     "onboarding-guide": "../../components/OnboardingGuide",
-    "login-prompt": "../../components/LoginPrompt"
+    "login-prompt": "../../components/LoginPrompt",
+    "announcement-floating-ball": "../../components/AnnouncementFloatingBall"
   }
 }

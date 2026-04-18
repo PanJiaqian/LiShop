@@ -425,8 +425,8 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 9999;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 20000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -435,7 +435,7 @@ export default {
 .rs-content {
   width: 720rpx;
   max-width: 95vw;
-  background: #fff;
+  background: #2c2c2c;
   border-radius: 24rpx;
   overflow: hidden;
   display: flex;
@@ -458,12 +458,12 @@ export default {
 .rs-title {
   font-size: 36rpx;
   font-weight: 700;
-  color: #000;
+  color: #fff;
 }
 
 .rs-close {
   font-size: 40rpx;
-  color: #000;
+  color: #fff;
   padding: 10rpx;
   line-height: 1;
 }
@@ -492,9 +492,9 @@ export default {
   justify-content: space-between;
   gap: 16rpx;
   padding: 32rpx 24rpx;
-  background: #fff;
+  background: #333;
   border-radius: 16rpx;
-  border: 1rpx solid #f0f0f0;
+  border: 1rpx solid #444;
   width: 600rpx;
   /* margin: 0 auto; */
   transition: transform 0.2s ease;
@@ -508,8 +508,8 @@ export default {
 }
 
 .rs-item.active {
-  background: #f0f0f0;
-  border-color: #e0e0e0;
+  background: #444;
+  border-color: #555;
 }
 
 .rs-item.swiped {
@@ -536,18 +536,18 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  filter: drop-shadow(44rpx 0 0 #333);
+  filter: drop-shadow(44rpx 0 0 #fff);
   transform: translateX(-44rpx);
 }
 
 .rs-name {
   font-size: 30rpx;
-  color: #333;
+  color: #fff;
 }
 
 .rs-arrow {
   font-size: 30rpx;
-  color: #000;
+  color: #fff;
 }
 
 .rs-delete {
@@ -611,7 +611,7 @@ export default {
 
 .rs-subtitle {
   font-size: 30rpx;
-  color: #333;
+  color: #fff;
   font-weight: 500;
 }
 
@@ -619,7 +619,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f7f7f7;
+  background: #444;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   width: 600rpx;
@@ -629,7 +629,7 @@ export default {
 .rs-input {
   flex: 1;
   font-size: 30rpx;
-  color: #333;
+  color: #fff;
 }
 
 .rs-footer {
@@ -655,17 +655,17 @@ export default {
 }
 
 .rs-btn.cancel {
-  background: #fff;
-  color: #333;
-  border: 1rpx solid #eee;
+  background: #333;
+  color: #fff;
+  border: 1rpx solid #555;
 }
 
 .rs-btn.create {
-  background: #000;
+  background: #e1251b;
   color: #fff;
 }
 
-.addr-empty-tip { text-align: center; color: #999; padding: 20rpx; }
+.addr-empty-tip { text-align: center; color: #aaa; padding: 20rpx; }
 
 .addr-form {
   display: flex;
@@ -677,25 +677,25 @@ export default {
 .form-item {
   display: flex;
   align-items: center;
-  border-bottom: 1rpx solid #eee;
+  border-bottom: 1rpx solid #444;
   padding: 20rpx 0;
 }
 
 .form-item:last-child { border-bottom: none; }
 
-.label { width: 160rpx; font-size: 28rpx; color: #333; }
-.input { flex: 1; font-size: 28rpx; }
+.label { width: 160rpx; font-size: 28rpx; color: #fff; }
+.input { flex: 1; font-size: 28rpx; color: #fff; }
 .region-inputs { flex: 1; display: flex; gap: 10rpx; }
 .region-input { flex: 1; }
 .region-display {
   flex: 1;
   height: 64rpx;
   line-height: 64rpx;
-  border: 1rpx solid #e6e6e6;
+  border: 1rpx solid #555;
   border-radius: 12rpx;
   padding: 0 14rpx;
   font-size: 28rpx;
-  color: #333;
+  color: #fff;
 }
 .textarea { flex: 1; height: 120rpx; font-size: 28rpx; padding-top: 10rpx; }
 .switch-item { justify-content: space-between; }

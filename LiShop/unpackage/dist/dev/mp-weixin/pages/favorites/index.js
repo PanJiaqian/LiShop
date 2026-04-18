@@ -143,10 +143,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       loading: $data.loading,
       showTitle: true
     }),
-    b: common_vendor.o((...args) => $options.goBack && $options.goBack(...args)),
-    c: $data.favorites.length
+    b: $data.favorites.length
   }, $data.favorites.length ? {
-    d: common_vendor.f($data.favorites, (it, i, i0) => {
+    c: common_vendor.f($data.favorites, (it, i, i0) => {
       return {
         a: it.image,
         b: common_vendor.t(it.title),
@@ -156,10 +155,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : !$data.loading ? {} : {}, {
-    e: !$data.loading,
-    f: common_vendor.o($options.closeLoginModal),
-    g: common_vendor.o($options.goLogin),
-    h: common_vendor.p({
+    d: !$data.loading,
+    e: common_vendor.o($options.closeLoginModal),
+    f: common_vendor.o($options.goLogin),
+    g: common_vendor.p({
       visible: $data.showLoginModal
     })
   });

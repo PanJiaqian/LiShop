@@ -382,7 +382,7 @@ const _sfc_main = {
                     common_vendor.index.showToast({ title: "文件已保存", icon: "success" });
                     try {
                       if (typeof common_vendor.wx$1 !== "undefined" && typeof common_vendor.wx$1.openDocument === "function")
-                        common_vendor.wx$1.openDocument({ filePath });
+                        common_vendor.wx$1.openDocument({ filePath, showMenu: true });
                     } catch (e) {
                     }
                   },
@@ -398,7 +398,24 @@ const _sfc_main = {
           const possibleUrl = res && res.url || res && res.data && res.data.url || (res && res.data && typeof res.data === "string" ? res.data : "");
           if (possibleUrl && typeof possibleUrl === "string") {
             const url = possibleUrl;
-            common_vendor.index.setClipboardData({ data: url, success: () => common_vendor.index.showToast({ title: "下载链接已复制", icon: "none" }) });
+            common_vendor.index.downloadFile({
+              url,
+              success: (dres) => {
+                const filePath = dres && dres.tempFilePath;
+                if (filePath) {
+                  try {
+                    if (typeof common_vendor.wx$1 !== "undefined" && typeof common_vendor.wx$1.openDocument === "function")
+                      common_vendor.wx$1.openDocument({ filePath, showMenu: true });
+                  } catch (e) {
+                  }
+                } else {
+                  common_vendor.index.setClipboardData({ data: url, success: () => common_vendor.index.showToast({ title: "下载链接已复制", icon: "none" }) });
+                }
+              },
+              fail: () => {
+                common_vendor.index.setClipboardData({ data: url, success: () => common_vendor.index.showToast({ title: "下载链接已复制", icon: "none" }) });
+              }
+            });
           } else {
             common_vendor.index.showToast({ title: "未获取到导出链接", icon: "none" });
           }

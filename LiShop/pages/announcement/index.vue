@@ -47,7 +47,7 @@
       </view>
     </view>
     <!-- #endif -->
-  </view>
+    </view>
 </template>
 
 <script>
@@ -119,25 +119,26 @@ export default {
 </script>
 
 <style scoped>
-.page { min-height: 100vh; }
+.page { min-height: 100vh; background-color: #1a1a1a; }
 .page-bg {
   position: fixed; left: 0; right: 0; top: 0; bottom: 0;
   width: 100vw; height: 100vh; z-index: -1;
+  opacity: 0.2;
 }
-.h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.h5-modal { width: 820rpx; max-width: 90vw; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.12); display: flex; flex-direction: column; height: 60vh; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #f0f0f0; margin-bottom: 16rpx; }
-.modal-title { font-size: 32rpx; font-weight: 700; color: #333; }
-.modal-close { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #999; cursor: pointer; }
-.modal-close:active { color: #333; }
+.h5-mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.h5-modal { width: 820rpx; max-width: 90vw; background: #2c2c2c; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; height: 60vh; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12rpx; border-bottom: 1rpx solid #444444; margin-bottom: 16rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; color: #ffffff; }
+.modal-close { width: 60rpx; height: 60rpx; display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #aaaaaa; cursor: pointer; }
+.modal-close:active { color: #ffffff; }
 .modal-body { flex: 1; min-height: 0; overflow-y: auto; }
 .modal-body-two { display: flex; gap: 16rpx; height: 100%; }
-.two-left { width: 280rpx; flex-shrink: 0; padding-right: 16rpx; border-right: 1rpx solid #f0f0f0; display: flex; flex-direction: column; gap: 12rpx; }
+.two-left { width: 280rpx; flex-shrink: 0; padding-right: 16rpx; border-right: 1rpx solid #444444; display: flex; flex-direction: column; gap: 12rpx; }
 .two-left { cursor: pointer; }
-.two-label { font-size: 24rpx; color: #999; }
-.two-title { font-size: 30rpx; color: #333; font-weight: 600; }
+.two-label { font-size: 24rpx; color: #aaaaaa; }
+.two-title { font-size: 30rpx; color: #dddddd; font-weight: 600; }
 .two-right { flex: 1; min-height: 0; overflow-y: auto; padding-left: 16rpx; }
-.two-hint { height: 100%; display: flex; align-items: center; justify-content: center; color: #999; font-size: 26rpx; }
+.two-hint { height: 100%; display: flex; align-items: center; justify-content: center; color: #777777; font-size: 26rpx; }
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -152,36 +153,36 @@ export default {
 .title {
   font-size: 36rpx;
   font-weight: 700;
-  color: #000;
+  color: #ffffff;
 }
 .card {
-  background: #fff;
-  border: 1rpx solid #eee;
+  background: #2c2c2c;
+  border: 1rpx solid #444444;
   border-radius: 12rpx;
   padding: 20rpx;
 }
 .a-title {
   font-size: 34rpx;
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
   display: block;
 }
 .a-time {
   font-size: 24rpx;
-  color: #999;
+  color: #aaaaaa;
   display: block;
   margin-top: 8rpx;
   margin-bottom: 16rpx;
 }
 .a-content {
   font-size: 28rpx;
-  color: #333;
+  color: #dddddd;
   line-height: 1.6;
   white-space: pre-wrap;
 }
 .empty {
   text-align: center;
-  color: #999;
+  color: #777777;
   padding: 40rpx 0;
 }
 </style>

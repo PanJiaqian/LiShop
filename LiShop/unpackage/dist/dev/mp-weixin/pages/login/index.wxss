@@ -4,6 +4,7 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  background-color: #1a1a1a;
 }
 .bg-image.data-v-d08ef7d4 {
   position: absolute;
@@ -12,6 +13,7 @@
   width: 100%;
   height: 100%;
   z-index: 0;
+  opacity: 0.4; /* Darken the background image */
 }
 .top-bar.data-v-d08ef7d4 {
   position: absolute;
@@ -28,12 +30,12 @@
 .brand-title.data-v-d08ef7d4 {
   font-size: 48rpx;
   font-weight: bold;
-  color: #000;
+  color: #ffffff;
   font-family: sans-serif;
 }
 .menu-icon.data-v-d08ef7d4 {
   font-size: 48rpx;
-  color: #000;
+  color: #ffffff;
 }
 .login-card.data-v-d08ef7d4 {
   position: absolute;
@@ -42,12 +44,12 @@
   transform: translate(-50%, -50%);
   width: 600rpx;
   padding: 60rpx 40rpx;
-  background: rgba(255, 255, 255, 0.2); /* Glassmorphism */
+  background: rgba(44, 44, 44, 0.8); /* Dark Glassmorphism */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 30rpx;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.3);
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -59,28 +61,71 @@
 .glass-input.data-v-d08ef7d4 {
   width: 100%;
   height: 100rpx;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16rpx;
   padding: 0 30rpx;
   font-size: 32rpx;
-  color: #333;
+  color: #ffffff;
   box-sizing: border-box;
 }
 .ph-style.data-v-d08ef7d4 {
-  color: #666;
+  color: #999999;
+}
+.agreement-row.data-v-d08ef7d4 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 24rpx;
+  color: #aaaaaa;
+}
+.agree-box.data-v-d08ef7d4 {
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 6rpx;
+  border: 2rpx solid #666666;
+  box-sizing: border-box;
+  position: relative;
+}
+.agree-box.checked.data-v-d08ef7d4 {
+  background: #e1251b;
+  border-color: #e1251b;
+}
+.agree-box.checked.data-v-d08ef7d4::after {
+  content: '';
+  position: absolute;
+  left: 7rpx;
+  top: 2rpx;
+  width: 6rpx;
+  height: 12rpx;
+  border: 2rpx solid #ffffff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+.agreement-text.data-v-d08ef7d4 {
+  color: #aaaaaa;
+}
+.agreement-link.data-v-d08ef7d4 {
+  color: #5aa7ff;
 }
 .login-btn.data-v-d08ef7d4 {
   width: 100%;
   height: 100rpx;
   line-height: 100rpx;
-  background: #000;
+  background: #e1251b;
   color: #fff;
   font-size: 36rpx;
   font-weight: bold;
   border-radius: 16rpx;
   margin-top: 20rpx;
   letter-spacing: 2rpx;
+}
+.login-btn.disabled.data-v-d08ef7d4 {
+  background: #666666;
+  color: #cccccc;
+  pointer-events: none;
 }
 .login-btn.data-v-d08ef7d4:active {
   opacity: 0.9;
