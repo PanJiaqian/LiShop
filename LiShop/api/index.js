@@ -438,13 +438,13 @@ export function getRooms(options = {}) {
 
 /**
  * 将商品加入购物车
- * POST /api/cart/items?room_id=...&product_id=...&length=...&quantity=...&color=...&note=...
- * @param {Object} options { room_id: string, room_name?: string, product_id: string, length?: number, quantity?: number, color?: string, note?: string, token?: string }
+ * POST /api/cart/items/add?room_id=...&product_id=...&length=...&quantity=...&color=...&note=...&coupon_record_id=...
+ * @param {Object} options { room_id: string, room_name?: string, product_id: string, length?: number, quantity?: number, color?: string, note?: string, coupon_record_id?: string, token?: string }
  */
 export function addCartItem(options = {}) {
-  const { room_id, product_id, length, quantity, color, note, token } = options
-  const query = toQuery({ room_id, product_id, length, quantity, color, note })
-  const url = `${BASE_URL}/api/cart/items${query ? `?${query}` : ''}`
+  const { room_id, product_id, length, quantity, color, note, coupon_record_id, token } = options
+  const query = toQuery({ room_id, product_id, length, quantity, color, note, coupon_record_id })
+  const url = `${BASE_URL}/api/cart/items/add${query ? `?${query}` : ''}`
 
   return new Promise((resolve, reject) => {
     const auth = getBearer(token)
@@ -511,8 +511,8 @@ export function deleteCartItem(options = {}) {
 }
 
 export function updateCartItem(options = {}) {
-  const { id, room_id, product_id, length, quantity, color, note, token } = options
-  const query = toQuery({ id, room_id, product_id, length, quantity, color, note })
+  const { id, room_id, product_id, length, quantity, color, note, coupon_record_id, token } = options
+  const query = toQuery({ id, room_id, product_id, length, quantity, color, note, coupon_record_id })
   const url = `${BASE_URL}/api/cart/items/update${query ? `?${query}` : ''}`
 
   return new Promise((resolve, reject) => {
@@ -1014,8 +1014,8 @@ export function confirmOrderReceipt(options = {}) {
 }
 
 export function createDirectOrder(options = {}) {
-  const { product_id, address_id, note, length, quantity, room_id, token } = options
-  const query = toQuery({ product_id, address_id, note, length, quantity, room_id })
+  const { product_id, address_id, note, length, quantity, room_id, coupon_record_id, token } = options
+  const query = toQuery({ product_id, address_id, note, length, quantity, room_id, coupon_record_id })
   const url = `${BASE_URL}/api/orders/create_direct${query ? `?${query}` : ''}`
   return new Promise((resolve, reject) => {
     const auth = getBearer(token)
@@ -1036,8 +1036,8 @@ export function createDirectOrder(options = {}) {
 }
 
 export function createOrderByIds(options = {}) {
-  const { ids, address_id, note, token } = options
-  const query = toQuery({ ids, address_id, note })
+  const { ids, address_id, note, coupon_record_id, token } = options
+  const query = toQuery({ ids, address_id, note, coupon_record_id })
   const url = `${BASE_URL}/api/orders/create_by_ids${query ? `?${query}` : ''}`
   return new Promise((resolve, reject) => {
     const auth = getBearer(token)
@@ -1136,6 +1136,76 @@ export function exportOrderExcel(options = {}) {
           if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
           resolve(data)
         }
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+// ---------------------- 优惠券相关接口 ----------------------
+
+export function getUserCoupons(options = {}) {
+  const { token } = options
+  const url = `${BASE_URL}/api/user/coupons`
+
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function getAvailableCoupons(options = {}) {
+  const { product_id, token } = options
+  const query = toQuery({ product_id })
+  const url = `${BASE_URL}/api/user/coupons/available${query ? `?${query}` : ''}`
+
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = auth ? { 'Authorization': auth } : {}
+    uni.request({
+      url,
+      method: 'GET',
+      header,
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
+export function calculateCoupon(options = {}) {
+  const { record_id, order_amount, applicable_order_amount, product_category_ids, token } = options
+  const url = `${BASE_URL}/api/user/coupons/calculate`
+
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = { 'Content-Type': 'application/json', ...(auth ? { 'Authorization': auth } : {}) }
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      data: { record_id, order_amount, applicable_order_amount, product_category_ids },
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
       },
       fail: (err) => reject(err)
     })

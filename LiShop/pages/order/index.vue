@@ -102,7 +102,10 @@
         </view>
       </view>
       <view class="ops">
-        <text class="total-text">合计：¥{{ order.total.toFixed(2) }}</text>
+        <view style="display:flex; flex-direction:column; align-items:flex-end;">
+          <text class="total-text">合计：¥{{ order.total.toFixed(2) }}</text>
+          <text v-if="order.coupon_discount_amount > 0" style="color:#ff4d4f; font-size:24rpx; margin-top:8rpx;">(已使用优惠券抵扣 ¥{{ Number(order.coupon_discount_amount).toFixed(2) }})</text>
+        </view>
         <view class="btns">
           <button class="btn-action" v-if="isPendingReceipt(order.status)"
             @click="confirmReceipt(order.id)">确认收货</button>
@@ -120,7 +123,10 @@
           <view class="card-hd">
             <text class="id">订单号：{{ o.orderNo || o.id }}</text>
             <text class="time" v-if="o.createdAt">下单时间：{{ formatTime(o.createdAt) }}</text>
-            <text class="total">¥{{ o.total.toFixed(2) }}</text>
+            <view style="display:flex; flex-direction:column; align-items:flex-end;">
+              <text class="total">¥{{ o.total.toFixed(2) }}</text>
+              <text v-if="o.coupon_discount_amount > 0" style="color:#ff4d4f; font-size:20rpx;">已优惠 ¥{{ Number(o.coupon_discount_amount).toFixed(2) }}</text>
+            </view>
           </view>
           <view class="card-body">
             <view class="thumbs">
@@ -582,6 +588,8 @@ export default {
         orderNo: apiOrder.order_id,
         createdAt: null,
         total: Number(apiOrder.total_price || 0),
+        coupon_record_id: apiOrder.coupon_record_id || '',
+        coupon_discount_amount: Number(apiOrder.coupon_discount_amount || 0),
         waybillNo: (apiOrder && apiOrder.tracking_number) || (apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult && apiOrder.logistics_data.lastResult.nu) || '',
         tracking: tracking,
         trackingMessage: tracking.length ? '' : (trackingMessage || ''),

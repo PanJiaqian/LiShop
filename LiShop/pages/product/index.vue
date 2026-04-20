@@ -138,6 +138,10 @@
                 </view>
 
                 <view class="pd-form">
+                  <view class="pd-field inline" @click="openCouponSheet">
+                    <text class="pd-section-title" selectable="true">优惠券</text>
+                    <view class="picker-display">{{ selectedCoupon ? selectedCoupon.name : '不使用优惠券' }}</view>
+                  </view>
                   <view class="pd-field inline">
                     <text class="pd-section-title" selectable="true">房间</text>
                     <view id="og-room-select" class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
@@ -290,6 +294,10 @@
             <view class="mp-param-item"><text class="key">暂无规格数据</text><text class="val">—</text></view>
           </view>
 
+          <view class="mp-field" @click="openCouponSheet">
+            <text class="label">优惠券</text>
+            <view class="mp-input">{{ selectedCoupon ? selectedCoupon.name : '不使用优惠券' }}</view>
+          </view>
           <view class="mp-field"><text class="label">房间</text>
             <view id="og-mp-room-select" class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
           </view>
@@ -343,7 +351,7 @@
  * - 负责拉取商品详情/规格、收藏状态，并提供加入购物车/下单等交互
  * - 同时兼容 H5 与小程序端的规格/房间/地址选择流程（通过条件编译与弹窗组件实现）
  */
-import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress, createDirectOrder, addFavorite, deleteFavorite } from '../../api/index.js'
+import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress, createDirectOrder, addFavorite, deleteFavorite, getAvailableCoupons } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -352,11 +360,12 @@ import LoginPrompt from '@/components/LoginPrompt.vue'
 
 export default {
   components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
-  data() { return { hls: null, product: null, shareProductId: '', current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false } },
+  data() { return { hls: null, product: null, shareProductId: '', current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false, coupons: [], selectedCoupon: null, couponSheetVisible: false } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     this.shareProductId = id
     if (!id) { this.product = { id: '', title: '商品', price: 0, sales: 0, image: '/static/logo.png', images: ['/static/logo.png'] }; return }
+    this.fetchCoupons(id)
     getProductDetail({ available_product_id: id })
       .then((res) => {
         const d = res?.data || {}
@@ -631,6 +640,33 @@ export default {
     } catch (e) {}
   },
   methods: {
+    fetchCoupons(productId) {
+      const token = uni.getStorageSync('token') || ''
+      if (!token || !productId) return
+      getAvailableCoupons({ product_id: productId, token }).then(res => {
+        // 后端返回了专门筛选好的 items
+        if (res.success && res.data && res.data.items) {
+          this.coupons = res.data.items
+        }
+      }).catch(() => {})
+    },
+    openCouponSheet() {
+      if (!this.coupons || this.coupons.length === 0) {
+        uni.showToast({ title: '暂无可用优惠券', icon: 'none' })
+        return
+      }
+      const list = ['不使用优惠券', ...this.coupons.map(c => c.name)]
+      uni.showActionSheet({
+        itemList: list,
+        success: (res) => {
+          if (res.tapIndex === 0) {
+            this.selectedCoupon = null
+          } else {
+            this.selectedCoupon = this.coupons[res.tapIndex - 1]
+          }
+        }
+      })
+    },
     tryShowOnboarding(sel, tries) {
       const max = Math.max(1, Number(tries || 6))
       const attempt = (left) => {
@@ -1085,7 +1121,8 @@ export default {
       if (!this.ensureLoggedIn()) return
       const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
       const pid = spec ? spec.product_id : (this.product?.id || '')
-      addCartItem({ product_id: pid, quantity: 1 })
+      const cid = this.selectedCoupon ? this.selectedCoupon.record_id : ''
+      addCartItem({ product_id: pid, quantity: 1, coupon_record_id: cid })
         .then((res) => {
           if (res && res.success) uni.showToast({ title: '已加入购物车', icon: 'success' })
           else {
@@ -1129,7 +1166,8 @@ export default {
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
       const q = Math.max(1, Number(this.qty || 1))
-      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: q, color: this.specTemp || '', note: this.h5OrderNote || '' })
+      const cid = this.selectedCoupon ? this.selectedCoupon.record_id : ''
+      addCartItem({ room_id: this.roomId, product_id: pid, length: lengthNum, quantity: q, color: this.specTemp || '', note: this.h5OrderNote || '', coupon_record_id: cid })
         .then((res) => {
           if (res && res.success) uni.showToast({ title: `已加入房间：${chosen}`, icon: 'success' })
           else {
@@ -1169,9 +1207,10 @@ export default {
 
         const u = uni.getStorageSync('user') || null
         const token = (u && (u.token || (u.data && u.data.token))) || ''
+        const cid = this.selectedCoupon ? this.selectedCoupon.record_id : ''
 
         uni.showLoading({ title: '下单中' })
-        createDirectOrder({ product_id: pid, address_id: addrId, note, length: lenMeters, quantity: qty, room_id: roomId, token })
+        createDirectOrder({ product_id: pid, address_id: addrId, note, length: lenMeters, quantity: qty, room_id: roomId, coupon_record_id: cid, token })
           .then((data) => {
             uni.hideLoading()
             if (data && data.success) {
@@ -1334,7 +1373,8 @@ export default {
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
       const mq = Math.max(1, Number(this.mpQty || 1))
-      addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: mq, color: this.mpTemp || '', note: this.mpOrderNote || '' })
+      const cid = this.selectedCoupon ? this.selectedCoupon.record_id : ''
+      addCartItem({ room_id: rid, product_id: pid, length: lengthVal, quantity: mq, color: this.mpTemp || '', note: this.mpOrderNote || '', coupon_record_id: cid })
         .then((res) => {
           if (res && res.success) {
             this.mpSheet = false

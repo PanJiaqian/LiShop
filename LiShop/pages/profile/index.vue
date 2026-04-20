@@ -110,6 +110,10 @@
                 <text>我的购物车</text>
                 <text class="arrow">›</text>
               </navigator>
+              <navigator url="/pages/coupons/index" class="menu-row">
+                <text>我的优惠券</text>
+                <text class="arrow">›</text>
+              </navigator>
               <navigator url="/pages/favorites/index" class="menu-row">
                 <text>我的收藏</text>
                 <text class="arrow">›</text>

@@ -33,7 +33,10 @@
                 <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
               </view>
               <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" @click="openDetail(it)" />
-              <text class="title" @click="openDetail(it)">{{ it.title }}</text>
+              <text class="title" @click="openDetail(it)">
+                <text v-if="it.has_used_coupon" style="color: #ff4d4f; font-size: 20rpx; border: 1rpx solid #ff4d4f; border-radius: 4rpx; padding: 0 4rpx; margin-right: 8rpx;">券</text>
+                {{ it.title }}
+              </text>
               <text class="attr-txt">{{ it.attr }}</text>
               <text class="attr-txt" v-if="it.package_capacity > 0">包装容量：{{ it.package_capacity }} | 包装价：¥{{ Number(it.package_price).toFixed(2) }}</text>
               <text class="price">¥{{ it.price.toFixed(2) }}</text>
@@ -142,7 +145,10 @@
           <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" @click="openDetail(it)" />
           <view class="meta">
             <view class="row-title">
-              <text class="title" @click="openDetail(it)">{{ it.title }}</text>
+              <text class="title" @click="openDetail(it)">
+                <text v-if="it.has_used_coupon" style="color: #ff4d4f; font-size: 20rpx; border: 1rpx solid #ff4d4f; border-radius: 4rpx; padding: 0 4rpx; margin-right: 8rpx;">券</text>
+                {{ it.title }}
+              </text>
             </view>
             <view class="row-attr">
               <text class="attr-txt">{{ it.attr }}</text>
@@ -269,7 +275,7 @@ import FloatingNav from '@/components/FloatingNav.vue'
 import RoomSelector from '@/components/RoomSelector.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
-import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses, addAddress } from '../../api/index.js'
+import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses, addAddress, calculateCoupon } from '../../api/index.js'
 export default {
   components: { FloatingNav, RoomSelector, Skeleton, LoginPrompt },
   data() {
@@ -292,6 +298,7 @@ export default {
         total_original: 0,
         is_free_shipping: 0
       },
+      couponDiscount: 0,
       showLoginModal: false
     }
   },
@@ -309,8 +316,8 @@ export default {
     // redReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.redReduce || 0) : 0), 0) },
     // extraReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.reduce || 0) : 0), 0) },
     // totalReduce() { return this.officialReduce + this.redReduce + this.extraReduce },
-    totalReduce() { return Math.max(0, (this.summaryData.total_original || 0) - (this.summaryData.total_price || 0)) },
-    payable() { return this.summaryData.total_price || 0 },
+    totalReduce() { return Math.max(0, (this.summaryData.total_original || 0) - (this.summaryData.total_price || 0)) + this.couponDiscount },
+    payable() { return Math.max(0, (this.summaryData.total_price || 0) - this.couponDiscount) },
     needForCoupon() { const need = Math.max(0, 800 - this.payable); return need.toFixed(2) },
     addressRooms() {
       return this.addresses.map(a => ({
@@ -502,16 +509,54 @@ export default {
         })
     },
     fetchSummary() {
-        const selectedIds = this.cart.filter(it => it.selected).map(it => it.id)
+        const selectedItems = this.cart.filter(it => it.selected)
+        const selectedIds = selectedItems.map(it => it.id)
         if (selectedIds.length === 0) {
             this.summaryData = { total_price: 0, total_original: 0, is_free_shipping: 0 }
+            this.couponDiscount = 0
             return
         }
         getCartItemsByIDs({ ids: selectedIds }).then(res => {
             if (res && res.success && res.data) {
                 this.summaryData = res.data
+                this.updateCouponDiscount(selectedItems)
             }
         }).catch(e => console.error(e))
+    },
+    updateCouponDiscount(selectedItems) {
+      let coupon_record_id = ''
+      let applicable_order_amount = 0
+      const couponItem = selectedItems.find(it => it.coupon_record_id)
+      if (couponItem) {
+        coupon_record_id = couponItem.coupon_record_id
+        applicable_order_amount = selectedItems.reduce((sum, it) => {
+          if (it.coupon_record_id === coupon_record_id) {
+            return sum + (it.price * (it.quantity || 1))
+          }
+          return sum
+        }, 0)
+      }
+      
+      if (!coupon_record_id || applicable_order_amount <= 0) {
+        this.couponDiscount = 0
+        return
+      }
+      
+      const token = uni.getStorageSync('token') || ''
+      calculateCoupon({
+        record_id: coupon_record_id,
+        order_amount: this.summaryData.total_price || 0,
+        applicable_order_amount: applicable_order_amount,
+        token
+      }).then(res => {
+        if (res && res.code === 200 && res.data) {
+          this.couponDiscount = res.data.deduct_amount || 0
+        } else {
+          this.couponDiscount = 0
+        }
+      }).catch(() => {
+        this.couponDiscount = 0
+      })
     },
     sync() { uni.setStorageSync('cart', this.cart) },
     findIndexById(id) { return this.cart.findIndex(it => it.id === id) },
@@ -661,15 +706,22 @@ export default {
       this.fetchSummary()
     },
     clear() { this.cart = []; this.sync(); this.fetchSummary() },
-    async checkout() {
+    checkout() {
       if (!this.ensureLoggedIn()) return
       if (this.selectedCount === 0) { uni.showToast({ title: '请选择商品', icon: 'none' }); return }
-      const selectedIds = this.cart.filter(it => it.selected).map(it => it.id)
+      const selectedItems = this.cart.filter(it => it.selected)
+      const selectedIds = selectedItems.map(it => it.id)
       const addressId = this.selectedAddress?.id || ''
       if (!addressId) { uni.showToast({ title: '请先选择收货地址', icon: 'none' }); return }
-      if (!addressId) { uni.showToast({ title: '地址选择异常', icon: 'none' }); return }
 
-      createOrderByIds({ ids: selectedIds, address_id: addressId, note: (this.orderNote || this.mpOrderNote || '') }).then(res => {
+      // 提取选中的第一个优惠券ID
+      let coupon_record_id = ''
+      const couponItem = selectedItems.find(it => it.coupon_record_id)
+      if (couponItem) {
+          coupon_record_id = couponItem.coupon_record_id
+      }
+
+      createOrderByIds({ ids: selectedIds, address_id: addressId, note: (this.orderNote || this.mpOrderNote || ''), coupon_record_id }).then(res => {
           if (res && res.success) {
              uni.showToast({ title: '下单成功', icon: 'success' })
              // 移除已选商品
