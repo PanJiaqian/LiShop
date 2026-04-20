@@ -533,6 +533,34 @@ export function updateCartItem(options = {}) {
   })
 }
 
+/**
+ * 购物车结算计价接口
+ * POST /api/cart/calculate
+ * @param {Object} options { cart_item_ids: Array<string>, coupon_record_ids?: Array<string>, token?: string }
+ */
+export function calculateCartPrice(options = {}) {
+  const { cart_item_ids, coupon_record_ids, token } = options
+  const url = `${BASE_URL}/api/cart/calculate`
+
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = { 'Content-Type': 'application/json', ...(auth ? { 'Authorization': auth } : {}) }
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      data: { cart_item_ids, coupon_record_ids: coupon_record_ids || [] },
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
 export function updateUserAvatar(options = {}) {
   const { filePath, file, token } = options
   const url = `${BASE_URL}/api/user/avatar/update`
@@ -1190,7 +1218,7 @@ export function getAvailableCoupons(options = {}) {
 }
 
 export function calculateCoupon(options = {}) {
-  const { record_id, order_amount, applicable_order_amount, product_category_ids, token } = options
+  const { record_id, order_amount, applicable_order_amount, token } = options
   const url = `${BASE_URL}/api/user/coupons/calculate`
 
   return new Promise((resolve, reject) => {
@@ -1200,7 +1228,7 @@ export function calculateCoupon(options = {}) {
       url,
       method: 'POST',
       header,
-      data: { record_id, order_amount, applicable_order_amount, product_category_ids },
+      data: { record_id, order_amount, applicable_order_amount },
       success: (res) => {
         let data = res?.data
         if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
@@ -1240,4 +1268,3 @@ export function getCurrentAnnouncement(options = {}) {
 }
 
 export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress, getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, createOrderByIds, cancelOrder, getCartItemsByIDs, exportOrderExcel, getCarousel, updateUserAvatar, addFavorite, getFavorites }
-

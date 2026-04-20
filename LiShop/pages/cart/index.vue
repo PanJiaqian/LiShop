@@ -132,6 +132,13 @@
       <text style="font-size: 26rpx; color: #fff;">备注</text>
       <input v-model="mpOrderNote" placeholder="填写订单备注" placeholder-style="color:#777" style="width: 100%; padding: 12rpx; border: 1rpx solid #444; border-radius: 8rpx; margin-top: 8rpx; background: #333; color: #fff;" />
     </view>
+    
+    <view class="mp-note-bar" style="margin: 16rpx 20rpx;" v-if="availableCoupons.length > 0">
+      <view style="display:flex; justify-content:space-between; align-items:center;" @click="showCouponModal = true">
+        <text style="font-size: 26rpx; color: #fff;">优惠券</text>
+        <text style="font-size: 24rpx; color: #ff4d4f;">{{ selectedCouponRecordId ? '已选择1张' : '可使用优惠券 ▾' }}</text>
+      </view>
+    </view>
     <view v-if="cart.length" class="list">
       <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
         <view class="group-header">
@@ -180,7 +187,10 @@
           <text class="chk-txt">全选</text>
         </view>
       </view>
-      <text>合计：<text class="sum">¥{{ selectedTotal.toFixed(2) }}</text></text>
+      <view style="display:flex; flex-direction:column; align-items:flex-end; flex:1; padding-right:12px;">
+        <text>合计：<text class="sum">¥{{ selectedTotal.toFixed(2) }}</text></text>
+        <view v-if="couponDiscount > 0" style="color:#ff4d4f; font-size:20rpx;">已抵扣 ¥{{ Number(couponDiscount).toFixed(2) }}</view>
+      </view>
       <view class="actions">
         <view class="footer-btn" @click="clearRemote">清空</view>
         <!-- <view class="footer-btn" @click="handleExportExcel">导出Excel</view> -->
@@ -261,6 +271,26 @@
       @select="onAddressSelect" 
       @createAddress="onCreateAddress"
     />
+    
+    <!-- 优惠券选择弹窗 -->
+    <view v-if="showCouponModal" class="spec-modal-mask" @mousedown="handleCouponModalMaskMousedown" @mouseup="handleCouponModalMaskMouseup">
+      <view class="spec-modal room-modal" style="background:#222;" @mousedown.stop @mouseup.stop @click.stop>
+        <view class="spec-header">
+          <text class="spec-title">选择优惠券</text>
+          <view class="spec-close" @click="showCouponModal = false">✕</view>
+        </view>
+        <scroll-view scroll-y class="spec-body" style="padding: 20rpx;">
+          <view class="spec-list" style="flex-direction:column; gap:16rpx;">
+            <view class="spec-opt" style="text-align:center;" :class="{ active: selectedCouponRecordId === '' }" @click="selectCoupon('')">不使用优惠券</view>
+            <view v-for="c in availableCoupons" :key="c.record_id" class="spec-opt" style="display:flex; flex-direction:column; align-items:flex-start; text-align:left;" :class="{ active: selectedCouponRecordId === c.record_id }" @click="selectCoupon(c.record_id)">
+              <text style="font-weight:bold;">{{ c.name }}</text>
+              <text style="font-size:24rpx; color:#999;">余额: ¥{{ c.balance }}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+    
     <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
   </view>
 </template>
@@ -275,7 +305,7 @@ import FloatingNav from '@/components/FloatingNav.vue'
 import RoomSelector from '@/components/RoomSelector.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
-import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, getCartItemsByIDs, createOrderByIds, exportOrderExcel, getAddresses, addAddress, calculateCoupon } from '../../api/index.js'
+import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, calculateCartPrice, createOrderByIds, exportOrderExcel, getAddresses, addAddress, calculateCoupon, getUserCoupons } from '../../api/index.js'
 export default {
   components: { FloatingNav, RoomSelector, Skeleton, LoginPrompt },
   data() {
@@ -299,7 +329,12 @@ export default {
         is_free_shipping: 0
       },
       couponDiscount: 0,
-      showLoginModal: false
+      showLoginModal: false,
+      // 优惠券相关
+      availableCoupons: [],
+      selectedCouponRecordId: '',
+      showCouponModal: false,
+      _couponModalMousedownTarget: null
     }
   },
   computed: {
@@ -352,6 +387,7 @@ export default {
       }
     } catch (e) {}
     // #endif
+    this.fetchCoupons()
     this.load()
     this.loadAddresses()
     // #ifdef H5
@@ -379,6 +415,29 @@ export default {
     } catch (e) {}
   },
     methods: {
+    handleCouponModalMaskMousedown(e) {
+      this._couponModalMousedownTarget = e.target;
+    },
+    handleCouponModalMaskMouseup(e) {
+      if (this._couponModalMousedownTarget === e.currentTarget && e.target === e.currentTarget) {
+        this.showCouponModal = false;
+      }
+      this._couponModalMousedownTarget = null;
+    },
+      fetchCoupons() {
+        const token = uni.getStorageSync('token') || ''
+        if (!token) return
+        getUserCoupons({ token }).then(res => {
+          if (res && res.success && res.data && res.data.items) {
+            this.availableCoupons = res.data.items.filter(c => c.status === 1)
+          }
+        }).catch(() => {})
+      },
+      selectCoupon(id) {
+        this.selectedCouponRecordId = id
+        this.showCouponModal = false
+        this.updateCouponDiscount()
+      },
       closeLoginModal() {
         this.showLoginModal = false
         try {
@@ -489,7 +548,9 @@ export default {
                 status: x.status,
                 available: x.available_product_status,
                 stockMessage: x.message || (isOutOfStock ? '该商品已无库存' : ''),
-                isOutOfStock: isOutOfStock
+                isOutOfStock: isOutOfStock,
+                category_id: x.category_id || '',
+                has_used_coupon: false
               })
             }
           }
@@ -512,39 +573,74 @@ export default {
         const selectedItems = this.cart.filter(it => it.selected)
         const selectedIds = selectedItems.map(it => it.id)
         if (selectedIds.length === 0) {
-            this.summaryData = { total_price: 0, total_original: 0, is_free_shipping: 0 }
+            this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, is_free_shipping: 0 }
             this.couponDiscount = 0
             return
         }
-        getCartItemsByIDs({ ids: selectedIds }).then(res => {
+        const token = uni.getStorageSync('token') || ''
+        calculateCartPrice({ cart_item_ids: selectedIds, token }).then(res => {
             if (res && res.success && res.data) {
-                this.summaryData = res.data
-                this.updateCouponDiscount(selectedItems)
+                // 使用专门的计价接口返回的数据
+                this.summaryData = {
+                    total_price: res.data.total_amount || 0,
+                    total_original: res.data.total_original || 0,
+                    total_package_fee: res.data.total_package_fee || 0,
+                    is_free_shipping: 0,
+                    items: Array.isArray(res.data.items) ? res.data.items : []
+                }
+                
+                // 将后端算好的每个 item 的包装费/单价等回填到前端列表，保证显示一致（可选）
+                if (res.data.items && Array.isArray(res.data.items)) {
+                    res.data.items.forEach(detail => {
+                        const idx = this.cart.findIndex(it => it.id === detail.cart_item_id)
+                        if (idx >= 0) {
+                            // 这里主要是为了让前端列表的单品展示也能反映包装费后的价格
+                            // 前端原有的 price 字段是单价，如果需要可以做覆盖
+                        }
+                    })
+                }
+                
+                this.updateCouponDiscount()
             }
         }).catch(e => console.error(e))
     },
-    updateCouponDiscount(selectedItems) {
-      let coupon_record_id = ''
-      let applicable_order_amount = 0
-      const couponItem = selectedItems.find(it => it.coupon_record_id)
-      if (couponItem) {
-        coupon_record_id = couponItem.coupon_record_id
-        applicable_order_amount = selectedItems.reduce((sum, it) => {
-          if (it.coupon_record_id === coupon_record_id) {
-            return sum + (it.price * (it.quantity || 1))
-          }
-          return sum
-        }, 0)
-      }
-      
-      if (!coupon_record_id || applicable_order_amount <= 0) {
+    updateCouponDiscount() {
+      if (!this.selectedCouponRecordId || this.summaryData.total_price <= 0) {
         this.couponDiscount = 0
+        this.cart.forEach(it => { it.has_used_coupon = false })
         return
       }
       
+      const coupon = this.availableCoupons.find(c => c.record_id === this.selectedCouponRecordId)
+      let applicable_order_amount = this.summaryData.total_original || 0
+      
+      if (coupon && coupon.rule) {
+        const cats = coupon.rule.applicable_categories || []
+        const isAll = cats.includes('ALL') || cats.length === 0
+        const summaryItemMap = {}
+        ;((this.summaryData && this.summaryData.items) || []).forEach(item => {
+          if (item && item.cart_item_id) summaryItemMap[item.cart_item_id] = item
+        })
+        
+        applicable_order_amount = 0
+        this.cart.forEach(it => {
+          if (!it.selected) {
+            it.has_used_coupon = false
+            return
+          }
+          if (isAll || cats.includes(it.category_id)) {
+            it.has_used_coupon = true
+            const detail = summaryItemMap[it.id] || null
+            applicable_order_amount += Number(detail ? detail.item_original : 0) || 0
+          } else {
+            it.has_used_coupon = false
+          }
+        })
+      }
+
       const token = uni.getStorageSync('token') || ''
       calculateCoupon({
-        record_id: coupon_record_id,
+        record_id: this.selectedCouponRecordId,
         order_amount: this.summaryData.total_price || 0,
         applicable_order_amount: applicable_order_amount,
         token
@@ -714,14 +810,11 @@ export default {
       const addressId = this.selectedAddress?.id || ''
       if (!addressId) { uni.showToast({ title: '请先选择收货地址', icon: 'none' }); return }
 
-      // 提取选中的第一个优惠券ID
-      let coupon_record_id = ''
-      const couponItem = selectedItems.find(it => it.coupon_record_id)
-      if (couponItem) {
-          coupon_record_id = couponItem.coupon_record_id
-      }
+      // 使用当前选中的优惠券
+      let coupon_record_id = this.selectedCouponRecordId || ''
 
-      createOrderByIds({ ids: selectedIds, address_id: addressId, note: (this.orderNote || this.mpOrderNote || ''), coupon_record_id }).then(res => {
+      const token = uni.getStorageSync('token') || ''
+      createOrderByIds({ ids: selectedIds, address_id: addressId, note: (this.orderNote || this.mpOrderNote || ''), coupon_record_id, token }).then(res => {
           if (res && res.success) {
              uni.showToast({ title: '下单成功', icon: 'success' })
              // 移除已选商品

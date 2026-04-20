@@ -67,6 +67,16 @@
 			}
 		},
 		{
+			"path": "pages/coupons/index",
+			"style": {
+				"navigationBarTitleText": "我的优惠券",
+				"mp-weixin": {
+					"enableShareAppMessage": true,
+					"enableShareTimeline": true
+				}
+			}
+		},
+		{
 			"path": "pages/favorites/index",
 			"style": {
 				"navigationBarTitleText": "我的收藏",
