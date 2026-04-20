@@ -425,7 +425,11 @@ export default {
       this._couponModalMousedownTarget = null;
     },
       fetchCoupons() {
-        const token = uni.getStorageSync('token') || ''
+        let token = ''
+        try {
+          const u = uni.getStorageSync('user') || null
+          token = (u && (u.token || (u.data && u.data.token))) || ''
+        } catch (e) {}
         if (!token) return
         getUserCoupons({ token }).then(res => {
           if (res && res.success && res.data && res.data.items) {
@@ -577,7 +581,11 @@ export default {
             this.couponDiscount = 0
             return
         }
-        const token = uni.getStorageSync('token') || ''
+        let token = ''
+        try {
+          const u = uni.getStorageSync('user') || null
+          token = (u && (u.token || (u.data && u.data.token))) || ''
+        } catch (e) {}
         calculateCartPrice({ cart_item_ids: selectedIds, token }).then(res => {
             if (res && res.success && res.data) {
                 // 使用专门的计价接口返回的数据
@@ -638,7 +646,11 @@ export default {
         })
       }
 
-      const token = uni.getStorageSync('token') || ''
+      let token = ''
+      try {
+        const u = uni.getStorageSync('user') || null
+        token = (u && (u.token || (u.data && u.data.token))) || ''
+      } catch (e) {}
       calculateCoupon({
         record_id: this.selectedCouponRecordId,
         order_amount: this.summaryData.total_price || 0,
@@ -813,7 +825,11 @@ export default {
       // 使用当前选中的优惠券
       let coupon_record_id = this.selectedCouponRecordId || ''
 
-      const token = uni.getStorageSync('token') || ''
+      let token = ''
+      try {
+        const u = uni.getStorageSync('user') || null
+        token = (u && (u.token || (u.data && u.data.token))) || ''
+      } catch (e) {}
       createOrderByIds({ ids: selectedIds, address_id: addressId, note: (this.orderNote || this.mpOrderNote || ''), coupon_record_id, token }).then(res => {
           if (res && res.success) {
              uni.showToast({ title: '下单成功', icon: 'success' })

@@ -29,10 +29,6 @@
     <view class="empty" v-else>
       <text>暂无优惠券</text>
     </view>
-    
-    <!-- #ifdef H5 -->
-    <view class="floating-back" @click="goBack">←</view>
-    <!-- #endif -->
   </view>
 </template>
 
@@ -49,18 +45,17 @@ export default {
     this.fetchCoupons()
   },
   methods: {
-    goBack() {
-      uni.navigateBack({
-        fail: () => uni.switchTab({ url: '/pages/profile/index' })
-      })
-    },
     formatDate(iso) {
       if (!iso) return '-'
       const d = new Date(iso)
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     },
     fetchCoupons() {
-      const token = uni.getStorageSync('token') || ''
+      let token = ''
+      try {
+        const u = uni.getStorageSync('user') || null
+        token = (u && (u.token || (u.data && u.data.token))) || ''
+      } catch (e) {}
       if (!token) {
         uni.navigateTo({ url: '/pages/login/index' })
         return
@@ -167,20 +162,5 @@ export default {
   height: 400rpx;
   color: #888;
   font-size: 28rpx;
-}
-.floating-back {
-  position: fixed;
-  bottom: 120rpx;
-  left: 30rpx;
-  width: 80rpx;
-  height: 80rpx;
-  background: rgba(255,255,255,0.1);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 40rpx;
-  z-index: 99;
 }
 </style>

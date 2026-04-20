@@ -107,7 +107,15 @@
                               Number(it.original_price).toFixed(2) }}</text>
                           </view>
                           <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
-                          <text v-if="it.package_capacity > 0" class="spec-unit" selectable="true">包装容量：{{ it.package_capacity }} | 包装价：¥{{ Number(it.package_price).toFixed(2) }}</text>
+                          <view v-if="Number(it.package_price) > 0" class="spec-unit spec-package-fee">
+                            <text selectable="true">包装费：¥{{ it.single_package_fee }}</text>
+                            <view class="fee-icon-wrap">
+                              <text class="fee-icon">!</text>
+                              <view class="fee-tooltip">
+                                包装容量：{{ it.package_capacity }} | 单位价格：¥{{ it.package_price_formatted }}
+                              </view>
+                            </view>
+                          </view>
                         </view>
                         <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
                           <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
@@ -139,12 +147,18 @@
 
                 <view class="pd-form">
                   <view class="pd-field inline" @click="openCouponSheet">
-                    <text class="pd-section-title" selectable="true">优惠券</text>
-                    <view class="picker-display">{{ selectedCoupon ? selectedCoupon.name : '不使用优惠券' }}</view>
+                    <text class="label" selectable="true">优惠券</text>
+                    <view class="picker-display coupon-display" :class="{'has-coupon': selectedCoupon}">
+                      <text class="coupon-text">{{ selectedCoupon ? selectedCoupon.name : '不使用优惠券' }}</text>
+                      <text class="coupon-arrow">›</text>
+                    </view>
                   </view>
                   <view class="pd-field inline">
-                    <text class="pd-section-title" selectable="true">房间</text>
-                    <view id="og-room-select" class="picker-display" @click="openRoomSheet">{{ roomName || '请选择房间' }}</view>
+                    <text class="label" selectable="true">房间</text>
+                    <view id="og-room-select" class="picker-display room-display" @click="openRoomSheet">
+                      <text class="room-text">{{ roomName || '请选择房间' }}</text>
+                      <text class="room-arrow">›</text>
+                    </view>
                   </view>
                   <!-- <view class="pd-field inline">
               <text class="label">色温</text>
@@ -278,7 +292,15 @@
                     Number(it.original_price).toFixed(2) }}</text>
                 </view>
                 <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
-                <text v-if="it.package_capacity > 0" class="spec-unit" selectable="true">包装容量：{{ it.package_capacity }} | 包装价：¥{{ Number(it.package_price).toFixed(2) }}</text>
+                <view v-if="Number(it.package_price) > 0" class="spec-unit spec-package-fee">
+                  <text selectable="true">单个包装费：¥{{ it.single_package_fee }}</text>
+                  <view class="fee-icon-wrap">
+                    <text class="fee-icon">!</text>
+                    <view class="fee-tooltip">
+                      包装容量：{{ it.package_capacity }} | 包装总价：¥{{ it.package_price_formatted }}
+                    </view>
+                  </view>
+                </view>
               </view>
               <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
                 <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
@@ -296,10 +318,16 @@
 
           <view class="mp-field" @click="openCouponSheet">
             <text class="label">优惠券</text>
-            <view class="mp-input">{{ selectedCoupon ? selectedCoupon.name : '不使用优惠券' }}</view>
+            <view class="mp-input coupon-display" :class="{'has-coupon': selectedCoupon}">
+              <text class="coupon-text">{{ selectedCoupon ? selectedCoupon.name : '不使用优惠券' }}</text>
+              <text class="coupon-arrow">›</text>
+            </view>
           </view>
           <view class="mp-field"><text class="label">房间</text>
-            <view id="og-mp-room-select" class="mp-input" @click="openMpRoomSheet">{{ mpRoom || '请选择房间' }}</view>
+            <view id="og-mp-room-select" class="mp-input room-display" @click="openMpRoomSheet">
+              <text class="room-text">{{ mpRoom || '请选择房间' }}</text>
+              <text class="room-arrow">›</text>
+            </view>
           </view>
           <!-- <view class="mp-field"><text class="label">色温</text><input class="mp-input" v-model="mpTemp"
             placeholder="如 3000K" /></view> -->
@@ -360,7 +388,7 @@ import LoginPrompt from '@/components/LoginPrompt.vue'
 
 export default {
   components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
-  data() { return { hls: null, product: null, shareProductId: '', current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false, coupons: [], selectedCoupon: null, couponSheetVisible: false } },
+  data() { return { hls: null, product: null, shareProductId: '', current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false, coupons: [], selectedCoupon: null, couponSheetVisible: false, packageFeeByProductId: {} } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     this.shareProductId = id
@@ -391,6 +419,15 @@ export default {
           image: main[0] || '/static/logo.png',
           images: [...main, ...videos].length ? [...main, ...videos] : ['/static/logo.png']
         }
+        const childrenUnits = Array.isArray(d.children_units) ? d.children_units : []
+        const packageFeeByProductId = {}
+        childrenUnits.forEach((item) => {
+          const pid = String(item?.product_id || '').trim()
+          const fee = item?.package_fee_info || null
+          if (!pid || !fee) return
+          packageFeeByProductId[pid] = fee
+        })
+        this.packageFeeByProductId = packageFeeByProductId
         this.product = base
         this.isFavorite = (String(d.is_favorite) === '1') || (d.is_favorite === 1) || (d.is_favorite === true)
         this.fetchSpecs(base.id)
@@ -411,6 +448,7 @@ export default {
       })
       .catch(() => {
         // 接口失败时保底展示
+        this.packageFeeByProductId = {}
         this.product = { id, title: '商品 ' + id, price: 0, sales: 0, shipping_origin: '', image: '/static/logo.png', images: ['/static/logo.png'] }
         this.fetchSpecs(id)
         this.resetCarouselTimer()
@@ -641,7 +679,11 @@ export default {
   },
   methods: {
     fetchCoupons(productId) {
-      const token = uni.getStorageSync('token') || ''
+      let token = ''
+      try {
+        const u = uni.getStorageSync('user') || null
+        token = (u && (u.token || (u.data && u.data.token))) || ''
+      } catch (e) {}
       if (!token || !productId) return
       getAvailableCoupons({ product_id: productId, token }).then(res => {
         // 后端返回了专门筛选好的 items
@@ -1017,7 +1059,14 @@ export default {
         .then((res) => {
           if (res && res.message && res.message.includes('库存')) uni.showToast({ title: res.message, icon: 'none' })
           const children = (res && res.data && Array.isArray(res.data.children)) ? res.data.children : (Array.isArray(res?.children) ? res.children : [])
-          this.specs = (children || []).map((it) => ({
+          this.specs = (children || []).map((it) => {
+            const pid = String(it.product_id || '').trim()
+            const detailPackageFee = this.packageFeeByProductId[pid] || null
+            const detailPackageCapacity = Number(detailPackageFee?.max_capacity || 0) || 0
+            const detailPackagePrice = Number(detailPackageFee?.price || 0) || 0
+            const packageCapacity = Number(it.package_capacity || 0) || detailPackageCapacity
+            const packagePrice = Number(it.package_price || 0) || detailPackagePrice
+            return ({
             product_id: it.product_id || '',
             name: it.name || '',
             unit: it.unit || '',
@@ -1038,14 +1087,17 @@ export default {
             color: it.color || '',
             model: it.model || '',
             color_temperature: it.color_temperature || '',
-            package_capacity: it.package_capacity || 0,
-            package_price: it.package_price || 0,
+            package_capacity: packageCapacity,
+            package_price: packagePrice,
+            package_price_formatted: packagePrice.toFixed(2),
+            single_package_fee: packagePrice.toFixed(2),
             has_custom_params: it.has_custom_params || 0,
             custom_param1_name: it.custom_param1_name || '',
             custom_param2_name: it.custom_param2_name || '',
             custom_param1_value: it.custom_param1_value || '',
             custom_param2_value: it.custom_param2_value || ''
-          }))
+          })
+          })
         })
         .catch(() => { this.specs = [] })
         .finally(() => {
@@ -1655,7 +1707,6 @@ export default {
   /* background: #fafafa; */
   transition: all .2s;
   position: relative;
-  overflow: hidden;
 }
 
 .spec-item.active {
@@ -1727,6 +1778,60 @@ export default {
 .spec-unit {
   color: #aaaaaa;
   font-size: 24rpx;
+}
+
+.spec-package-fee {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.fee-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  border: 2rpx solid #999;
+  margin-left: 8rpx;
+  cursor: pointer;
+}
+
+.fee-icon {
+  font-size: 16rpx;
+  color: #999;
+  line-height: 1;
+}
+
+.fee-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 150%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.fee-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8rpx solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+}
+
+.fee-icon-wrap:hover .fee-tooltip {
+  display: block;
 }
 
 .specs-toggle {
@@ -2194,14 +2299,64 @@ export default {
 /* H5 内联字段输入宽度缩小 */
 .pd-field.inline .pd-input,
 .pd-field.inline .picker-display {
-  flex: 1;
-  /* width: 60%; */
+  flex: none;
+  width: 480rpx;
+  max-width: none;
+}
+
+/* 统一 Label 宽度与两端对齐 */
+.pd-field.inline .label,
+.mp-field .label {
+  width: 90rpx;
+  text-align: justify;
+  text-align-last: justify;
+  display: inline-block;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.pd-field.inline .label {
+  color: #333333;
 }
 
 .unit-tip {
   margin-left: 12rpx;
   font-size: 24rpx;
   color: #aaaaaa;
+}
+
+.coupon-display,
+.room-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.coupon-text,
+.room-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-arrow,
+.room-arrow {
+  color: #999999;
+  font-size: 32rpx;
+  margin-left: 12rpx;
+  line-height: 1;
+}
+
+.coupon-display.has-coupon {
+  border-color: #ff4d4f !important;
+  color: #ff4d4f !important;
+  background: rgba(255, 77, 79, 0.05) !important;
+  font-weight: 600;
+}
+.coupon-display.has-coupon .coupon-text,
+.coupon-display.has-coupon .coupon-arrow {
+  color: #ff4d4f !important;
 }
 
 .pd-title {
@@ -2439,7 +2594,8 @@ export default {
 }
 
 .mp-input {
-  width: 60%;
+  flex: none;
+  width: 480rpx;
   height: 64rpx;
   line-height: 64rpx;
   background: #333333;
