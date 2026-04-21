@@ -1063,6 +1063,28 @@ export function createDirectOrder(options = {}) {
   })
 }
 
+export function calculateDirectPrice(options = {}) {
+  const { product_id, length, quantity, coupon_record_id, room_id, address_id, token } = options
+  const url = `${BASE_URL}/api/orders/calculate_price`
+  return new Promise((resolve, reject) => {
+    const auth = getBearer(token)
+    const header = { 'Content-Type': 'application/json', ...(auth ? { 'Authorization': auth } : {}) }
+    uni.request({
+      url,
+      method: 'POST',
+      header,
+      data: { product_id, length, quantity, coupon_record_id, room_id, address_id },
+      success: (res) => {
+        let data = res?.data
+        if (typeof data === 'string') { try { data = JSON.parse(data) } catch (e) { } }
+        if (res && res.statusCode >= 200 && res.statusCode < 300) resolve(data)
+        else reject(data || res)
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
 export function createOrderByIds(options = {}) {
   const { ids, address_id, note, coupon_record_id, token } = options
   const query = toQuery({ ids, address_id, note, coupon_record_id })
@@ -1267,4 +1289,4 @@ export function getCurrentAnnouncement(options = {}) {
   })
 }
 
-export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress, getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, createOrderByIds, cancelOrder, getCartItemsByIDs, exportOrderExcel, getCarousel, updateUserAvatar, addFavorite, getFavorites }
+export default { loginAdmin, getRecommendedProducts, getVisibleCategories, searchProducts, getVisibleProducts, getProductDetail, getProductSpecs, createRoom, updateRoom, deleteRoom, getRooms, addCartItem, getCartItems, deleteCartItem, clearCart, updateCartItem, getUserProfile, updateUserProfile, sendSecurityCode, updateUserPhone, updateUserEmail, getAddresses, deleteAddress, addAddress, updateAddress, getPendingPaymentOrders, getPendingShipmentOrders, getPendingReceiptOrders, getHistoryOrders, getOrderDetail, confirmOrderReceipt, createDirectOrder, calculateDirectPrice, createOrderByIds, cancelOrder, getCartItemsByIDs, exportOrderExcel, getCarousel, updateUserAvatar, addFavorite, getFavorites }

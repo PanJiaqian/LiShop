@@ -360,9 +360,71 @@ export default {
     },
     onAddrRegionChange(e) {
       const val = e?.detail?.value || []
-      this.addrForm.province = val[0] || ''
-      this.addrForm.city = val[1] || ''
-      this.addrForm.district = val[2] || ''
+      const normalized = this.normalizeAddrRegion({
+        province: val[0] || '',
+        city: val[1] || '',
+        district: val[2] || ''
+      })
+      this.addrForm.province = normalized.province
+      this.addrForm.city = normalized.city
+      this.addrForm.district = normalized.district
+    },
+    /**
+     * 获取直辖市列表
+     * @returns {string[]} 直辖市名称数组
+     */
+    getMunicipalityList() {
+      return ['北京市', '天津市', '上海市', '重庆市']
+    },
+    /**
+     * 判断是否为直辖市名称
+     * @param {string} name 地区名称
+     * @returns {boolean} 是直辖市返回 true
+     */
+    isMunicipality(name) {
+      const text = String(name || '').trim()
+      if (!text) return false
+      return this.getMunicipalityList().includes(text)
+    },
+    /**
+     * 归一化地址地区字段，兼容直辖市省/市缺失
+     * @param {{province:string,city:string,district:string}} region 原始地区
+     * @returns {{province:string,city:string,district:string}} 归一化地区
+     */
+    normalizeAddrRegion(region) {
+      const normalized = {
+        province: String(region?.province || '').trim(),
+        city: String(region?.city || '').trim(),
+        district: String(region?.district || '').trim()
+      }
+      if (!normalized.province && this.isMunicipality(normalized.city)) {
+        normalized.province = normalized.city
+      }
+      if (!normalized.city && this.isMunicipality(normalized.province)) {
+        normalized.city = normalized.province
+      }
+      // H5 滑动选择器直辖市特有处理：若只有两列，第二列往往是区
+      if (this.isMunicipality(normalized.province) && !normalized.district && normalized.city) {
+         if (!this.isMunicipality(normalized.city)) {
+             normalized.district = normalized.city
+             normalized.city = normalized.province
+         }
+      }
+      return normalized
+    },
+    /**
+     * 校验地址地区完整性，允许直辖市使用“市+区”
+     * @param {{province:string,city:string,district:string}} region 地区信息
+     * @returns {boolean} 校验通过返回 true
+     */
+    isAddrRegionComplete(region) {
+      const normalized = this.normalizeAddrRegion(region)
+      if (!normalized.district) return false
+      if (normalized.province && normalized.city) return true
+      if (this.isMunicipality(normalized.province) || this.isMunicipality(normalized.city)) {
+        return !!(normalized.province || normalized.city)
+      }
+      return false
     },
     async initH5AddrRegion() {
       try {
@@ -381,34 +443,44 @@ export default {
     onH5AddrRegionColumnChange(e) {
       const col = e.detail.column
       const idx = e.detail.value
-      this.addrRegionIndex[col] = idx
-      const p = this.addrRegionRange[0][this.addrRegionIndex[0]] || ''
+      const newIndex = [...this.addrRegionIndex]
+      newIndex[col] = idx
+      
+      const p = this.addrRegionRange[0][newIndex[0]] || ''
       if (col === 0) {
         const cities = Object.keys((this.addrAreaTree && this.addrAreaTree[p]) || {})
         const c = cities[0] || ''
         const areas = ((this.addrAreaTree && this.addrAreaTree[p] && this.addrAreaTree[p][c]) || [])
         this.addrRegionRange = [this.addrRegionRange[0], cities, areas]
-        this.addrRegionIndex[1] = 0
-        this.addrRegionIndex[2] = 0
+        newIndex[1] = 0
+        newIndex[2] = 0
       } else if (col === 1) {
-        const c = this.addrRegionRange[1][this.addrRegionIndex[1]] || ''
+        const c = this.addrRegionRange[1][newIndex[1]] || ''
         const areas = ((this.addrAreaTree && this.addrAreaTree[p] && this.addrAreaTree[p][c]) || [])
         this.addrRegionRange = [this.addrRegionRange[0], this.addrRegionRange[1], areas]
-        this.addrRegionIndex[2] = 0
+        newIndex[2] = 0
       }
+      this.addrRegionIndex = newIndex
     },
     onH5AddrRegionChange(e) {
       this.addrRegionIndex = e.detail.value
       const p = this.addrRegionRange[0][this.addrRegionIndex[0]] || ''
       const c = this.addrRegionRange[1][this.addrRegionIndex[1]] || ''
       const a = this.addrRegionRange[2][this.addrRegionIndex[2]] || ''
-      this.addrForm.province = p
-      this.addrForm.city = c
-      this.addrForm.district = a
+      
+      const normalized = this.normalizeAddrRegion({ province: p, city: c, district: a })
+      
+      this.addrForm.province = normalized.province || p
+      this.addrForm.city = normalized.city || c
+      this.addrForm.district = normalized.district || a
     },
     saveAddress() {
       const f = this.addrForm
-      if (!f.receiver || !f.phone || !f.province || !f.city || !f.district || !f.detail_address) {
+      const normalized = this.normalizeAddrRegion(f)
+      this.addrForm.province = normalized.province
+      this.addrForm.city = normalized.city
+      this.addrForm.district = normalized.district
+      if (!f.receiver || !f.phone || !this.isAddrRegionComplete(this.addrForm) || !f.detail_address) {
         try { uni.showToast({ title: '请填写完整地址信息', icon: 'none' }) } catch (e) {}
         return
       }

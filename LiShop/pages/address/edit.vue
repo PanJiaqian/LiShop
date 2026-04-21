@@ -158,9 +158,74 @@ export default {
     },
     onRegionPickerChange(e) {
       const val = e?.detail?.value || []
-      this.form.province = val[0] || ''
-      this.form.city = val[1] || ''
-      this.form.district = val[2] || ''
+      const normalized = this.normalizeRegion({
+        province: val[0] || '',
+        city: val[1] || '',
+        district: val[2] || ''
+      })
+      this.form.province = normalized.province
+      this.form.city = normalized.city
+      this.form.district = normalized.district
+    },
+    /**
+     * 直辖市名称集合
+     * @returns {string[]} 返回支持自动补齐省市字段的直辖市列表
+     */
+    getMunicipalityList() {
+      return ['北京市', '天津市', '上海市', '重庆市']
+    },
+    /**
+     * 判断地区名称是否为直辖市
+     * @param {string} name 地区名称
+     * @returns {boolean} 为直辖市返回 true，否则返回 false
+     */
+    isMunicipality(name) {
+      const text = String(name || '').trim()
+      if (!text) return false
+      return this.getMunicipalityList().includes(text)
+    },
+    /**
+     * 归一化地区字段，兼容直辖市省/市字段缺失场景
+     * @param {{province:string,city:string,district:string}} region 原始地区数据
+     * @returns {{province:string,city:string,district:string}} 归一化后的地区数据
+     */
+    normalizeRegion(region) {
+      const normalized = {
+        province: String(region?.province || '').trim(),
+        city: String(region?.city || '').trim(),
+        district: String(region?.district || '').trim()
+      }
+      if (!normalized.province && this.isMunicipality(normalized.city)) {
+        normalized.province = normalized.city
+      }
+      if (!normalized.city && this.isMunicipality(normalized.province)) {
+        normalized.city = normalized.province
+      }
+      if (!normalized.district && normalized.city && !this.isMunicipality(normalized.province)) {
+        // H5 选择器有时直辖市第三列为空，但区数据在第二列，需要将市区数据平移
+      }
+      // H5 滑动选择器直辖市特有处理：若只有两列，第二列往往是区
+      if (this.isMunicipality(normalized.province) && !normalized.district && normalized.city) {
+         if (!this.isMunicipality(normalized.city)) {
+             normalized.district = normalized.city
+             normalized.city = normalized.province
+         }
+      }
+      return normalized
+    },
+    /**
+     * 校验地区是否完整，支持“直辖市 + 区”结构
+     * @param {{province:string,city:string,district:string}} region 地区数据
+     * @returns {boolean} 完整返回 true，否则返回 false
+     */
+    isRegionComplete(region) {
+      const normalized = this.normalizeRegion(region)
+      if (!normalized.district) return false
+      if (normalized.province && normalized.city) return true
+      if (this.isMunicipality(normalized.province) || this.isMunicipality(normalized.city)) {
+        return !!(normalized.province || normalized.city)
+      }
+      return false
     },
     async initH5Region() {
       try {
@@ -168,44 +233,47 @@ export default {
         if (!isH5) return
         await this.ensureAreaTree()
         const provinces = Object.keys(this.areaTree || {})
-        this.regionRange[0] = provinces
         const p = provinces[0] || ''
         const cities = Object.keys((this.areaTree && this.areaTree[p]) || {})
-        this.regionRange[1] = cities
         const c = cities[0] || ''
         const areas = ((this.areaTree && this.areaTree[p] && this.areaTree[p][c]) || [])
-        this.regionRange[2] = areas
+        this.regionRange = [provinces, cities, areas]
         this.regionIndex = [0, 0, 0]
       } catch (e) {}
     },
     onH5RegionColumnChange(e) {
       const col = e.detail.column
       const idx = e.detail.value
-      this.regionIndex[col] = idx
-      const p = this.regionRange[0][this.regionIndex[0]] || ''
+      const newIndex = [...this.regionIndex]
+      newIndex[col] = idx
+      
+      const p = this.regionRange[0][newIndex[0]] || ''
       if (col === 0) {
         const cities = Object.keys((this.areaTree && this.areaTree[p]) || {})
-        this.regionRange[1] = cities
-        this.regionIndex[1] = 0
         const c = cities[0] || ''
         const areas = ((this.areaTree && this.areaTree[p] && this.areaTree[p][c]) || [])
-        this.regionRange[2] = areas
-        this.regionIndex[2] = 0
+        this.regionRange = [this.regionRange[0], cities, areas]
+        newIndex[1] = 0
+        newIndex[2] = 0
       } else if (col === 1) {
-        const c = this.regionRange[1][this.regionIndex[1]] || ''
+        const c = this.regionRange[1][newIndex[1]] || ''
         const areas = ((this.areaTree && this.areaTree[p] && this.areaTree[p][c]) || [])
-        this.regionRange[2] = areas
-        this.regionIndex[2] = 0
+        this.regionRange = [this.regionRange[0], this.regionRange[1], areas]
+        newIndex[2] = 0
       }
+      this.regionIndex = newIndex
     },
     onH5RegionChange(e) {
       this.regionIndex = e.detail.value
       const p = this.regionRange[0][this.regionIndex[0]] || ''
       const c = this.regionRange[1][this.regionIndex[1]] || ''
       const a = this.regionRange[2][this.regionIndex[2]] || ''
-      this.form.province = p
-      this.form.city = c
-      this.form.district = a
+      
+      const normalized = this.normalizeRegion({ province: p, city: c, district: a })
+      
+      this.form.province = normalized.province || p
+      this.form.city = normalized.city || c
+      this.form.district = normalized.district || a
     },
     loadAddress(id) {
       this.loading = true
@@ -234,20 +302,27 @@ export default {
       try {
         const isH5 = typeof window !== 'undefined'
         if (!isH5) return
-        const pIdx = (this.regionRange[0] || []).indexOf(this.form.province)
+        
+        const newIndex = [0, 0, 0]
+        let newRange = [...this.regionRange]
+        
+        const pIdx = (newRange[0] || []).indexOf(this.form.province)
         if (pIdx >= 0) {
-          this.regionIndex[0] = pIdx
-          const p = this.regionRange[0][pIdx]
+          newIndex[0] = pIdx
+          const p = newRange[0][pIdx]
           const cities = Object.keys((this.areaTree && this.areaTree[p]) || {})
-          this.regionRange[1] = cities
+          newRange[1] = cities
           const cIdx = cities.indexOf(this.form.city)
-          this.regionIndex[1] = cIdx >= 0 ? cIdx : 0
-          const c = cities[this.regionIndex[1]] || ''
+          newIndex[1] = cIdx >= 0 ? cIdx : 0
+          const c = cities[newIndex[1]] || ''
           const areas = ((this.areaTree && this.areaTree[p] && this.areaTree[p][c]) || [])
-          this.regionRange[2] = areas
+          newRange[2] = areas
           const aIdx = areas.indexOf(this.form.district)
-          this.regionIndex[2] = aIdx >= 0 ? aIdx : 0
+          newIndex[2] = aIdx >= 0 ? aIdx : 0
         }
+        
+        this.regionRange = newRange
+        this.regionIndex = newIndex
       } catch (e) {}
     },
     onSwitchChange(e) {
@@ -256,7 +331,11 @@ export default {
     saveAddress() {
       if (!this.form.receiver) return uni.showToast({ title: '请填写收货人', icon: 'none' })
       if (!this.form.phone) return uni.showToast({ title: '请填写手机号', icon: 'none' })
-      if (!this.form.province || !this.form.city || !this.form.district) return uni.showToast({ title: '请填写完整地区', icon: 'none' })
+      const normalized = this.normalizeRegion(this.form)
+      this.form.province = normalized.province
+      this.form.city = normalized.city
+      this.form.district = normalized.district
+      if (!this.isRegionComplete(this.form)) return uni.showToast({ title: '请填写完整地区', icon: 'none' })
       if (!this.form.detail_address) return uni.showToast({ title: '请填写详细地址', icon: 'none' })
 
       const u = uni.getStorageSync('user')

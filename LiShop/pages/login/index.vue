@@ -134,7 +134,7 @@ export default {
   width: 100%;
   height: 100%;
   z-index: 0;
-  opacity: 0.4; /* Darken the background image */
+  opacity: 1;
 }
 
 .top-bar {

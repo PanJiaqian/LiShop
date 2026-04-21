@@ -73,7 +73,7 @@
           </view>
           <view class="note-section" style="margin-top: 20rpx;">
             <view class="note-label" style="font-size: 24rpx; color: #434343; font-weight: 600;">订单备注</view>
-            <input v-model="orderNote" placeholder="填写订单备注信息" style="width: 95%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx;" />
+            <input v-model="orderNote" placeholder="填写订单备注信息" placeholder-style="color:#999" style="width: 95%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx; background: #fff; color: #000;" />
           </view>
 
           <view v-if="selectedCount > 0" class="sum-body">
@@ -130,7 +130,7 @@
     </view>
     <view class="mp-note-bar" style="margin: 16rpx 20rpx;">
       <text style="font-size: 26rpx; color: #fff;">备注</text>
-      <input v-model="mpOrderNote" placeholder="填写订单备注" placeholder-style="color:#777" style="width: 100%; padding: 12rpx; border: 1rpx solid #444; border-radius: 8rpx; margin-top: 8rpx; background: #333; color: #fff;" />
+      <input v-model="mpOrderNote" placeholder="填写订单备注" placeholder-style="color:#999" style="width: 100%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx; background: #fff; color: #000;" />
     </view>
     
     <view class="mp-note-bar" style="margin: 16rpx 20rpx;" v-if="availableCoupons.length > 0">

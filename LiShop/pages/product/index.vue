@@ -80,11 +80,11 @@
                   <text class="pd-title" selectable="true">{{ product.title }}</text>
                   <text class="fav-star" :class="{ active: isFavorite }" @click="favProduct">{{ isFavorite ? '★' : '☆' }}</text>
                 </view>
-                <view class="pd-meta">
+                <!-- <view class="pd-meta">
                   <text selectable="true">{{ product.is_free_shipping ? '包邮' : '不包邮' }} ｜ {{ product.shipping_time_hours ?
                     (product.shipping_time_hours + '小时内发货') : '发货时间待定' }} ｜ {{ product.support_no_reason_return_7d ?
                       '七天无理由' : '不支持七天无理由' }}</text>
-                </view>
+                </view> -->
                 <view class="pd-price-row">
                   <text class="pd-price" selectable="true">{{ displayTopPriceWithSymbol }}</text>
                   <text class="pd-coupon" selectable="true">券后更低</text>
@@ -107,7 +107,7 @@
                               Number(it.original_price).toFixed(2) }}</text>
                           </view>
                           <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
-                          <view v-if="Number(it.package_price) > 0" class="spec-unit spec-package-fee">
+                          <!-- <view v-if="Number(it.package_price) > 0" class="spec-unit spec-package-fee">
                             <text selectable="true">包装费：¥{{ it.single_package_fee }}</text>
                             <view class="fee-icon-wrap">
                               <text class="fee-icon">!</text>
@@ -115,7 +115,7 @@
                                 包装容量：{{ it.package_capacity }} | 单位价格：¥{{ it.package_price_formatted }}
                               </view>
                             </view>
-                          </view>
+                          </view> -->
                         </view>
                         <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
                           <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
@@ -164,9 +164,12 @@
               <text class="label">色温</text>
               <input class="pd-input" v-model="specTemp" placeholder="如 3000K / 4000K" />
             </view> -->
-                  <view class="pd-field inline" v-if="selectedSpec && selectedSpec.has_length === 1">
+                  <view class="pd-field inline pd-field-length" v-if="selectedSpec && selectedSpec.has_length === 1">
                     <text class="label">长度</text>
-                    <input class="pd-input" v-model="specLength" placeholder="填写数字" />
+                    <view class="length-input-wrap">
+                      <input class="pd-input" v-model="specLength" placeholder="填写数字" @input="onSpecLengthInput" />
+                      <view v-if="lengthLimitTip" class="length-limit-bubble">{{ lengthLimitTip }}</view>
+                    </view>
                     <text class="unit-tip">{{ lengthUnitText }}</text>
                   </view>
                   <view class="pd-field inline">
@@ -292,15 +295,6 @@
                     Number(it.original_price).toFixed(2) }}</text>
                 </view>
                 <text class="spec-unit" selectable="true">单位：{{ it.unit || '—' }}</text>
-                <view v-if="Number(it.package_price) > 0" class="spec-unit spec-package-fee">
-                  <text selectable="true">单个包装费：¥{{ it.single_package_fee }}</text>
-                  <view class="fee-icon-wrap">
-                    <text class="fee-icon">!</text>
-                    <view class="fee-tooltip">
-                      包装容量：{{ it.package_capacity }} | 包装总价：¥{{ it.package_price_formatted }}
-                    </view>
-                  </view>
-                </view>
               </view>
               <view v-if="String(it.product_type || '').toLowerCase() === 'stagnant' && Number(it.inventory) === 0" class="spec-mask">
                 <image class="spec-mask-ico" src="/static/no.png" mode="aspectFit" />
@@ -379,7 +373,7 @@
  * - 负责拉取商品详情/规格、收藏状态，并提供加入购物车/下单等交互
  * - 同时兼容 H5 与小程序端的规格/房间/地址选择流程（通过条件编译与弹窗组件实现）
  */
-import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress, createDirectOrder, addFavorite, deleteFavorite, getAvailableCoupons } from '../../api/index.js'
+import { getProductDetail, getProductSpecs, getRooms, createRoom, addCartItem, getCartItems, createOrderByIds, getAddresses, addAddress, createDirectOrder, calculateDirectPrice, addFavorite, deleteFavorite, getAvailableCoupons } from '../../api/index.js'
 import RoomSelector from '../../components/RoomSelector.vue'
 import FloatingNav from '@/components/FloatingNav.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -388,7 +382,7 @@ import LoginPrompt from '@/components/LoginPrompt.vue'
 
 export default {
   components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
-  data() { return { hls: null, product: null, shareProductId: '', current: 0, qty: 1, specTemp: '', specLength: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false, coupons: [], selectedCoupon: null, couponSheetVisible: false, packageFeeByProductId: {} } },
+  data() { return { hasUserInteracted: false, hls: null, product: null, shareProductId: '', current: 0, qty: 1, specTemp: '', specLength: '', lengthLimitTip: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false, coupons: [], selectedCoupon: null, couponSheetVisible: false, packageFeeByProductId: {}, realTimePriceData: null } },
   onLoad(query) {
     const id = decodeURIComponent(query?.id || '')
     this.shareProductId = id
@@ -564,56 +558,28 @@ export default {
     },
     displayTopPrice() {
       const sel = this.selectedSpec || (this.specs && this.specs[0]) || null
-      const formula = String(sel?.formula || '').trim()
       let isH5 = false
       try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
       const lengthRaw = isH5 ? this.specLength : this.mpLength
       const lengthStr = String(lengthRaw || '').replace(/[^0-9.]/g, '')
       const lengthVal = lengthStr ? Number(lengthStr) : 1
+      const formula = String(sel?.formula || '').trim()
+      const usesLength = /\blength\b/.test(formula) || Number(sel?.has_length || 0) === 1
+
+      if (this.realTimePriceData && typeof this.realTimePriceData.total_amount !== 'undefined') {
+        const numText = Number(this.realTimePriceData.total_amount).toFixed(2)
+        if (usesLength && !lengthStr) return `${numText}/m`
+        return numText
+      }
+
       const qtyRaw = isH5 ? this.qty : this.mpQty
       const qty = Math.max(1, Number(qtyRaw || 1))
-      const usesLength = /\blength\b/.test(formula) || Number(sel?.has_length || 0) === 1
       if (usesLength && lengthStr && isNaN(lengthVal)) return '-'
       const fallbackNum = Number(sel?.price ?? sel?.unit_price ?? this.product?.price ?? 0)
-      if (!formula) {
-        if (isNaN(fallbackNum)) return '-'
-        const defaultText = fallbackNum.toFixed(2)
-        if (usesLength && !lengthStr) return `${defaultText}/m`
-        return defaultText
-      }
-      const ctx = {
-        unit_price: sel?.unit_price ?? sel?.price ?? this.product?.price ?? 0,
-        additional_price: sel?.additional_price ?? 0,
-        discount: sel?.discount ?? 1,
-        price: sel?.price ?? this.product?.price ?? 0,
-        original_price: sel?.original_price ?? 0,
-        length: lengthVal,
-        quantity: qty,
-        package_price: sel?.package_price ?? 0,
-        package_capacity: sel?.package_capacity ?? 0
-      }
-      const val = this.evaluateFormula(formula, ctx)
-      if (isH5) {
-        try {
-          console.log('[价格计算]', {
-            formula,
-            lengthRaw,
-            lengthVal,
-            qty,
-            context: ctx,
-            result: val
-          })
-        } catch (e) {}
-      }
-      if (val === null) {
-        if (isNaN(fallbackNum)) return '-'
-        const defaultText = fallbackNum.toFixed(2)
-        if (usesLength && !lengthStr) return `${defaultText}/m`
-        return defaultText
-      }
-      const numText = Number(val).toFixed(2)
-      if (usesLength && !lengthStr) return `${numText}/m`
-      return numText
+      if (isNaN(fallbackNum)) return '-'
+      const defaultText = fallbackNum.toFixed(2)
+      if (usesLength && !lengthStr) return `${defaultText}/m`
+      return defaultText
     },
     displayTopPriceWithSymbol() {
       const s = this.displayTopPrice
@@ -643,6 +609,40 @@ export default {
         this.lockCarousel = false
         this.resetCarouselTimer()
       }
+    },
+    selectedSpecIndex(newVal, oldVal) {
+      this.validateSpecLengthLimit(this.specLength)
+      if (oldVal !== -1 && oldVal !== undefined) {
+        this.hasUserInteracted = true
+      }
+      this.triggerRealTimePriceCalc()
+    },
+    qty(newVal, oldVal) {
+      if (oldVal !== undefined) this.hasUserInteracted = true
+      this.triggerRealTimePriceCalc()
+    },
+    specLength(newVal, oldVal) {
+      if (oldVal !== undefined) this.hasUserInteracted = true
+      this.triggerRealTimePriceCalc()
+    },
+    mpLength(newVal, oldVal) {
+      if (oldVal !== undefined) this.hasUserInteracted = true
+      this.triggerRealTimePriceCalc()
+    },
+    mpQty(newVal, oldVal) {
+      if (oldVal !== undefined) this.hasUserInteracted = true
+      this.triggerRealTimePriceCalc()
+    },
+    selectedCoupon(newVal, oldVal) {
+      if (oldVal !== undefined) this.hasUserInteracted = true
+      this.triggerRealTimePriceCalc()
+    },
+    roomId(newVal, oldVal) {
+      if (oldVal !== undefined && oldVal !== '') this.hasUserInteracted = true
+      this.triggerRealTimePriceCalc()
+    },
+    selectedAddress() {
+      this.triggerRealTimePriceCalc()
     }
   },
   beforeDestroy() {
@@ -678,6 +678,69 @@ export default {
     } catch (e) {}
   },
   methods: {
+    triggerRealTimePriceCalc(force = false) {
+      if (!this.hasUserInteracted && !force) return
+      if (this._calcTimer) clearTimeout(this._calcTimer)
+      this._calcTimer = setTimeout(() => {
+        this.doCalculateRealTimePrice()
+      }, 300)
+    },
+    doCalculateRealTimePrice() {
+      const spec = this.selectedSpec
+      if (!spec) {
+        this.realTimePriceData = null
+        return
+      }
+      
+      let isH5 = false
+      try { isH5 = typeof window !== 'undefined' } catch (e) { isH5 = false }
+      
+      const pid = spec.product_id || this.product?.id || ''
+      const rawLen = isH5 ? this.specLength : this.mpLength
+      const lenStr = String(rawLen || '').replace(/[^0-9.]/g, '')
+      const lenNum = lenStr ? Number(lenStr) : null
+      
+      const needLength = spec.has_length === 1
+      const qtyRaw = isH5 ? this.qty : this.mpQty
+      const qty = Math.max(1, Number(qtyRaw || 1))
+      
+      const cid = this.selectedCoupon ? this.selectedCoupon.record_id : ''
+      const roomId = this.roomId || ''
+      const addrId = this.selectedAddress?.id || ''
+      
+      let token = ''
+      try {
+        const u = uni.getStorageSync('user') || null
+        token = (u && (u.token || (u.data && u.data.token))) || ''
+      } catch (e) {}
+      
+      calculateDirectPrice({
+        product_id: pid,
+        length: needLength ? lenNum : null,
+        quantity: qty,
+        coupon_record_id: cid,
+        room_id: roomId,
+        address_id: addrId,
+        token
+      }).then(res => {
+        if (res && res.success && res.data) {
+          this.realTimePriceData = res.data
+        } else {
+          this.realTimePriceData = null
+          const errMsg = (res && typeof res.data === 'string' ? res.data : '') || (res && res.message) || ''
+          if (errMsg && errMsg.includes('长度')) {
+            this.lengthLimitTip = errMsg
+          }
+        }
+      }).catch(err => {
+        console.error('实时计价失败', err)
+        this.realTimePriceData = null
+        const errMsg = (err && typeof err.data === 'string' ? err.data : '') || (err && err.message) || ''
+        if (errMsg && errMsg.includes('长度')) {
+          this.lengthLimitTip = errMsg
+        }
+      })
+    },
     fetchCoupons(productId) {
       let token = ''
       try {
@@ -701,6 +764,7 @@ export default {
       uni.showActionSheet({
         itemList: list,
         success: (res) => {
+          this.hasUserInteracted = true
           if (res.tapIndex === 0) {
             this.selectedCoupon = null
           } else {
@@ -1081,6 +1145,11 @@ export default {
             inventory: it.inventory || 0,
             has_length: it.has_length || 0,
             specification: it.specification || '',
+            min_length: it.min_length || '',
+            min_specification: it.min_specification || '',
+            specification_min: it.specification_min || '',
+            length_min: it.length_min || '',
+            minimum_length: it.minimum_length || '',
             product_type: it.product_type || it.type || '',
             message: it.message || '',
             product_category: it.product_category || '',
@@ -1191,6 +1260,90 @@ export default {
       const n = Number(this.qty)
       this.qty = isNaN(n) ? 1 : Math.max(1, Math.floor(n))
     },
+    /**
+     * 处理 H5 长度输入框的实时输入，并同步触发上限校验。
+     * @param {Object} e 输入事件对象
+     * @param {Object} e.detail 输入事件详情
+     * @param {string|number} e.detail.value 当前输入值
+     * @returns {void}
+     * @example
+     * onSpecLengthInput({ detail: { value: '3.5' } })
+     */
+    onSpecLengthInput(e) {
+      const value = e?.detail?.value ?? this.specLength
+      this.specLength = value
+      this.validateSpecLengthLimit(value)
+    },
+    /**
+     * 将长度限制原始值解析为数值。
+     * @param {string|number} value 长度限制原始值
+     * @returns {number|null} 解析成功返回数值，失败返回 null
+     * @example
+     * const n = this.parseLengthLimitValue('3.5m')
+     */
+    parseLengthLimitValue(value) {
+      const s = String(value ?? '').trim()
+      if (!s) return null
+      const matched = s.match(/\d+(\.\d+)?/g)
+      if (!matched || !matched.length) return null
+      const n = Number(matched[0])
+      return isNaN(n) ? null : n
+    },
+    /**
+     * 获取当前规格的长度上下限（兼容后端不同字段命名）。
+     * @param {Object|null} spec 当前规格对象
+     * @returns {{min:number|null,max:number|null,minText:string,maxText:string}} 规格长度区间
+     * @example
+     * const limits = this.getSpecLengthLimitRange(this.selectedSpec)
+     */
+    getSpecLengthLimitRange(spec) {
+      const parse = (v) => this.parseLengthLimitValue(v)
+      const minRaw = [spec?.min_length, spec?.min_specification, spec?.specification_min, spec?.length_min, spec?.minimum_length].find(v => String(v ?? '').trim() !== '')
+      const maxRaw = spec?.specification
+      const min = parse(minRaw)
+      const max = parse(maxRaw)
+      return {
+        min: (typeof min === 'number' && !isNaN(min)) ? min : null,
+        max: (typeof max === 'number' && !isNaN(max)) ? max : null,
+        minText: (minRaw !== undefined && minRaw !== null && String(minRaw).trim() !== '') ? String(minRaw) : ((min === null) ? '' : String(min)),
+        maxText: (maxRaw !== undefined && maxRaw !== null && String(maxRaw).trim() !== '') ? String(maxRaw) : ((max === null) ? '' : String(max))
+      }
+    },
+    /**
+     * 校验长度是否在当前规格限制区间内，并维护输入框右上角提示气泡。
+     * @param {string|number} rawLength 用户输入的长度原始值
+     * @returns {boolean} true 表示合法，false 表示不合法
+     * @example
+     * const ok = this.validateSpecLengthLimit('5')
+     */
+    validateSpecLengthLimit(rawLength) {
+      const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
+      if (!spec || Number(spec.has_length) !== 1) {
+        this.lengthLimitTip = ''
+        return true
+      }
+      const lengthNum = String(rawLength ?? '').replace(/[^0-9.]/g, '')
+      if (!lengthNum) {
+        this.lengthLimitTip = ''
+        return true
+      }
+      const lengthVal = Number(lengthNum)
+      if (isNaN(lengthVal)) {
+        this.lengthLimitTip = ''
+        return true
+      }
+      const limits = this.getSpecLengthLimitRange(spec)
+      if (limits.min !== null && lengthVal < limits.min) {
+        this.lengthLimitTip = '当前长度最短不得少于' + (limits.minText || limits.min)
+        return false
+      }
+      if (limits.max !== null && lengthVal > limits.max) {
+        this.lengthLimitTip = '长度不能超过' + (limits.maxText || limits.max)
+        return false
+      }
+      this.lengthLimitTip = ''
+      return true
+    },
     addToCartWithQty() {
       if (!this.ensureLoggedIn()) return
       const chosen = (this.roomName || '').trim()
@@ -1208,13 +1361,7 @@ export default {
       }
 
       const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
-      if (spec && spec.specification && lengthVal) {
-        const max = parseFloat(spec.specification)
-        if (!isNaN(max) && lengthVal > max) {
-          uni.showModal({ title: '提示', content: '长度不能超过 ' + spec.specification, showCancel: false })
-          return
-        }
-      }
+      if (!this.validateSpecLengthLimit(lengthNum || this.specLength)) return
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
       const q = Math.max(1, Number(this.qty || 1))
@@ -1336,6 +1483,7 @@ export default {
     },
 
     onRoomSelect(room) {
+      this.hasUserInteracted = true
       if (this.roomSelectorMode === 'addr') {
         if (room && room.raw) {
           this.selectedAddress = room.raw
@@ -1386,6 +1534,7 @@ export default {
         if (res && res.success) {
           const id = (res && res.data && (res.data.addresses_id || res.data.id)) || ''
           const item = { id, receiver: data.receiver, phone: data.phone, province: data.province, city: data.city, district: data.district, detail_address: data.detail_address, is_default: data.is_default === 1 }
+          this.hasUserInteracted = true
           this.addresses = [item, ...this.addresses]
           this.selectedAddress = item
           try { uni.setStorageSync('selected_address_id', id) } catch (e) { }
@@ -1415,12 +1564,14 @@ export default {
       const lengthVal = lengthNum ? Number(lengthNum) : undefined
       const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
 
-      if (spec && spec.specification && lengthVal) {
-        const max = parseFloat(spec.specification)
-        if (!isNaN(max) && lengthVal > max) {
-          uni.showModal({ title: '提示', content: '长度不能超过 ' + spec.specification, showCancel: false })
-          return
-        }
+      const limits = this.getSpecLengthLimitRange(spec)
+      if (lengthVal && limits.min !== null && lengthVal < limits.min) {
+        uni.showToast({ title: '当前长度最短不得少于' + (limits.minText || limits.min), icon: 'none' })
+        return
+      }
+      if (lengthVal && limits.max !== null && lengthVal > limits.max) {
+        uni.showToast({ title: '长度不能超过' + (limits.maxText || limits.max), icon: 'none' })
+        return
       }
 
       const pid = spec ? spec.product_id : (this.product?.id || '')
@@ -1455,24 +1606,6 @@ export default {
       this.loadAddresses()
     },
     closeMpRoomSheet() { this.roomSelectorVisible = false; this.lockScroll = false },
-    evaluateFormula(formula, context) {
-      try {
-        const raw = String(formula || '')
-        if (!raw) return null
-        if (!/^[0-9+\-*/().\s_a-zA-Z]+$/.test(raw)) return null
-        const expr = raw.replace(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g, (key) => {
-          if (Object.prototype.hasOwnProperty.call(context, key)) {
-            const v = Number(context[key])
-            return isNaN(v) ? '0' : String(v)
-          }
-          return '0'
-        })
-        if (!/^[0-9+\-*/().\s]+$/.test(expr)) return null
-        const val = Function(`"use strict"; return (${expr})`)()
-        if (typeof val !== 'number' || isNaN(val)) return null
-        return val
-      } catch (e) { return null }
-    },
     formatPriceWithSymbol(val) {
       try {
         if (val === '-' || val === '—') return '-'
@@ -2302,6 +2435,47 @@ export default {
   flex: none;
   width: 480rpx;
   max-width: none;
+}
+
+.pd-field-length {
+  overflow: visible;
+}
+
+.length-input-wrap {
+  position: relative;
+  flex: none;
+  width: 480rpx;
+}
+
+.length-input-wrap .pd-input {
+  width: 100%;
+}
+
+.length-limit-bubble {
+  position: absolute;
+  right: 0;
+  top: -52rpx;
+  max-width: 100%;
+  padding: 6rpx 14rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.2;
+  color: #ffffff;
+  background: #ff4d4f;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.length-limit-bubble::after {
+  content: '';
+  position: absolute;
+  right: 16rpx;
+  bottom: -10rpx;
+  width: 0;
+  height: 0;
+  border-left: 8rpx solid transparent;
+  border-right: 8rpx solid transparent;
+  border-top: 10rpx solid #ff4d4f;
 }
 
 /* 统一 Label 宽度与两端对齐 */
