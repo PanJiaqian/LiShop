@@ -18,25 +18,24 @@
                       v-if="isVideo(src)"
                       :id="i === current ? 'pd-video' : ('pd-video-' + i)"
                       class="pd-main"
-                      :src="i === current ? videoSrc : src"
+                      :src="getH5VideoRenderSrc(src, i)"
                       :poster="product.image || '/static/logo.png'"
                       :controls="true"
                       :autoplay="false"
                       playsinline
                       webkit-playsinline
-                      crossorigin="anonymous"
                       object-fit="contain"
                       :muted="true"
                       @play="pauseCarousel"
                       @ended="onVideoEnded"
                     />
-                    <image v-else class="pd-main" :src="src" mode="aspectFit" @click="previewCurrentImage" />
+                    <image v-else class="pd-main" :src="normalizeMediaUrl(src)" mode="aspectFit" @click="previewCurrentImage" />
                   </swiper-item>
                 </swiper>
                 <view class="pd-thumbs">
                   <view v-for="(src, i) in images" :key="i" class="pd-thumb" :class="{ active: i === current }"
                     @click="current = i" style="position: relative; overflow: hidden;">
-                    <image :src="isVideo(src) ? (product.image || '/static/logo.png') : src" mode="aspectFill"
+                    <image :src="isVideo(src) ? (product.image || '/static/logo.png') : normalizeMediaUrl(src)" mode="aspectFill"
                       style="width: 100%; height: 100%; display: block;" />
                     <view v-if="isVideo(src)"
                       style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
@@ -204,9 +203,9 @@
       <swiper class="cover" indicator-dots :current="current" :autoplay="false" circular interval="3000" @change="onSwiperChange">
         <swiper-item v-for="(item, index) in images" :key="index">
           <video
-            v-if="isVideo(item)"
+            v-if="isPlayableVideo(item)"
             :id="index === current ? 'mp-video' : ('mp-video-' + index)"
-            :src="item"
+            :src="getMpVideoRenderSrc(item)"
             controls
             style="width: 100%; height: 100%;"
             object-fit="contain"
@@ -214,7 +213,14 @@
             @play="pauseCarousel"
             @ended="onVideoEnded"
           ></video>
-          <image v-else :src="item" mode="aspectFill" style="width: 100%; height: 100%;" @click="previewMpImage(item)" />
+          <view v-else-if="isVideo(item)" class="cover unsupported-video" @click="handleUnsupportedVideo(item)">
+            <image :src="product.image || '/static/logo.png'" mode="aspectFit" style="width: 100%; height: 100%;" />
+            <view class="unsupported-video-mask">
+              <text class="unsupported-video-icon">▶</text>
+              <text class="unsupported-video-text">当前端暂不支持该视频格式播放</text>
+            </view>
+          </view>
+          <image v-else :src="normalizeMediaUrl(item)" mode="aspectFill" style="width: 100%; height: 100%;" @click="previewMpImage(item)" />
         </swiper-item>
       </swiper>
       <view class="info mp-info-spacing">
@@ -391,11 +397,9 @@ export default {
     getProductDetail({ available_product_id: id })
       .then((res) => {
         const d = res?.data || {}
-        const clean = (u) => typeof u === 'string' ? u.replace(/`/g, '').trim() : ''
-        const arr = (x) => Array.isArray(x) ? x.map(clean).filter(Boolean) : []
-        const main = arr(d.main_image)
-        const videos = arr(d.video_url)
-        const detailImgs = arr(d.images)
+        const main = this.collectMediaUrls(d.main_image)
+        const videos = this.collectMediaUrls(d.video, d.video_url)
+        const detailImgs = this.collectMediaUrls(d.images)
         const price = Number(d.price ?? 0) || 0
         const base = {
           id: d.available_product_id || id,
@@ -404,7 +408,7 @@ export default {
           sales: 0,
           type: d.type || d.product_type || '',
           comment: d.comment || '',
-          shipping_origin: clean(d.shipping_origin) || '',
+          shipping_origin: this.normalizeMediaUrl(d.shipping_origin) || '',
           main_media: [...main, ...videos].length ? [...main, ...videos] : ['/static/logo.png'],
           details_images: detailImgs,
           shipping_time_hours: d.shipping_time_hours || 0,
@@ -428,7 +432,7 @@ export default {
         this.resetCarouselTimer()
         this.$nextTick(() => {
           const src = this.currentImage
-          if (this.isVideo(src)) {
+          if (this.isPlayableVideo(src)) {
             this.lockCarousel = true
             this.stopCarousel()
             try {
@@ -448,7 +452,7 @@ export default {
         this.resetCarouselTimer()
         this.$nextTick(() => {
           const src = this.currentImage
-          if (this.isVideo(src)) {
+          if (this.isPlayableVideo(src)) {
             this.lockCarousel = true
             this.stopCarousel()
             try {
@@ -522,10 +526,8 @@ export default {
     videoSrc() {
       const src = this.currentImage
       if (!this.isVideo(src)) return ''
-      if (src.includes('.m3u8')) return ''
-      const hasQuery = src.includes('?')
-      const t = Date.now()
-      return hasQuery ? (src + '&t=' + t) : (src + '?t=' + t)
+      if (this.isM3u8Video(src)) return ''
+      return this.withCacheBust(src)
     },
     selectedSpec() {
       return (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
@@ -595,7 +597,7 @@ export default {
     ,
     current(val) {
       const src = (this.images || [])[val]
-      if (this.isVideo(src)) {
+      if (this.isPlayableVideo(src)) {
         this.$nextTick(() => {
           try {
             const ctx1 = uni.createVideoContext('pd-video', this)
@@ -811,22 +813,20 @@ export default {
         this.hls.destroy()
         this.hls = null
       }
-      if (!src || !this.isVideo(src)) return
-      if (!src.includes('.m3u8')) return
+      const normalizedSrc = this.normalizeMediaUrl(src)
+      if (!normalizedSrc || !this.isM3u8Video(normalizedSrc)) return
 
       this.$nextTick(() => {
         let el = document.querySelector('#pd-video video') || document.querySelector('#pd-video')
         if (el && el.tagName !== 'VIDEO') el = el.querySelector('video')
         if (!el) return
-        try { el.setAttribute('crossorigin', 'anonymous') } catch (e) { }
 
-        if (window.Hls && Hls.isSupported()) {
-          this.hls = new Hls()
-          const hasQuery = src.includes('?')
-          const bust = hasQuery ? (src + '&t=' + Date.now()) : (src + '?t=' + Date.now())
+        if (window.Hls && window.Hls.isSupported()) {
+          this.hls = new window.Hls()
+          const bust = this.withCacheBust(normalizedSrc)
           this.hls.loadSource(bust)
           this.hls.attachMedia(el)
-          this.hls.on(Hls.Events.ERROR, (event, data) => {
+          this.hls.on(window.Hls.Events.ERROR, (event, data) => {
             if (data && data.fatal) {
               try { this.hls.destroy() } catch (e) { }
               this.hls = null
@@ -841,22 +841,167 @@ export default {
             }
           })
         } else if (el && el.canPlayType && el.canPlayType('application/vnd.apple.mpegurl')) {
-          const hasQuery = src.includes('?')
-          el.src = hasQuery ? (src + '&t=' + Date.now()) : (src + '?t=' + Date.now())
+          el.src = this.withCacheBust(normalizedSrc)
         }
       })
       // #endif
     },
+    /**
+     * 规范化媒体地址，统一去除空白、引号与无效占位值。
+     * @param {string|number|null|undefined} raw 原始媒体地址
+     * @returns {string} 清洗后的媒体地址
+     * @example
+     * const url = this.normalizeMediaUrl(' `https://a.com/demo.mp4` ')
+     */
+    normalizeMediaUrl(raw) {
+      try {
+        let s = String(raw ?? '').trim()
+        s = s.replace(/`/g, '').trim()
+        s = s.replace(/^"+|"+$/g, '')
+        s = s.replace(/^'+|'+$/g, '')
+        s = s.trim()
+        if (!s) return ''
+        const lower = s.toLowerCase()
+        if (lower === 'null' || lower === 'undefined' || lower === 'none') return ''
+        return s
+      } catch (e) {
+        return ''
+      }
+    },
+    /**
+     * 汇总并清洗媒体地址，兼容单值、数组及多个字段来源。
+     * @param {...any} sources 可能来自后端不同字段的媒体数据
+     * @returns {string[]} 清洗后的媒体地址数组
+     * @example
+     * const videos = this.collectMediaUrls(data.video, data.video_url)
+     */
+    collectMediaUrls(...sources) {
+      const result = []
+      const seen = new Set()
+      ;(sources || []).forEach((source) => {
+        const list = Array.isArray(source) ? source : [source]
+        list.forEach((item) => {
+          const url = this.normalizeMediaUrl(item)
+          if (url && !seen.has(url)) {
+            seen.add(url)
+            result.push(url)
+          }
+        })
+      })
+      return result
+    },
+    /**
+     * 为媒体地址追加时间戳，避免浏览器或容器读取旧缓存。
+     * @param {string} url 原始媒体地址
+     * @returns {string} 带时间戳的媒体地址
+     * @example
+     * const src = this.withCacheBust('https://a.com/demo.mp4')
+     */
+    withCacheBust(url) {
+      const normalized = this.normalizeMediaUrl(url)
+      if (!normalized) return ''
+      const t = Date.now()
+      return normalized.includes('?') ? (normalized + '&t=' + t) : (normalized + '?t=' + t)
+    },
+    /**
+     * 判断当前运行环境是否为 H5。
+     * @returns {boolean} H5 返回 true，其它端返回 false
+     * @example
+     * if (this.isH5Platform()) { ... }
+     */
+    isH5Platform() {
+      try {
+        return typeof window !== 'undefined'
+      } catch (e) {
+        return false
+      }
+    },
+    /**
+     * 判断媒体地址是否为 m3u8 视频。
+     * @param {string} src 媒体地址
+     * @returns {boolean} 是否为 m3u8 视频
+     * @example
+     * const isHls = this.isM3u8Video(url)
+     */
+    isM3u8Video(src) {
+      const s = this.normalizeMediaUrl(src).toLowerCase()
+      return /\.m3u8(\?.*)?$/.test(s)
+    },
+    /**
+     * 判断媒体地址是否为可直接原生播放的 mp4 视频。
+     * @param {string} src 媒体地址
+     * @returns {boolean} 是否为 mp4 视频
+     * @example
+     * const isMp4 = this.isMp4Video(url)
+     */
+    isMp4Video(src) {
+      const s = this.normalizeMediaUrl(src).toLowerCase()
+      return /\.mp4(\?.*)?$/.test(s)
+    },
     isVideo(src) {
-      if (!src) return false
-      return src.includes('.mp4') || src.includes('.m3u8')
+      const s = this.normalizeMediaUrl(src).toLowerCase()
+      if (!s) return false
+      return /\.(mp4|m3u8)(\?.*)?$/.test(s)
+    },
+    /**
+     * 判断当前端是否可以直接播放该视频。
+     * - H5 端支持 mp4 与 m3u8。
+     * - 非 H5 端仅直接播放 mp4，m3u8 交由降级提示处理。
+     * @param {string} src 媒体地址
+     * @returns {boolean} 当前端是否可直接播放
+     * @example
+     * if (this.isPlayableVideo(url)) { ... }
+     */
+    isPlayableVideo(src) {
+      if (!this.isVideo(src)) return false
+      if (this.isH5Platform()) return true
+      return this.isMp4Video(src)
+    },
+    /**
+     * 获取 H5 端视频节点使用的渲染地址。
+     * @param {string} src 媒体地址
+     * @param {number} index 当前轮播项索引
+     * @returns {string} 可用于 video 标签的 src
+     * @example
+     * const renderSrc = this.getH5VideoRenderSrc(url, 0)
+     */
+    getH5VideoRenderSrc(src, index) {
+      const normalized = this.normalizeMediaUrl(src)
+      if (!this.isVideo(normalized)) return ''
+      if (this.isM3u8Video(normalized)) return ''
+      return normalized
+    },
+    /**
+     * 获取非 H5 端视频节点使用的渲染地址。
+     * @param {string} src 媒体地址
+     * @returns {string} 可用于 video 标签的 src
+     * @example
+     * const renderSrc = this.getMpVideoRenderSrc(url)
+     */
+    getMpVideoRenderSrc(src) {
+      const normalized = this.normalizeMediaUrl(src)
+      if (!this.isMp4Video(normalized)) return ''
+      return normalized
+    },
+    /**
+     * 处理当前端无法直接播放的视频格式提示。
+     * @param {string} src 媒体地址
+     * @returns {void}
+     * @example
+     * this.handleUnsupportedVideo(url)
+     */
+    handleUnsupportedVideo(src) {
+      const tip = this.isM3u8Video(src)
+        ? '当前端暂不支持 m3u8 直播流播放，请优先使用 MP4 视频'
+        : '当前视频格式暂不支持播放'
+      uni.showToast({ title: tip, icon: 'none' })
     },
     onSwiperChange(e) {
       try {
         const idx = (e && e.detail && typeof e.detail.current === 'number') ? e.detail.current : 0
         this.current = idx
         const src = (this.images || [])[idx]
-        if (this.isVideo(src)) {
+        if (this.isPlayableVideo(src)) {
           this.lockCarousel = true
           this.stopCarousel()
           this.$nextTick(() => {
@@ -1219,7 +1364,10 @@ export default {
     },
     previewMpImage(item) {
       try {
-        if (this.isVideo(item)) return
+        if (this.isVideo(item)) {
+          if (!this.isPlayableVideo(item)) this.handleUnsupportedVideo(item)
+          return
+        }
         const arr = (this.images || []).filter(u => !this.isVideo(u))
         const current = arr.includes(item) ? item : (arr[0] || '')
         if (!current) return
@@ -1687,6 +1835,34 @@ export default {
   width: 100%;
   height: 500rpx;
   background: #2c2c2c;
+}
+
+.unsupported-video {
+  position: relative;
+  overflow: hidden;
+}
+
+.unsupported-video-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx;
+}
+
+.unsupported-video-icon {
+  color: #ffffff;
+  font-size: 48rpx;
+}
+
+.unsupported-video-text {
+  color: #ffffff;
+  font-size: 24rpx;
+  text-align: center;
 }
 
 .info {
