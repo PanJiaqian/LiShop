@@ -1,0 +1,121 @@
+
+.page {
+  padding-bottom: 100rpx;
+  background-color: #1a1a1a;
+  min-height: 100vh;
+}
+.page {
+  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed; */
+  /* background-size: cover; */
+  background-color: #1a1a1a;
+}
+.address-list {
+  padding: 20rpx;
+}
+.address-item {
+  background-color: #2c2c2c;
+  border-radius: 10rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.info {
+  flex: 1;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+.name {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-right: 20rpx;
+  color: #ffffff;
+}
+.phone {
+  color: #aaaaaa;
+  font-size: 28rpx;
+  margin-right: 20rpx;
+}
+.tag {
+  background-color: #e1251b;
+  color: #fff;
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 4rpx;
+  margin-left: 10rpx;
+}
+.address-detail {
+  color: #dddddd;
+  font-size: 28rpx;
+  line-height: 1.4;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  margin-left: 20rpx;
+  align-items: flex-end;
+}
+.btn-edit,
+.btn-delete {
+  display: inline-block;
+  padding: 10rpx 30rpx;
+  border-radius: 30rpx;
+  border: 1rpx solid #444444;
+  margin-bottom: 10rpx;
+  text-align: center;
+  font-size: 26rpx;
+}
+.btn-edit {
+  color: #dddddd;
+  border-color: #444444;
+}
+.btn-delete {
+  color: #e1251b;
+  border-color: #e1251b;
+  margin-top: 10rpx;
+}
+.empty-state {
+  padding: 100rpx;
+  text-align: center;
+  color: #777777;
+}
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx;
+  background-color: #2c2c2c;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.3);
+}
+.btn-add {
+  background-color: #e1251b;
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 32rpx;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

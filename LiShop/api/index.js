@@ -892,7 +892,7 @@ export function updateAddress(options = {}) {
 
 export function clearCart(options = {}) {
   const { body = {}, token } = options
-  const url = `${BASE_URL}/api/cart`
+  const url = `${BASE_URL}/api/cart/items/clear`
 
   return new Promise((resolve, reject) => {
     const auth = getBearer(token)

@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "分类商品",
+  "enablePullDownRefresh": true,
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
+  "usingComponents": {
+    "product-card": "../../components/ProductCard",
+    "skeleton": "../../components/Skeleton"
+  }
+}

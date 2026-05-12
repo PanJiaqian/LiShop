@@ -72,8 +72,11 @@
             </view>
           </view>
           <view class="note-section" style="margin-top: 20rpx;">
-            <view class="note-label" style="font-size: 24rpx; color: #434343; font-weight: 600;">订单备注</view>
-            <input v-model="orderNote" placeholder="填写订单备注信息" placeholder-style="color:#999" style="width: 95%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx; background: #fff; color: #000;" />
+            <view style="display:flex; align-items:center; justify-content:space-between;">
+              <view class="note-label" style="font-size: 24rpx; color: #434343; font-weight: 600;">订单备注</view>
+              <text style="font-size: 22rpx; color: #999;">{{ orderNoteCount }}/250</text>
+            </view>
+            <input v-model="orderNote" maxlength="250" placeholder="填写订单备注信息" placeholder-style="color:#999" style="width: 95%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx; background: #fff; color: #000;" @input="onOrderNoteInput" />
           </view>
 
           <view v-if="selectedCount > 0" class="sum-body">
@@ -129,8 +132,11 @@
       <button size="mini" class="bar-btn" @click="openAddressPicker">选择收货地址</button>
     </view>
     <view class="mp-note-bar" style="margin: 16rpx 20rpx;">
-      <text style="font-size: 26rpx; color: #fff;">备注</text>
-      <input v-model="mpOrderNote" placeholder="填写订单备注" placeholder-style="color:#999" style="width: 100%; padding: 12rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx; background: #fff; color: #000;" />
+      <view style="display:flex; align-items:center; justify-content:space-between;">
+        <text style="font-size: 26rpx; color: #fff;">备注</text>
+        <text style="font-size: 22rpx; color: #999;">{{ mpOrderNoteCount }}/250</text>
+      </view>
+      <input v-model="mpOrderNote" maxlength="250" placeholder="填写订单备注" placeholder-style="color:#999" style="box-sizing: border-box; width: 100%; height: 72rpx; line-height: 72rpx; font-size: 28rpx; padding: 0 20rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx; background: #fff; color: #000;" @input="onMpOrderNoteInput" />
     </view>
     
     <view class="mp-note-bar" style="margin: 16rpx 20rpx;" v-if="availableCoupons.length > 0">
@@ -142,7 +148,7 @@
     <view v-if="cart.length" class="list">
       <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
         <view class="group-header">
-          <text class="room mp-room" @click="openRoomPopup(grp)">{{ grp.name }} ▾</text>
+          <text class="room mp-room">{{ grp.name }}</text>
         </view>
         <view class="item" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock }">
           <view class="out-stock-mask" v-if="it.isOutOfStock"></view>
@@ -182,7 +188,7 @@
 
     <view class="footer">
       <view class="actions-left" @click="toggleAll">
-        <view class="chk btn-style">
+        <view class="chk btn-style mp-select-all">
           <view class="chk-ico" :class="{ on: isAllSelected }"></view>
           <text class="chk-txt">全选</text>
         </view>
@@ -192,24 +198,9 @@
         <view v-if="couponDiscount > 0" style="color:#ff4d4f; font-size:20rpx;">已抵扣 ¥{{ Number(couponDiscount).toFixed(2) }}</view>
       </view>
       <view class="actions">
-        <view class="footer-btn" @click="clearRemote">清空</view>
+        <view class="footer-btn" @click="removeSelected">删除</view>
         <!-- <view class="footer-btn" @click="handleExportExcel">导出Excel</view> -->
         <view class="footer-btn" :class="{ disabled: selectedCount === 0 }" @click="checkout">去结算({{ selectedCount }})</view>
-      </view>
-    </view>
-
-    <!-- 房间选择弹窗 -->
-    <view v-if="showRoomModal" class="spec-modal-mask" @click="closeRoomPopup">
-      <view class="spec-modal room-modal" @click.stop>
-        <view class="spec-header">
-          <text class="spec-title">选择房间</text>
-          <view class="spec-close" @click="closeRoomPopup">✕</view>
-        </view>
-        <scroll-view scroll-y class="spec-body">
-          <view class="spec-list">
-             <text v-for="r in rooms" :key="r.id" class="spec-opt" :class="{ active: targetGroup && targetGroup.name === r.name }" @click="selectRoom(r)">{{ r.name }}</text>
-          </view>
-        </scroll-view>
       </view>
     </view>
     <!-- #endif -->
@@ -291,6 +282,11 @@
       </view>
     </view>
     
+    <!-- 自定义高对比度 Toast -->
+    <view v-if="customToastVisible" class="custom-toast">
+      <text class="custom-toast-text">{{ customToastMessage }}</text>
+    </view>
+    
     <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
   </view>
 </template>
@@ -298,14 +294,14 @@
 <script>
 /**
  * 购物车页面模块
- * - 拉取/展示购物车条目，支持数量修改、删除、清空等操作
- * - 按房间分组并支持房间/地址选择，创建订单与导出订单数据
+ * - 拉取/展示购物车条目，支持数量修改、删除等操作
+ * - 按房间分组展示并支持地址选择、创建订单与导出订单数据
  */
 import FloatingNav from '@/components/FloatingNav.vue'
 import RoomSelector from '@/components/RoomSelector.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
-import { getCartItems, deleteCartItem, clearCart, updateCartItem, getRooms, calculateCartPrice, createOrderByIds, exportOrderExcel, getAddresses, addAddress, calculateCoupon, getUserCoupons } from '../../api/index.js'
+import { getCartItems, deleteCartItem, updateCartItem, calculateCartPrice, createOrderByIds, exportOrderExcel, getAddresses, addAddress, calculateCoupon, getUserCoupons } from '../../api/index.js'
 export default {
   components: { FloatingNav, RoomSelector, Skeleton, LoginPrompt },
   data() {
@@ -314,10 +310,6 @@ export default {
       cart: [],
       showSpecModal: false,
       editingItem: {},
-      // 房间选择相关
-      rooms: [],
-      showRoomModal: false,
-      targetGroup: null,
       addresses: [],
       selectedAddress: null,
       showAddressSelector: false,
@@ -334,7 +326,11 @@ export default {
       availableCoupons: [],
       selectedCouponRecordId: '',
       showCouponModal: false,
-      _couponModalMousedownTarget: null
+      _couponModalMousedownTarget: null,
+      _noteLimitMax: 250,
+      customToastVisible: false,
+      customToastMessage: '',
+      _customToastTimer: null
     }
   },
   computed: {
@@ -346,6 +342,8 @@ export default {
         const validItems = this.cart.filter(it => !it.isOutOfStock)
         return validItems.length > 0 && validItems.every(it => it.selected)
     },
+    orderNoteCount() { return Array.from(this.orderNote || '').length },
+    mpOrderNoteCount() { return Array.from(this.mpOrderNote || '').length },
     selectedThumbs() { return this.cart.filter(it => it.selected).slice(0, 4).map(it => it.image || '/static/logo.png') },
     // officialReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.officialReduce || 0) : 0), 0) },
     // redReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.redReduce || 0) : 0), 0) },
@@ -373,6 +371,14 @@ export default {
         console.error('groups computed error', e)
         return []
       }
+    }
+  },
+  watch: {
+    mpOrderNote(val) {
+      this._applyNoteLimit('mpOrderNote', val)
+    },
+    orderNote(val) {
+      this._applyNoteLimit('orderNote', val)
     }
   },
   onShow() {
@@ -423,6 +429,26 @@ export default {
         this.showCouponModal = false;
       }
       this._couponModalMousedownTarget = null;
+    },
+    onOrderNoteInput(e) {
+      const val = e.detail.value || e.target.value || ''
+      if (Array.from(val).length >= this._noteLimitMax) {
+        this.showCustomToast(`最多输入${this._noteLimitMax}个字哦`)
+      }
+    },
+    onMpOrderNoteInput(e) {
+      const val = e.detail.value || e.target.value || ''
+      if (Array.from(val).length >= this._noteLimitMax) {
+        this.showCustomToast(`最多输入${this._noteLimitMax}个字哦`)
+      }
+    },
+    showCustomToast(msg) {
+      this.customToastMessage = msg
+      this.customToastVisible = true
+      if (this._customToastTimer) clearTimeout(this._customToastTimer)
+      this._customToastTimer = setTimeout(() => {
+        this.customToastVisible = false
+      }, 2000)
     },
       fetchCoupons() {
         let token = ''
@@ -769,28 +795,6 @@ export default {
         uni.showToast({ title: '本地删除', icon: 'none' })
       })
     },
-    clearRemote() {
-      if (!this.ensureLoggedIn()) return
-      let token = ''
-      try {
-        const u = uni.getStorageSync('user') || null
-        token = (u && (u.token || (u.data && u.data.token))) || ''
-      } catch (e) {}
-      clearCart({ token })
-        .then((res) => {
-          if (res && res.success) {
-            this.cart = []
-            this.sync()
-            this.fetchSummary()
-            uni.showToast({ title: '已清空', icon: 'success' })
-          } else {
-            uni.showToast({ title: (res && res.message) ? res.message : '清空失败', icon: 'none' })
-          }
-        })
-        .catch(() => {
-          uni.showToast({ title: '清空失败', icon: 'none' })
-        })
-    },
     toggleById(id) { 
         const i = this.findIndexById(id); 
         if (i >= 0) { 
@@ -934,61 +938,6 @@ export default {
     closeSpecPopup() {
       this.showSpecModal = false
       this.editingItem = {}
-    },
-    // 房间选择逻辑
-    loadRooms() {
-      getRooms().then(res => {
-        const items = Array.isArray(res?.data?.items) ? res.data.items : []
-        this.rooms = items.map(r => ({
-          id: r.room_id,
-          name: r.name
-        }))
-      }).catch(err => {
-        console.error('Get rooms failed', err)
-        this.rooms = (uni.getStorageSync('rooms') || []).map(n => ({ id: n, name: n }))
-      })
-    },
-    openRoomPopup(group) {
-      this.targetGroup = group
-      this.showRoomModal = true
-      if (this.rooms.length === 0) {
-        this.loadRooms()
-      }
-    },
-    closeRoomPopup() {
-      this.showRoomModal = false
-      this.targetGroup = null
-    },
-    selectRoom(room) {
-      if (!this.targetGroup || !this.targetGroup.items) return
-      const items = this.targetGroup.items
-      // 批量更新该组下的商品到新房间
-      // 由于API是单个更新，循环调用（优化：如果有批量接口更好，这里只能循环）
-
-      uni.showLoading({ title: '移动中' })
-      const promises = items.map(item => {
-        return updateCartItem({
-          id: item.id,
-          room_id: room.id,
-          product_id: item.productId,
-          length: (Number(item.length) > 0 ? item.length : 0),
-          quantity: item.quantity,
-          color: item.color,
-          note: item.note
-        })
-      })
-
-      Promise.all(promises).then(() => {
-        uni.hideLoading()
-        uni.showToast({ title: '已移动到 ' + room.name, icon: 'success' })
-        this.closeRoomPopup()
-        this.load() // 重新加载购物车
-      }).catch(() => {
-        uni.hideLoading()
-        uni.showToast({ title: '移动部分失败', icon: 'none' })
-        this.closeRoomPopup()
-        this.load()
-      })
     }
   }
 }
@@ -1239,6 +1188,13 @@ export default {
   font-size: 26rpx;
   line-height: 1;
 }
+
+/* #ifndef H5 */
+.chk.btn-style.mp-select-all {
+  background: #e1251b;
+  border-color: #e1251b;
+}
+/* #endif */
 
 .footer .actions {
   display: flex;
@@ -1921,7 +1877,7 @@ export default {
   color: #fff;
   padding: 16rpx;
   border-radius: 8rpx;
-  display: block;
+  display: inline-block;
   font-size: 30rpx;
   font-weight: 600;
 }
@@ -1970,4 +1926,26 @@ export default {
   display: none;
 }
 /* #endif */
+
+/* 自定义 Toast 样式 */
+.custom-toast {
+  position: fixed;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #e1251b; /* 品牌红底色，高对比度 */
+  color: #ffffff;
+  padding: 24rpx 48rpx;
+  border-radius: 12rpx;
+  z-index: 99999;
+  box-shadow: 0 8rpx 24rpx rgba(225, 37, 27, 0.4);
+  text-align: center;
+  pointer-events: none;
+}
+
+.custom-toast-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
 </style>
