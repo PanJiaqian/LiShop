@@ -27,7 +27,7 @@
     </scroll-view>
 
     <view class="grid2">
-      <view class="grid2-item" v-for="(p, idx) in items" :key="idx">
+      <view class="grid2-item" v-for="(p, idx) in items" :key="p.id || idx">
         <ProductCard :product="p" />
       </view>
     </view>

@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const utils_productPreview = require("../../utils/product-preview.js");
 const common_assets = require("../../common/assets.js");
 const RoomSelector = () => "../../components/RoomSelector.js";
 const FloatingNav = () => "../../components/FloatingNav.js";
@@ -10,107 +11,19 @@ const LoginPrompt = () => "../../components/LoginPrompt.js";
 const _sfc_main = {
   components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
   data() {
-    return { hasUserInteracted: false, hls: null, product: null, shareProductId: "", current: 0, qty: 1, specTemp: "", specLength: "", lengthLimitTip: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false, coupons: [], selectedCoupon: null, couponSheetVisible: false, packageFeeByProductId: {}, realTimePriceData: null };
+    return { hasUserInteracted: false, hls: null, product: null, pageLoading: true, shareProductId: "", current: 0, qty: 1, specTemp: "", specLength: "", lengthLimitTip: "", roomName: "", roomId: "", roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: "", mpLength: "", mpRoom: "", mpQty: 1, mpOrderNote: "", specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: "", selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: "h5", addresses: [], selectedAddress: null, h5OrderNote: "", isFavorite: false, swiperTimer: null, carouselInterval: 3e3, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false, coupons: [], selectedCoupon: null, couponSheetVisible: false, packageFeeByProductId: {}, realTimePriceData: null };
   },
   onLoad(query) {
     const id = decodeURIComponent((query == null ? void 0 : query.id) || "");
+    this.pageLoading = true;
     this.shareProductId = id;
     if (!id) {
-      this.product = { id: "", title: "商品", price: 0, sales: 0, image: "/static/logo.png", images: ["/static/logo.png"] };
+      this.product = { id: "", title: "商品", price: 0, sales: 0, image: "/static/logo.png", images: ["/static/logo.png"], main_media: ["/static/logo.png"], details_images: [] };
+      this.pageLoading = false;
       return;
     }
-    this.fetchCoupons(id);
-    api_index.getProductDetail({ available_product_id: id }).then((res) => {
-      const d = (res == null ? void 0 : res.data) || {};
-      const main = this.collectMediaUrls(d.main_image);
-      const videos = this.collectMediaUrls(d.video, d.video_url);
-      const detailImgs = this.collectMediaUrls(d.images);
-      const price = Number(d.price ?? 0) || 0;
-      const base = {
-        id: d.available_product_id || id,
-        title: d.name || "商品 " + id,
-        price,
-        sales: 0,
-        type: d.type || d.product_type || "",
-        comment: d.comment || "",
-        shipping_origin: this.normalizeMediaUrl(d.shipping_origin) || "",
-        main_media: [...main, ...videos].length ? [...main, ...videos] : ["/static/logo.png"],
-        details_images: detailImgs,
-        shipping_time_hours: d.shipping_time_hours || 0,
-        support_no_reason_return_7d: d.support_no_reason_return_7d || 0,
-        is_free_shipping: d.is_free_shipping || 0,
-        image: main[0] || "/static/logo.png",
-        images: [...main, ...videos].length ? [...main, ...videos] : ["/static/logo.png"]
-      };
-      const childrenUnits = Array.isArray(d.children_units) ? d.children_units : [];
-      const packageFeeByProductId = {};
-      childrenUnits.forEach((item) => {
-        const pid = String((item == null ? void 0 : item.product_id) || "").trim();
-        const fee = (item == null ? void 0 : item.package_fee_info) || null;
-        if (!pid || !fee)
-          return;
-        packageFeeByProductId[pid] = fee;
-      });
-      this.packageFeeByProductId = packageFeeByProductId;
-      this.product = base;
-      this.isFavorite = String(d.is_favorite) === "1" || d.is_favorite === 1 || d.is_favorite === true;
-      this.fetchSpecs(base.id);
-      this.resetCarouselTimer();
-      this.$nextTick(() => {
-        const src = this.currentImage;
-        if (this.isPlayableVideo(src)) {
-          this.lockCarousel = true;
-          this.stopCarousel();
-          try {
-            const ctx1 = common_vendor.index.createVideoContext("pd-video", this);
-            const ctx2 = common_vendor.index.createVideoContext("mp-video", this);
-            if (ctx1 && typeof ctx1.play === "function")
-              ctx1.play();
-            else if (ctx2 && typeof ctx2.play === "function")
-              ctx2.play();
-          } catch (e) {
-          }
-        }
-      });
-    }).catch(() => {
-      this.packageFeeByProductId = {};
-      this.product = { id, title: "商品 " + id, price: 0, sales: 0, shipping_origin: "", image: "/static/logo.png", images: ["/static/logo.png"] };
-      this.fetchSpecs(id);
-      this.resetCarouselTimer();
-      this.$nextTick(() => {
-        const src = this.currentImage;
-        if (this.isPlayableVideo(src)) {
-          this.lockCarousel = true;
-          this.stopCarousel();
-          try {
-            const ctx1 = common_vendor.index.createVideoContext("pd-video", this);
-            const ctx2 = common_vendor.index.createVideoContext("mp-video", this);
-            if (ctx1 && typeof ctx1.play === "function")
-              ctx1.play();
-            else if (ctx2 && typeof ctx2.play === "function")
-              ctx2.play();
-          } catch (e) {
-          }
-        }
-      });
-    });
-  },
-  onShow() {
-    try {
-      const uniAny = common_vendor.index;
-      if (uniAny && typeof uniAny.showShareMenu === "function") {
-        uniAny.showShareMenu({ withShareTicket: true, menus: ["shareAppMessage", "shareTimeline"] });
-        return;
-      }
-    } catch (e) {
-    }
-    try {
-      const wxAny = typeof common_vendor.wx$1 !== "undefined" ? common_vendor.wx$1 : null;
-      if (wxAny && typeof wxAny.showShareMenu === "function") {
-        wxAny.showShareMenu({ withShareTicket: true, menus: ["shareAppMessage", "shareTimeline"] });
-      }
-    } catch (e) {
-    }
+    this.hydratePreviewProduct(id);
+    this.fetchProductDetailData(id);
   },
   created() {
     try {
@@ -325,10 +238,17 @@ const _sfc_main = {
       this.hls.destroy();
       this.hls = null;
     }
+    try {
+      if (this._detailDeferredTimer) {
+        clearTimeout(this._detailDeferredTimer);
+        this._detailDeferredTimer = null;
+      }
+    } catch (e) {
+    }
     this.stopCarousel();
   },
   onShow() {
-    this.loadAddresses();
+    this.showShareMenus();
     try {
       const cont = !!common_vendor.index.getStorageSync("onboarding_continue");
       const sel = common_vendor.index.getStorageSync("onboarding_target_selector") || "";
@@ -363,6 +283,164 @@ const _sfc_main = {
     }
   },
   methods: {
+    /**
+     * 显示当前端支持的分享菜单。
+     * @description
+     * 合并原先分散的 onShow 逻辑，避免生命周期重复定义导致其中一段逻辑失效。
+     * @returns {void}
+     * @example
+     * this.showShareMenus()
+     */
+    showShareMenus() {
+      try {
+        const uniAny = common_vendor.index;
+        if (uniAny && typeof uniAny.showShareMenu === "function") {
+          uniAny.showShareMenu({ withShareTicket: true, menus: ["shareAppMessage", "shareTimeline"] });
+          return;
+        }
+      } catch (e) {
+      }
+      try {
+        const wxAny = typeof common_vendor.wx$1 !== "undefined" ? common_vendor.wx$1 : null;
+        if (wxAny && typeof wxAny.showShareMenu === "function") {
+          wxAny.showShareMenu({ withShareTicket: true, menus: ["shareAppMessage", "shareTimeline"] });
+        }
+      } catch (e) {
+      }
+    },
+    /**
+     * 使用列表页预取缓存快速填充详情页首屏。
+     * @description
+     * 新标签页首次打开时先展示轻量商品数据，减少接口返回前的空白等待。
+     * @param {string} productId 商品 ID
+     * @returns {void}
+     * @example
+     * this.hydratePreviewProduct('1001')
+     */
+    hydratePreviewProduct(productId) {
+      const preview = utils_productPreview.getCachedProductPreview(productId);
+      if (!preview)
+        return;
+      this.product = {
+        id: preview.id || productId,
+        title: preview.title || "商品 " + productId,
+        price: preview.price === "-" ? 0 : Number(preview.price ?? 0) || 0,
+        sales: Number(preview.sales ?? 0) || 0,
+        type: "",
+        comment: "",
+        shipping_origin: "",
+        main_media: Array.isArray(preview.main_media) && preview.main_media.length ? preview.main_media : Array.isArray(preview.images) && preview.images.length ? preview.images : ["/static/logo.png"],
+        details_images: Array.isArray(preview.details_images) ? preview.details_images : [],
+        shipping_time_hours: 0,
+        support_no_reason_return_7d: 0,
+        is_free_shipping: 0,
+        image: preview.image || "/static/logo.png",
+        images: Array.isArray(preview.images) && preview.images.length ? preview.images : ["/static/logo.png"]
+      };
+    },
+    /**
+     * 拉取完整商品详情数据。
+     * @description
+     * 获取后端详情数据后更新首屏展示，并将非首屏必要请求延后到下一帧后执行。
+     * @param {string} productId 商品 ID
+     * @returns {void}
+     * @example
+     * this.fetchProductDetailData('1001')
+     */
+    fetchProductDetailData(productId) {
+      api_index.getProductDetail({ available_product_id: productId }).then((res) => {
+        const d = (res == null ? void 0 : res.data) || {};
+        const main = this.collectMediaUrls(d.main_image);
+        const videos = this.collectMediaUrls(d.video, d.video_url);
+        const detailImgs = this.collectMediaUrls(d.images);
+        const mediaList = [...main, ...videos];
+        const childrenUnits = Array.isArray(d.children_units) ? d.children_units : [];
+        const packageFeeByProductId = {};
+        childrenUnits.forEach((item) => {
+          const pid = String((item == null ? void 0 : item.product_id) || "").trim();
+          const fee = (item == null ? void 0 : item.package_fee_info) || null;
+          if (!pid || !fee)
+            return;
+          packageFeeByProductId[pid] = fee;
+        });
+        this.packageFeeByProductId = packageFeeByProductId;
+        this.product = {
+          id: d.available_product_id || productId,
+          title: d.name || "商品 " + productId,
+          price: Number(d.price ?? 0) || 0,
+          sales: Number(d.order_count ?? 0) || 0,
+          type: d.type || d.product_type || "",
+          comment: d.comment || "",
+          shipping_origin: this.normalizeMediaUrl(d.shipping_origin) || "",
+          main_media: mediaList.length ? mediaList : ["/static/logo.png"],
+          details_images: detailImgs,
+          shipping_time_hours: d.shipping_time_hours || 0,
+          support_no_reason_return_7d: d.support_no_reason_return_7d || 0,
+          is_free_shipping: d.is_free_shipping || 0,
+          image: main[0] || "/static/logo.png",
+          images: mediaList.length ? mediaList : ["/static/logo.png"]
+        };
+        this.isFavorite = String(d.is_favorite) === "1" || d.is_favorite === 1 || d.is_favorite === true;
+        this.fetchSpecs(this.product.id);
+      }).catch(() => {
+        this.packageFeeByProductId = {};
+        if (!this.product) {
+          this.product = { id: productId, title: "商品 " + productId, price: 0, sales: 0, shipping_origin: "", image: "/static/logo.png", images: ["/static/logo.png"], main_media: ["/static/logo.png"], details_images: [] };
+        }
+        this.fetchSpecs(productId);
+      }).finally(() => {
+        this.pageLoading = false;
+        this.resetCarouselTimer();
+        this.$nextTick(() => {
+          this.startMediaAutoplayIfNeeded();
+        });
+        this.deferDetailSideRequests(productId);
+      });
+    },
+    /**
+     * 启动当前轮播项的视频自动播放逻辑。
+     * @description
+     * 仅当当前轮播项是可播放视频时执行，避免重复散落在多个请求回调中。
+     * @returns {void}
+     * @example
+     * this.startMediaAutoplayIfNeeded()
+     */
+    startMediaAutoplayIfNeeded() {
+      const src = this.currentImage;
+      if (!this.isPlayableVideo(src))
+        return;
+      this.lockCarousel = true;
+      this.stopCarousel();
+      try {
+        const ctx1 = common_vendor.index.createVideoContext("pd-video", this);
+        const ctx2 = common_vendor.index.createVideoContext("mp-video", this);
+        if (ctx1 && typeof ctx1.play === "function")
+          ctx1.play();
+        else if (ctx2 && typeof ctx2.play === "function")
+          ctx2.play();
+      } catch (e) {
+      }
+    },
+    /**
+     * 延后加载非首屏必要数据。
+     * @description
+     * 将优惠券与地址请求放到首屏渲染之后，减少新标签页刚打开时的网络竞争。
+     * @param {string} productId 商品 ID
+     * @returns {void}
+     * @example
+     * this.deferDetailSideRequests('1001')
+     */
+    deferDetailSideRequests(productId) {
+      try {
+        if (this._detailDeferredTimer)
+          clearTimeout(this._detailDeferredTimer);
+      } catch (e) {
+      }
+      this._detailDeferredTimer = setTimeout(() => {
+        this.fetchCoupons(productId);
+        this.loadAddresses();
+      }, 120);
+    },
     triggerRealTimePriceCalc(force = false) {
       if (!this.hasUserInteracted && !force)
         return;
@@ -420,7 +498,7 @@ const _sfc_main = {
           }
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/product/index.vue:738", "实时计价失败", err);
+        common_vendor.index.__f__("error", "at pages/product/index.vue:832", "实时计价失败", err);
         this.realTimePriceData = null;
         const errMsg = (err && typeof err.data === "string" ? err.data : "") || err && err.message || "";
         if (errMsg && errMsg.includes("长度")) {
@@ -1399,6 +1477,17 @@ const _sfc_main = {
       });
     },
     loadAddresses() {
+      let token = "";
+      try {
+        const u = common_vendor.index.getStorageSync("user") || null;
+        token = u && (u.token || u.data && u.data.token) || "";
+      } catch (e) {
+      }
+      if (!token) {
+        this.addresses = [];
+        this.selectedAddress = null;
+        return;
+      }
       api_index.getAddresses().then((res) => {
         var _a;
         const raw = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : Array.isArray(res == null ? void 0 : res.items) ? res.items : [];
@@ -1666,12 +1755,20 @@ if (!Array) {
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: common_vendor.p({
-      loading: !$data.product,
+      loading: $data.pageLoading && !$data.product,
       showTitle: true
     }),
-    b: $data.product
+    b: $data.pageLoading && !$data.product
+  }, $data.pageLoading && !$data.product ? {
+    c: common_vendor.f(4, (i, k0, i0) => {
+      return {
+        a: "chip" + i
+      };
+    })
+  } : {}, {
+    d: $data.product
   }, $data.product ? common_vendor.e({
-    c: common_vendor.f($options.images, (item, index, i0) => {
+    e: common_vendor.f($options.images, (item, index, i0) => {
       return common_vendor.e({
         a: $options.isPlayableVideo(item)
       }, $options.isPlayableVideo(item) ? {
@@ -1690,48 +1787,48 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         k: index
       });
     }),
-    d: $data.current,
-    e: common_vendor.o((...args) => $options.onSwiperChange && $options.onSwiperChange(...args)),
-    f: common_vendor.t($data.product.title),
-    g: common_vendor.t($data.isFavorite ? "★" : "☆"),
-    h: $data.isFavorite ? 1 : "",
-    i: common_vendor.o((...args) => $options.favProduct && $options.favProduct(...args)),
-    j: common_vendor.t($options.displayTopPriceWithSymbol),
-    k: common_vendor.t($data.product.sales),
-    l: common_vendor.t($data.product.id || "默认款"),
-    m: common_vendor.t($data.product.title),
-    n: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
-    o: common_vendor.t($data.product.price.toFixed(2)),
-    p: common_vendor.f($data.product.details_images, (src, i, i0) => {
+    f: $data.current,
+    g: common_vendor.o((...args) => $options.onSwiperChange && $options.onSwiperChange(...args)),
+    h: common_vendor.t($data.product.title),
+    i: common_vendor.t($data.isFavorite ? "★" : "☆"),
+    j: $data.isFavorite ? 1 : "",
+    k: common_vendor.o((...args) => $options.favProduct && $options.favProduct(...args)),
+    l: common_vendor.t($options.displayTopPriceWithSymbol),
+    m: common_vendor.t($data.product.sales),
+    n: common_vendor.t($data.product.id || "默认款"),
+    o: common_vendor.t($data.product.title),
+    p: common_vendor.t($data.product.shipping_origin ? $data.product.shipping_origin.replace(/省|市/g, "") : "—"),
+    q: common_vendor.t($data.product.price.toFixed(2)),
+    r: common_vendor.f($data.product.details_images, (src, i, i0) => {
       return {
         a: "md" + i,
         b: src,
         c: common_vendor.o(($event) => $options.previewDetailImage(src), "md" + i)
       };
     }),
-    q: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
-    r: $data.mpSheet
-  }, $data.mpSheet ? {
-    s: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args))
-  } : {}, {
+    s: common_vendor.o((...args) => $options.openSpecSheet && $options.openSpecSheet(...args)),
     t: $data.mpSheet
+  }, $data.mpSheet ? {
+    v: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args))
+  } : {}, {
+    w: $data.mpSheet
   }, $data.mpSheet ? common_vendor.e({
-    v: $data.selectedAddress
+    x: $data.selectedAddress
   }, $data.selectedAddress ? {
-    w: common_vendor.t($data.selectedAddress.receiver),
-    x: common_vendor.t($data.selectedAddress.phone)
+    y: common_vendor.t($data.selectedAddress.receiver),
+    z: common_vendor.t($data.selectedAddress.phone)
   } : {}, {
-    y: $data.selectedAddress
+    A: $data.selectedAddress
   }, $data.selectedAddress ? {
-    z: common_vendor.t($data.selectedAddress.province),
-    A: common_vendor.t($data.selectedAddress.city),
-    B: common_vendor.t($data.selectedAddress.district),
-    C: common_vendor.t($data.selectedAddress.detail_address)
+    B: common_vendor.t($data.selectedAddress.province),
+    C: common_vendor.t($data.selectedAddress.city),
+    D: common_vendor.t($data.selectedAddress.district),
+    E: common_vendor.t($data.selectedAddress.detail_address)
   } : {}, {
-    D: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
-    E: $data.specsLoading
+    F: common_vendor.o((...args) => $options.openMpAddressSheet && $options.openMpAddressSheet(...args)),
+    G: $data.specsLoading
   }, $data.specsLoading ? {} : $data.specs && $data.specs.length ? common_vendor.e({
-    G: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 4) : $data.specs, (it, i, i0) => {
+    I: common_vendor.f($data.isSpecsCollapsed ? $data.specs.slice(0, 4) : $data.specs, (it, i, i0) => {
       return common_vendor.e({
         a: common_vendor.t(it.name),
         b: common_vendor.t($options.formatPriceWithSymbol(it.price)),
@@ -1750,61 +1847,61 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         k: common_vendor.o(($event) => $options.onClickSpec(it, i), "mpsp" + i)
       });
     }),
-    H: $data.specs.length > 4
+    J: $data.specs.length > 4
   }, $data.specs.length > 4 ? {
-    I: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
-    J: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
-    K: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
+    K: common_vendor.t($data.isSpecsCollapsed ? "展开更多" : "收起"),
+    L: common_vendor.t($data.isSpecsCollapsed ? "▼" : "▲"),
+    M: common_vendor.o(($event) => $data.isSpecsCollapsed = !$data.isSpecsCollapsed)
   } : {}) : {}, {
-    F: $data.specs && $data.specs.length,
-    L: common_vendor.t($data.selectedCoupon ? $data.selectedCoupon.name : "不使用优惠券"),
-    M: $data.selectedCoupon ? 1 : "",
-    N: common_vendor.o((...args) => $options.openCouponSheet && $options.openCouponSheet(...args)),
-    O: common_vendor.t($data.mpRoom || "请选择房间"),
-    P: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
-    Q: $options.selectedSpec && $options.selectedSpec.has_length === 1
+    H: $data.specs && $data.specs.length,
+    N: common_vendor.t($data.selectedCoupon ? $data.selectedCoupon.name : "不使用优惠券"),
+    O: $data.selectedCoupon ? 1 : "",
+    P: common_vendor.o((...args) => $options.openCouponSheet && $options.openCouponSheet(...args)),
+    Q: common_vendor.t($data.mpRoom || "请选择房间"),
+    R: common_vendor.o((...args) => $options.openMpRoomSheet && $options.openMpRoomSheet(...args)),
+    S: $options.selectedSpec && $options.selectedSpec.has_length === 1
   }, $options.selectedSpec && $options.selectedSpec.has_length === 1 ? common_vendor.e({
-    R: $data.mpLength,
-    S: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
-    T: $options.selectedSpec.length_unit
+    T: $data.mpLength,
+    U: common_vendor.o(($event) => $data.mpLength = $event.detail.value),
+    V: $options.selectedSpec.length_unit
   }, $options.selectedSpec.length_unit ? {
-    U: common_vendor.t($options.selectedSpec.length_unit)
+    W: common_vendor.t($options.selectedSpec.length_unit)
   } : {}) : {}, {
-    V: $data.mpOrderNote,
-    W: common_vendor.o(($event) => $data.mpOrderNote = $event.detail.value),
-    X: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
-    Y: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
-    Z: $data.mpQty,
-    aa: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
-    ab: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
-    ac: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
-    ad: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args))
+    X: $data.mpOrderNote,
+    Y: common_vendor.o(($event) => $data.mpOrderNote = $event.detail.value),
+    Z: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) - 1)),
+    aa: common_vendor.o((...args) => $options.normalizeMpQty && $options.normalizeMpQty(...args)),
+    ab: $data.mpQty,
+    ac: common_vendor.o(($event) => $data.mpQty = $event.detail.value),
+    ad: common_vendor.o(($event) => $data.mpQty = Math.max(1, Number($data.mpQty) + 1)),
+    ae: common_vendor.o((...args) => $options.closeSpecSheet && $options.closeSpecSheet(...args)),
+    af: common_vendor.o((...args) => $options.confirmSpecToCart && $options.confirmSpecToCart(...args))
   }) : {}) : {}, {
-    ae: common_vendor.o($options.closeRoomSheet),
-    af: common_vendor.o($options.onRoomSelect),
-    ag: common_vendor.o($options.onRoomCreate),
-    ah: common_vendor.o($options.onCreateAddress),
-    ai: common_vendor.p({
+    ag: common_vendor.o($options.closeRoomSheet),
+    ah: common_vendor.o($options.onRoomSelect),
+    ai: common_vendor.o($options.onRoomCreate),
+    aj: common_vendor.o($options.onCreateAddress),
+    ak: common_vendor.p({
       visible: $data.roomSelectorVisible,
       rooms: $options.selectorRooms,
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    aj: $data.mpSheet || $data.roomSelectorVisible ? 1 : "",
-    ak: $data.showOnboarding
+    al: $data.mpSheet || $data.roomSelectorVisible ? 1 : "",
+    am: $data.showOnboarding
   }, $data.showOnboarding ? {
-    al: common_vendor.o($options.handleOnboardingNext),
-    am: common_vendor.o($options.handleOnboardingPrev),
-    an: common_vendor.o($options.closeOnboarding),
-    ao: common_vendor.p({
+    an: common_vendor.o($options.handleOnboardingNext),
+    ao: common_vendor.o($options.handleOnboardingPrev),
+    ap: common_vendor.o($options.closeOnboarding),
+    aq: common_vendor.p({
       steps: $data.onboardingSteps,
       targets: $data.onboardingRects,
       initialIndex: $data.onboardingIndex
     })
   } : {}, {
-    ap: common_vendor.o($options.closeLoginModal),
-    aq: common_vendor.o($options.goLogin),
-    ar: common_vendor.p({
+    ar: common_vendor.o($options.closeLoginModal),
+    as: common_vendor.o($options.goLogin),
+    at: common_vendor.p({
       visible: $data.showLoginModal
     })
   });

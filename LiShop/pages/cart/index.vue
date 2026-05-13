@@ -37,8 +37,10 @@
                 <text v-if="it.has_used_coupon" style="color: #ff4d4f; font-size: 20rpx; border: 1rpx solid #ff4d4f; border-radius: 4rpx; padding: 0 4rpx; margin-right: 8rpx;">券</text>
                 {{ it.title }}
               </text>
-              <text class="attr-txt">{{ it.attr }}</text>
-              <text class="attr-txt" v-if="it.package_capacity > 0">包装容量：{{ it.package_capacity }} | 包装价：¥{{ Number(it.package_price).toFixed(2) }}</text>
+              <view style="flex: 1; display:flex; flex-direction:column; gap:4rpx; align-items:center; justify-content:center;">
+                <text class="attr-txt" style="flex:none;">{{ it.attr }}</text>
+                <text class="attr-txt" v-if="it.package_fee > 0" style="flex:none; color: #faa21b; font-size: 20rpx;">含包装费 ¥{{ Number(it.package_fee).toFixed(2) }}</text>
+              </view>
               <text class="price">¥{{ it.price.toFixed(2) }}</text>
               <view class="qty-box">
                   <view class="qty-btn" @click.stop="decById(it.id)">-</view>
@@ -87,6 +89,10 @@
               <view class="row">
                 <text class="label">商品总价</text>
                 <text class="value">¥{{ selectedTotal.toFixed(2) }}</text>
+              </view>
+              <view class="row" v-if="summaryData.total_package_fee > 0">
+                <text class="label">其中含包装费</text>
+                <text class="value" style="color: #faa21b;">¥{{ summaryData.total_package_fee.toFixed(2) }}</text>
               </view>
               <view class="row">
                 <text class="label">共减</text>
@@ -163,8 +169,9 @@
                 {{ it.title }}
               </text>
             </view>
-            <view class="row-attr">
-              <text class="attr-txt">{{ it.attr }}</text>
+            <view class="row-attr" style="display:flex; flex-direction:column; gap:4rpx; align-items:flex-start; background:transparent; padding:0; margin-top:8rpx;">
+              <text class="attr-txt" style="background:#f7f7f7; padding:4rpx 12rpx; border-radius:8rpx;">{{ it.attr }}</text>
+              <text class="attr-txt" v-if="it.package_fee > 0" style="color: #faa21b; font-size: 20rpx; background: rgba(250, 162, 27, 0.1); padding: 4rpx 12rpx; border-radius: 8rpx;">含包装费 ¥{{ Number(it.package_fee).toFixed(2) }}</text>
             </view>
             <view class="row-main">
               <view class="price-box">
@@ -194,7 +201,8 @@
         </view>
       </view>
       <view style="display:flex; flex-direction:column; align-items:flex-end; flex:1; padding-right:12px;">
-        <text>合计：<text class="sum">¥{{ selectedTotal.toFixed(2) }}</text></text>
+        <text>合计：<text class="sum">¥{{ payable.toFixed(2) }}</text></text>
+        <view v-if="summaryData.total_package_fee > 0" style="color:#faa21b; font-size:20rpx;">含包装费 ¥{{ summaryData.total_package_fee.toFixed(2) }}</view>
         <view v-if="couponDiscount > 0" style="color:#ff4d4f; font-size:20rpx;">已抵扣 ¥{{ Number(couponDiscount).toFixed(2) }}</view>
       </view>
       <view class="actions">
@@ -561,7 +569,7 @@ export default {
               const isOutOfStock = (x.available_product_status === 0) || ((x.inventory === 0) && isStagnant)
               list.push({
                 id: (x && x.id) ? x.id : '',
-                title: (x && (x.available_product_name || x.product_name)) ? (x.available_product_name || x.product_name) : '',
+                title: (x && x.available_product_name && x.product_name) ? (x.available_product_name === x.product_name ? x.product_name : `${x.available_product_name} | ${x.product_name}`) : (x ? (x.available_product_name || x.product_name || '') : ''),
                 productId: (x && x.product_id) ? x.product_id : '',
                 availableProductId: (x && x.available_product_id) ? x.available_product_id : ((x && x.product_id) ? x.product_id : ''),
                 price: Number((x && x.price) !== undefined ? x.price : 0) || 0,
@@ -580,7 +588,8 @@ export default {
                 stockMessage: x.message || (isOutOfStock ? '该商品已无库存' : ''),
                 isOutOfStock: isOutOfStock,
                 category_id: x.category_id || '',
-                has_used_coupon: false
+                has_used_coupon: false,
+                package_fee: Number(x.package_fee) || 0
               })
             }
           }
@@ -623,13 +632,12 @@ export default {
                     items: Array.isArray(res.data.items) ? res.data.items : []
                 }
                 
-                // 将后端算好的每个 item 的包装费/单价等回填到前端列表，保证显示一致（可选）
+                // 将后端算好的每个 item 的包装费/单价等回填到前端列表，保证显示一致
                 if (res.data.items && Array.isArray(res.data.items)) {
                     res.data.items.forEach(detail => {
                         const idx = this.cart.findIndex(it => it.id === detail.cart_item_id)
                         if (idx >= 0) {
-                            // 这里主要是为了让前端列表的单品展示也能反映包装费后的价格
-                            // 前端原有的 price 字段是单价，如果需要可以做覆盖
+                            this.cart[idx].package_fee = detail.package_fee || 0;
                         }
                     })
                 }
@@ -1050,7 +1058,8 @@ export default {
 
 .price {
   color: #e1251b;
-  font-size: 30rpx;
+  font-size: 28rpx;
+  font-weight: 600;
   margin-top: 8rpx;
   display: block;
 }
@@ -1493,13 +1502,14 @@ export default {
 
 .label {
   color: #666;
-  font-weight: 800;
-  font-size: 44rpx;
+  font-weight: 600;
+  font-size: 28rpx;
 }
 
 .value {
   color: #333;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 30rpx;
 }
 
 .value.reduce {
@@ -1527,9 +1537,9 @@ export default {
 }
 
 .row.total .label {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #000;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
   margin-bottom: 4rpx;
 }
 
@@ -1538,9 +1548,9 @@ export default {
 }
 
 .pay {
-  color: #000;
-  font-weight: 800;
-  font-size: 40rpx;
+  color: #e1251b;
+  font-weight: 700;
+  font-size: 36rpx;
 }
 
 .total-reduce {
@@ -1680,7 +1690,7 @@ export default {
   margin-top: 16rpx;
 }
 .price-box { flex: 1; }
-.price { color: #e1251b; font-size: 32rpx; font-weight: 700; }
+.price { color: #e1251b; font-size: 32rpx; font-weight: 600; }
 
 .qty-box {
   display: flex;
@@ -1744,7 +1754,7 @@ export default {
 }
 .spec-img { width: 120rpx; height: 120rpx; border-radius: 8rpx; background: #f5f5f5; }
 .spec-info { display: flex; flex-direction: column; justify-content: center; }
-.spec-price { color: #e1251b; font-size: 32rpx; font-weight: 700; margin-bottom: 8rpx; }
+.spec-price { color: #e1251b; font-size: 30rpx; font-weight: 600; margin-bottom: 8rpx; }
 .spec-selected { color: #666; font-size: 24rpx; }
 .spec-close {
   position: absolute;
@@ -1823,9 +1833,9 @@ export default {
 }
 .h5-row .price {
   width: 140rpx;
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #333;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #e1251b;
   text-align: center;
   flex-shrink: 0;
   align-self: center;

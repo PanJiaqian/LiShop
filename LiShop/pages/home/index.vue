@@ -194,7 +194,7 @@
         <text>猜你喜欢</text>
       </view>
       <view class="grid2">
-        <view class="grid2-item" v-for="(p, idx) in recommendList" :key="idx">
+        <view class="grid2-item" v-for="(p, idx) in recommendList" :key="p.id || idx">
           <ProductCard :product="p" />
         </view>
       </view>

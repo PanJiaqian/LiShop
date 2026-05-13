@@ -178,7 +178,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: common_vendor.p({
           product: p
         }),
-        c: idx
+        c: p.id || idx
       };
     }),
     e: !$data.loading && $data.items.length === 0

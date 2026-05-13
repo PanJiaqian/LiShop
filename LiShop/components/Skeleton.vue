@@ -4,7 +4,7 @@
       <view class="skeleton-row title-row"></view>
     </view>
     <view class="skeleton-content">
-      <view class="skeleton-row" v-for="i in rows" :key="i" :style="{ width: randomWidth() }"></view>
+      <view class="skeleton-row" v-for="(width, index) in rowWidths" :key="index" :style="{ width }"></view>
     </view>
     <view class="skeleton-grid" v-if="showGrid">
       <view class="skeleton-grid-item" v-for="j in 4" :key="'g'+j"></view>
@@ -26,9 +26,31 @@ export default {
     showTitle: { type: Boolean, default: false },
     showGrid: { type: Boolean, default: false }
   },
+  data() {
+    return {
+      rowWidths: []
+    }
+  },
+  watch: {
+    rows: {
+      immediate: true,
+      handler() {
+        this.rowWidths = this.buildRowWidths()
+      }
+    }
+  },
   methods: {
-    randomWidth() {
-      return (50 + Math.random() * 50) + '%'
+    /**
+     * 生成稳定的骨架行宽。
+     * @description
+     * 使用固定序列替代渲染期随机值，避免页面刷新或状态更新时骨架布局抖动。
+     * @returns {string[]} 每一行骨架的宽度数组
+     * @example
+     * const widths = this.buildRowWidths()
+     */
+    buildRowWidths() {
+      const presets = ['92%', '78%', '86%', '64%', '88%', '72%']
+      return Array.from({ length: Number(this.rows || 0) }, (_, index) => presets[index % presets.length])
     }
   }
 }

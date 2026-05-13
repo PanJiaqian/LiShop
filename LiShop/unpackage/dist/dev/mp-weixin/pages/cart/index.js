@@ -93,7 +93,7 @@ const _sfc_main = {
         });
         return Object.keys(map).map((name) => ({ name, items: map[name] }));
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:371", "groups computed error", e);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:379", "groups computed error", e);
         return [];
       }
     }
@@ -323,7 +323,7 @@ const _sfc_main = {
             const isOutOfStock = x.available_product_status === 0 || x.inventory === 0 && isStagnant;
             list.push({
               id: x && x.id ? x.id : "",
-              title: x && (x.available_product_name || x.product_name) ? x.available_product_name || x.product_name : "",
+              title: x && x.available_product_name && x.product_name ? x.available_product_name === x.product_name ? x.product_name : `${x.available_product_name} | ${x.product_name}` : x ? x.available_product_name || x.product_name || "" : "",
               productId: x && x.product_id ? x.product_id : "",
               availableProductId: x && x.available_product_id ? x.available_product_id : x && x.product_id ? x.product_id : "",
               price: Number((x && x.price) !== void 0 ? x.price : 0) || 0,
@@ -342,7 +342,8 @@ const _sfc_main = {
               stockMessage: x.message || (isOutOfStock ? "该商品已无库存" : ""),
               isOutOfStock,
               category_id: x.category_id || "",
-              has_used_coupon: false
+              has_used_coupon: false,
+              package_fee: Number(x.package_fee) || 0
             });
           }
         }
@@ -350,7 +351,7 @@ const _sfc_main = {
         this.fetchSummary();
         this.loading = false;
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:592", "Get cart failed", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:601", "Get cart failed", err);
         try {
           this.cart = common_vendor.index.getStorageSync("cart") || [];
         } catch (e) {
@@ -389,12 +390,15 @@ const _sfc_main = {
           };
           if (res.data.items && Array.isArray(res.data.items)) {
             res.data.items.forEach((detail) => {
-              this.cart.findIndex((it) => it.id === detail.cart_item_id);
+              const idx = this.cart.findIndex((it) => it.id === detail.cart_item_id);
+              if (idx >= 0) {
+                this.cart[idx].package_fee = detail.package_fee || 0;
+              }
             });
           }
           this.updateCouponDiscount();
         }
-      }).catch((e) => common_vendor.index.__f__("error", "at pages/cart/index.vue:639", e));
+      }).catch((e) => common_vendor.index.__f__("error", "at pages/cart/index.vue:647", e));
     },
     updateCouponDiscount() {
       if (!this.selectedCouponRecordId || this.summaryData.total_price <= 0) {
@@ -492,7 +496,7 @@ const _sfc_main = {
           common_vendor.index.showToast({ title: "更新失败", icon: "none" });
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:732", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:740", err);
         common_vendor.index.showToast({ title: "更新出错", icon: "none" });
       });
     },
@@ -647,7 +651,7 @@ const _sfc_main = {
         }
       }).catch((err) => {
         common_vendor.index.showToast({ title: "下单出错", icon: "none" });
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:859", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:867", err);
       });
     },
     handleExportExcel() {
@@ -727,18 +731,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
             h: common_vendor.t(it.title),
             i: common_vendor.o(($event) => $options.openDetail(it), it.id),
             j: common_vendor.t(it.attr),
-            k: common_vendor.t(it.price.toFixed(2)),
-            l: common_vendor.o(($event) => $options.decById(it.id), it.id),
-            m: common_vendor.t(it.quantity),
-            n: common_vendor.o(($event) => $options.incById(it.id), it.id),
-            o: it.isOutOfStock
-          }, it.isOutOfStock ? {
-            p: common_vendor.o(($event) => $options.removeById(it.id), it.id)
+            k: it.package_fee > 0
+          }, it.package_fee > 0 ? {
+            l: common_vendor.t(Number(it.package_fee).toFixed(2))
           } : {}, {
+            m: common_vendor.t(it.price.toFixed(2)),
+            n: common_vendor.o(($event) => $options.decById(it.id), it.id),
+            o: common_vendor.t(it.quantity),
+            p: common_vendor.o(($event) => $options.incById(it.id), it.id),
             q: it.isOutOfStock
+          }, it.isOutOfStock ? {
+            r: common_vendor.o(($event) => $options.removeById(it.id), it.id)
+          } : {}, {
+            s: it.isOutOfStock
           }, it.isOutOfStock ? {} : {}, {
-            r: it.id,
-            s: it.isOutOfStock ? 1 : ""
+            t: it.id,
+            v: it.isOutOfStock ? 1 : ""
           });
         }),
         c: grp.name
@@ -747,42 +755,46 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     q: $options.isAllSelected ? 1 : "",
     r: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
-    s: common_vendor.t($options.selectedTotal.toFixed(2)),
-    t: $data.couponDiscount > 0
+    s: common_vendor.t($options.payable.toFixed(2)),
+    t: $data.summaryData.total_package_fee > 0
+  }, $data.summaryData.total_package_fee > 0 ? {
+    v: common_vendor.t($data.summaryData.total_package_fee.toFixed(2))
+  } : {}, {
+    w: $data.couponDiscount > 0
   }, $data.couponDiscount > 0 ? {
-    v: common_vendor.t(Number($data.couponDiscount).toFixed(2))
+    x: common_vendor.t(Number($data.couponDiscount).toFixed(2))
   } : {}, {
-    w: common_vendor.o((...args) => $options.removeSelected && $options.removeSelected(...args)),
-    x: common_vendor.t($options.selectedCount),
-    y: $options.selectedCount === 0 ? 1 : "",
-    z: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
-    A: $data.showSpecModal
+    y: common_vendor.o((...args) => $options.removeSelected && $options.removeSelected(...args)),
+    z: common_vendor.t($options.selectedCount),
+    A: $options.selectedCount === 0 ? 1 : "",
+    B: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
+    C: $data.showSpecModal
   }, $data.showSpecModal ? {
-    B: $data.editingItem.image || "/static/logo.png",
-    C: common_vendor.t($data.editingItem.price),
-    D: common_vendor.t($data.editingItem.attr),
-    E: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    F: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    D: $data.editingItem.image || "/static/logo.png",
+    E: common_vendor.t($data.editingItem.price),
+    F: common_vendor.t($data.editingItem.attr),
     G: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    H: common_vendor.o(() => {
+    H: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    I: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    J: common_vendor.o(() => {
     }),
-    I: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
+    K: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
   } : {}, {
-    J: common_vendor.o(($event) => $data.showAddressSelector = false),
-    K: common_vendor.o($options.onAddressSelect),
-    L: common_vendor.o($options.onCreateAddress),
-    M: common_vendor.p({
+    L: common_vendor.o(($event) => $data.showAddressSelector = false),
+    M: common_vendor.o($options.onAddressSelect),
+    N: common_vendor.o($options.onCreateAddress),
+    O: common_vendor.p({
       visible: $data.showAddressSelector,
       rooms: $options.addressRooms,
       type: "addr",
       selectedName: $data.selectedAddress ? ($data.selectedAddress.receiver + " " + $data.selectedAddress.phone + " " + $data.selectedAddress.full).trim() : ""
     }),
-    N: $data.showCouponModal
+    P: $data.showCouponModal
   }, $data.showCouponModal ? {
-    O: common_vendor.o(($event) => $data.showCouponModal = false),
-    P: $data.selectedCouponRecordId === "" ? 1 : "",
-    Q: common_vendor.o(($event) => $options.selectCoupon("")),
-    R: common_vendor.f($data.availableCoupons, (c, k0, i0) => {
+    Q: common_vendor.o(($event) => $data.showCouponModal = false),
+    R: $data.selectedCouponRecordId === "" ? 1 : "",
+    S: common_vendor.o(($event) => $options.selectCoupon("")),
+    T: common_vendor.f($data.availableCoupons, (c, k0, i0) => {
       return {
         a: common_vendor.t(c.name),
         b: common_vendor.t(c.balance),
@@ -791,22 +803,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => $options.selectCoupon(c.record_id), c.record_id)
       };
     }),
-    S: common_vendor.o(() => {
-    }),
-    T: common_vendor.o(() => {
-    }),
     U: common_vendor.o(() => {
     }),
-    V: common_vendor.o((...args) => $options.handleCouponModalMaskMousedown && $options.handleCouponModalMaskMousedown(...args)),
-    W: common_vendor.o((...args) => $options.handleCouponModalMaskMouseup && $options.handleCouponModalMaskMouseup(...args))
+    V: common_vendor.o(() => {
+    }),
+    W: common_vendor.o(() => {
+    }),
+    X: common_vendor.o((...args) => $options.handleCouponModalMaskMousedown && $options.handleCouponModalMaskMousedown(...args)),
+    Y: common_vendor.o((...args) => $options.handleCouponModalMaskMouseup && $options.handleCouponModalMaskMouseup(...args))
   } : {}, {
-    X: $data.customToastVisible
+    Z: $data.customToastVisible
   }, $data.customToastVisible ? {
-    Y: common_vendor.t($data.customToastMessage)
+    aa: common_vendor.t($data.customToastMessage)
   } : {}, {
-    Z: common_vendor.o($options.closeLoginModal),
-    aa: common_vendor.o($options.goLogin),
-    ab: common_vendor.p({
+    ab: common_vendor.o($options.closeLoginModal),
+    ac: common_vendor.o($options.goLogin),
+    ad: common_vendor.p({
       visible: $data.showLoginModal
     })
   });

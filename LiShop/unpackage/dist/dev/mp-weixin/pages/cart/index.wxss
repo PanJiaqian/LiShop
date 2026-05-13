@@ -83,7 +83,8 @@
 }
 .price.data-v-8039fbf1 {
   color: #e1251b;
-  font-size: 30rpx;
+  font-size: 28rpx;
+  font-weight: 600;
   margin-top: 8rpx;
   display: block;
 }
@@ -650,6 +651,7 @@
 
 
 
+
 /* 新版商品卡片样式 */
 .row-title.data-v-8039fbf1 {
   display: -webkit-box;
@@ -694,7 +696,7 @@
 }
 .price-box.data-v-8039fbf1 { flex: 1;
 }
-.price.data-v-8039fbf1 { color: #e1251b; font-size: 32rpx; font-weight: 700;
+.price.data-v-8039fbf1 { color: #e1251b; font-size: 32rpx; font-weight: 600;
 }
 .qty-box.data-v-8039fbf1 {
   display: flex;
@@ -762,7 +764,7 @@
 }
 .spec-info.data-v-8039fbf1 { display: flex; flex-direction: column; justify-content: center;
 }
-.spec-price.data-v-8039fbf1 { color: #e1251b; font-size: 32rpx; font-weight: 700; margin-bottom: 8rpx;
+.spec-price.data-v-8039fbf1 { color: #e1251b; font-size: 30rpx; font-weight: 600; margin-bottom: 8rpx;
 }
 .spec-selected.data-v-8039fbf1 { color: #666; font-size: 24rpx;
 }

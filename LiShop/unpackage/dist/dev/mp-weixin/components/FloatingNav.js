@@ -56,10 +56,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $options.globalShow ? {
     b: common_vendor.o((...args) => $options.goHome && $options.goHome(...args)),
     c: common_vendor.o((...args) => $options.goCart && $options.goCart(...args)),
-    d: common_vendor.o((...args) => $options.contact && $options.contact(...args)),
-    e: common_vendor.o((...args) => $options.toTop && $options.toTop(...args)),
-    f: common_vendor.s($options.styleFix),
-    g: $props.hoverReveal ? 1 : ""
+    d: common_vendor.o((...args) => $options.toTop && $options.toTop(...args)),
+    e: common_vendor.s($options.styleFix),
+    f: $props.hoverReveal ? 1 : ""
   } : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-378faae9"]]);

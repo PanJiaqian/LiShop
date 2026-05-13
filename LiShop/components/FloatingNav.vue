@@ -9,10 +9,11 @@
       <text class="txt">购物车</text>
       <!-- <view v-if="cartCount > 0" class="badge">{{ cartCount }}</view> -->
     </view>
-    <view class="item" @click="contact">
+    <!-- 暂时隐藏客服图标，因为目前没有客服 -->
+    <!-- <view class="item" @click="contact">
       <text class="ico">💬</text>
       <text class="txt">客服</text>
-    </view>
+    </view> -->
     <view class="item to-top" @click="toTop">
       <text class="ico">⬆️</text>
       <text class="txt">顶部</text>

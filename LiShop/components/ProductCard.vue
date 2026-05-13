@@ -2,7 +2,7 @@
   <view>
     <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
     <view class="card" @click="openDetail">
-    <image class="cover" :src="product.image || '/static/logo.png'" mode="aspectFill" />
+    <image class="cover" :src="product.image || '/static/logo.png'" mode="aspectFill" lazy-load />
     <view class="info">
       <text class="title">{{ product.title }}</text>
       <view class="price-row">
@@ -28,6 +28,7 @@
  * - 点击进入商品详情；需要登录态时弹出 LoginPrompt
  */
 import LoginPrompt from '@/components/LoginPrompt.vue'
+import { cacheProductPreview } from '@/utils/product-preview.js'
 export default {
   name: 'ProductCard',
   props: {
@@ -50,6 +51,14 @@ export default {
     }
   },
   methods: {
+    /**
+     * 校验当前用户是否已登录。
+     * @description
+     * 若登录态失效则弹出统一登录提示，阻止继续进入详情页。
+     * @returns {boolean} 已登录返回 true，否则返回 false
+     * @example
+     * if (!this.ensureLoggedIn()) return
+     */
     ensureLoggedIn() {
       try {
         const u = uni.getStorageSync('user') || null
@@ -65,9 +74,19 @@ export default {
     add() {
       this.$emit('add-to-cart', this.product)
     },
+    /**
+     * 打开商品详情页。
+     * @description
+     * 进入详情前先缓存轻量预览数据，帮助新标签页优先渲染首屏内容。
+     * @returns {void}
+     * @example
+     * this.openDetail()
+     */
     openDetail() {
       if (!this.ensureLoggedIn()) return
       const id = this.product?.id ?? ''
+      if (!id) return
+      cacheProductPreview(this.product)
       const url = '/pages/product/index?id=' + encodeURIComponent(id)
       if (typeof window !== 'undefined' && window.open) {
         const base = (typeof location !== 'undefined' && location.href) ? location.href.split('#')[0] : ''

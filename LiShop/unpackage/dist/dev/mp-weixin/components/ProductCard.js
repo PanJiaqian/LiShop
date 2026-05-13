@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
+const utils_productPreview = require("../utils/product-preview.js");
 const LoginPrompt = () => "./LoginPrompt.js";
 const _sfc_main = {
   name: "ProductCard",
@@ -27,6 +28,14 @@ const _sfc_main = {
     }
   },
   methods: {
+    /**
+     * 校验当前用户是否已登录。
+     * @description
+     * 若登录态失效则弹出统一登录提示，阻止继续进入详情页。
+     * @returns {boolean} 已登录返回 true，否则返回 false
+     * @example
+     * if (!this.ensureLoggedIn()) return
+     */
     ensureLoggedIn() {
       try {
         const u = common_vendor.index.getStorageSync("user") || null;
@@ -50,11 +59,22 @@ const _sfc_main = {
     add() {
       this.$emit("add-to-cart", this.product);
     },
+    /**
+     * 打开商品详情页。
+     * @description
+     * 进入详情前先缓存轻量预览数据，帮助新标签页优先渲染首屏内容。
+     * @returns {void}
+     * @example
+     * this.openDetail()
+     */
     openDetail() {
       var _a;
       if (!this.ensureLoggedIn())
         return;
       const id = ((_a = this.product) == null ? void 0 : _a.id) ?? "";
+      if (!id)
+        return;
+      utils_productPreview.cacheProductPreview(this.product);
       const url = "/pages/product/index?id=" + encodeURIComponent(id);
       if (typeof window !== "undefined" && window.open) {
         const base = typeof location !== "undefined" && location.href ? location.href.split("#")[0] : "";

@@ -27,6 +27,7 @@
 import Skeleton from '@/components/Skeleton.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
 import { getFavorites } from '../../api/index.js'
+import { cacheProductPreview } from '@/utils/product-preview.js'
 export default {
   components: { Skeleton, LoginPrompt },
   data() {
@@ -78,6 +79,14 @@ export default {
     } catch (e) { this.loading = false; this.favorites = [] }
   },
   methods: {
+    /**
+     * 校验当前用户是否仍处于有效登录态。
+     * @description
+     * 收藏页进入详情前统一做登录校验，避免新标签页打开后再因鉴权失败回退。
+     * @returns {boolean} 已登录返回 true，否则返回 false
+     * @example
+     * if (!this.ensureLoggedIn()) return
+     */
     ensureLoggedIn() {
       try {
         const u = uni.getStorageSync('user') || null
@@ -109,9 +118,20 @@ export default {
         if (base) location.href = base + '#/pages/home/index'
       } catch (e) {}
     },
+    /**
+     * 打开收藏商品详情页。
+     * @description
+     * 在打开新标签前缓存收藏卡片的轻量数据，让详情页首屏可立即起屏。
+     * @param {string} id 商品 ID
+     * @returns {void}
+     * @example
+     * this.openProduct('1001')
+     */
     openProduct(id) {
       if (!this.ensureLoggedIn()) return
       if (!id) return
+      const target = (this.favorites || []).find((item) => item.id === id)
+      if (target) cacheProductPreview(target)
       const url = '/pages/product/index?id=' + encodeURIComponent(id)
       if (typeof window !== 'undefined' && window.open) {
         const base = (typeof location !== 'undefined' && location.href) ? location.href.split('#')[0] : ''

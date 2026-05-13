@@ -1,6 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const api_index = require("../../api/index.js");
+const utils_productPreview = require("../../utils/product-preview.js");
 const Skeleton = () => "../../components/Skeleton.js";
 const LoginPrompt = () => "../../components/LoginPrompt.js";
 const _sfc_main = {
@@ -61,6 +62,14 @@ const _sfc_main = {
     }
   },
   methods: {
+    /**
+     * 校验当前用户是否仍处于有效登录态。
+     * @description
+     * 收藏页进入详情前统一做登录校验，避免新标签页打开后再因鉴权失败回退。
+     * @returns {boolean} 已登录返回 true，否则返回 false
+     * @example
+     * if (!this.ensureLoggedIn()) return
+     */
     ensureLoggedIn() {
       try {
         const u = common_vendor.index.getStorageSync("user") || null;
@@ -116,11 +125,23 @@ const _sfc_main = {
       } catch (e) {
       }
     },
+    /**
+     * 打开收藏商品详情页。
+     * @description
+     * 在打开新标签前缓存收藏卡片的轻量数据，让详情页首屏可立即起屏。
+     * @param {string} id 商品 ID
+     * @returns {void}
+     * @example
+     * this.openProduct('1001')
+     */
     openProduct(id) {
       if (!this.ensureLoggedIn())
         return;
       if (!id)
         return;
+      const target = (this.favorites || []).find((item) => item.id === id);
+      if (target)
+        utils_productPreview.cacheProductPreview(target);
       const url = "/pages/product/index?id=" + encodeURIComponent(id);
       if (typeof window !== "undefined" && window.open) {
         const base = typeof location !== "undefined" && location.href ? location.href.split("#")[0] : "";

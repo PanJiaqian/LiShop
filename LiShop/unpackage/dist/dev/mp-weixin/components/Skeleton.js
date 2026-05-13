@@ -8,9 +8,31 @@ const _sfc_main = {
     showTitle: { type: Boolean, default: false },
     showGrid: { type: Boolean, default: false }
   },
+  data() {
+    return {
+      rowWidths: []
+    };
+  },
+  watch: {
+    rows: {
+      immediate: true,
+      handler() {
+        this.rowWidths = this.buildRowWidths();
+      }
+    }
+  },
   methods: {
-    randomWidth() {
-      return 50 + Math.random() * 50 + "%";
+    /**
+     * 生成稳定的骨架行宽。
+     * @description
+     * 使用固定序列替代渲染期随机值，避免页面刷新或状态更新时骨架布局抖动。
+     * @returns {string[]} 每一行骨架的宽度数组
+     * @example
+     * const widths = this.buildRowWidths()
+     */
+    buildRowWidths() {
+      const presets = ["92%", "78%", "86%", "64%", "88%", "72%"];
+      return Array.from({ length: Number(this.rows || 0) }, (_, index) => presets[index % presets.length]);
     }
   }
 };
@@ -20,15 +42,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $props.loading ? common_vendor.e({
     b: $props.showTitle
   }, $props.showTitle ? {} : {}, {
-    c: common_vendor.f($props.rows, (i, k0, i0) => {
+    c: common_vendor.f($data.rowWidths, (width, index, i0) => {
       return {
-        a: i
+        a: index,
+        b: width
       };
     }),
-    d: $options.randomWidth(),
-    e: $props.showGrid
+    d: $props.showGrid
   }, $props.showGrid ? {
-    f: common_vendor.f(4, (j, k0, i0) => {
+    e: common_vendor.f(4, (j, k0, i0) => {
       return {
         a: "g" + j
       };
