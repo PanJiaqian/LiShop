@@ -14,12 +14,13 @@
       <scroll-view class="right" scroll-y>
         <view class="right-wrap">
           <view class="sub-title">{{ activeCategory.name }}</view>
-          <view class="sub-grid">
+          <view v-if="rightChildren.length" class="sub-grid">
             <view class="sub-item" v-for="(s, i) in rightChildren" :key="i" @click="openList(s)">
               <image class="sub-icon" :src="s.icon || '/static/logo.png'" mode="aspectFill" />
               <text class="sub-name">{{ s.name }}</text>
             </view>
           </view>
+          <view v-else class="sub-empty">暂无子分类</view>
         </view>
       </scroll-view>
     </view>
@@ -239,6 +240,13 @@ export default {
   margin-top: 12rpx;
   font-size: 26rpx;
   color: #fff;
+}
+
+.sub-empty {
+  text-align: center;
+  color: #777;
+  font-size: 28rpx;
+  padding: 60rpx 0;
 }
 
 /* #ifdef MP-WEIXIN */

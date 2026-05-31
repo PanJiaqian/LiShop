@@ -27,7 +27,7 @@
               <text class="room">{{ grp.name }}</text>
               <!-- <text class="arrow">></text> -->
             </view>
-            <view class="item h5-row" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock }">
+            <view class="item h5-row" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock, 'no-permission': it.isNoPermission }">
               <view class="out-stock-mask" v-if="it.isOutOfStock"></view>
               <view class="chk" @click="toggleById(it.id)">
                 <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
@@ -48,7 +48,8 @@
                   <view class="qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
               <text class="del-btn" v-if="it.isOutOfStock" @click.stop="removeById(it.id)">删除</text>
-              <view class="stock-tip" v-if="it.isOutOfStock">无货</view>
+              <view class="stock-tip" v-if="it.isNoPermission">无权限</view>
+              <view class="stock-tip" v-else-if="it.isOutOfStock">无货</view>
             </view>
           </view>
         </view>
@@ -156,7 +157,7 @@
         <view class="group-header">
           <text class="room mp-room">{{ grp.name }}</text>
         </view>
-        <view class="item" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock }">
+        <view class="item" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock, 'no-permission': it.isNoPermission }">
           <view class="out-stock-mask" v-if="it.isOutOfStock"></view>
           <view class="chk" @click="toggleById(it.id)">
             <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
@@ -186,7 +187,8 @@
                 <text class="act-txt del" v-if="it.isOutOfStock" @click.stop="removeById(it.id)">删除</text>
               </view>
             </view>
-            <view class="stock-tip" v-if="it.isOutOfStock">无货</view>
+            <view class="stock-tip" v-if="it.isNoPermission">无权限</view>
+            <view class="stock-tip" v-else-if="it.isOutOfStock">无货</view>
           </view>
         </view>
       </view>
@@ -495,6 +497,7 @@ export default {
       goBack() { this.goHome() },
       openDetail(item) {
         try {
+          if (item.isNoPermission) { uni.showToast({ title: '该商品暂无权限查看', icon: 'none' }); return }
           const id = (item && (item.availableProductId || item.available_product_id || item.productId || item.id)) || ''
           if (!id) { uni.showToast({ title: '商品ID缺失', icon: 'none' }); return }
           uni.navigateTo({ url: '/pages/product/index?id=' + encodeURIComponent(id) })
@@ -567,6 +570,8 @@ export default {
               const typeLower = String(typeRaw || '').toLowerCase()
               const isStagnant = typeLower.includes('stagnant') || typeLower.includes('呆滞')
               const isOutOfStock = (x.available_product_status === 0) || ((x.inventory === 0) && isStagnant)
+              const cartItemStatus = Number(x.cart_item_status) || 1
+              const isNoPermission = cartItemStatus === 2
               list.push({
                 id: (x && x.id) ? x.id : '',
                 title: (x && x.available_product_name && x.product_name) ? (x.available_product_name === x.product_name ? x.product_name : `${x.available_product_name} | ${x.product_name}`) : (x ? (x.available_product_name || x.product_name || '') : ''),
@@ -586,7 +591,9 @@ export default {
                 status: x.status,
                 available: x.available_product_status,
                 stockMessage: x.message || (isOutOfStock ? '该商品已无库存' : ''),
-                isOutOfStock: isOutOfStock,
+                isOutOfStock: isOutOfStock || isNoPermission,
+                isNoPermission: isNoPermission,
+                cart_item_status: cartItemStatus,
                 category_id: x.category_id || '',
                 has_used_coupon: false,
                 package_fee: Number(x.package_fee) || 0
@@ -829,6 +836,8 @@ export default {
     checkout() {
       if (!this.ensureLoggedIn()) return
       if (this.selectedCount === 0) { uni.showToast({ title: '请选择商品', icon: 'none' }); return }
+      const hasNoPermission = this.cart.filter(it => it.selected).some(it => it.isNoPermission)
+      if (hasNoPermission) { uni.showToast({ title: '选中商品中包含无权限商品，请取消勾选后再结算', icon: 'none' }); return }
       const selectedItems = this.cart.filter(it => it.selected)
       const selectedIds = selectedItems.map(it => it.id)
       const addressId = this.selectedAddress?.id || ''
@@ -1032,6 +1041,10 @@ export default {
 }
 
 .item.out-of-stock .chk { pointer-events: none; }
+
+.item.no-permission .stock-tip {
+  background: rgba(225, 37, 27, 0.9);
+}
 
 .cover {
   width: 160rpx;

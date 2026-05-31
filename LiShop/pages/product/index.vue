@@ -722,8 +722,23 @@ export default {
           this.isFavorite = (String(d.is_favorite) === '1') || (d.is_favorite === 1) || (d.is_favorite === true)
           this.fetchSpecs(this.product.id)
         })
-        .catch(() => {
+        .catch((err) => {
           this.packageFeeByProductId = {}
+          const errData = err?.data || err || {}
+          const msg = errData?.message || ''
+          const statusCode = err?.statusCode || 0
+          const isNotFound = statusCode === 404 || msg.includes('不存在') || msg.includes('not found')
+          if (isNotFound) {
+            this.product = null
+            this.pageLoading = false
+            uni.showToast({ title: '商品不存在', icon: 'none' })
+            setTimeout(() => {
+              try { uni.navigateBack() } catch (e) {
+                uni.switchTab({ url: '/pages/home/index' })
+              }
+            }, 1500)
+            return
+          }
           if (!this.product) {
             this.product = { id: productId, title: '商品 ' + productId, price: 0, sales: 0, shipping_origin: '', image: '/static/logo.png', images: ['/static/logo.png'], main_media: ['/static/logo.png'], details_images: [] }
           }

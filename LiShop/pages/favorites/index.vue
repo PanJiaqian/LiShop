@@ -5,12 +5,14 @@
       <view class="back-btn" @click="goBack">←</view>
     <!-- #endif -->
     <view v-if="favorites.length" class="grid">
-      <view class="item" v-for="(it, i) in favorites" :key="i" @click="openProduct(it.id)">
+      <view class="item" v-for="(it, i) in favorites" :key="i" :class="{ 'no-permission': it.favorite_status === 2 }" @click="openProduct(it)">
+        <view class="no-perm-mask" v-if="it.favorite_status === 2"></view>
         <image class="thumb" :src="it.image" mode="aspectFill" />
         <view class="info">
           <text class="name">{{ it.title }}</text>
           <text class="price">{{ formatPriceWithSymbol(it.price) }}</text>
         </view>
+        <view class="no-perm-tag" v-if="it.favorite_status === 2">无权限</view>
       </view>
     </view>
     <view v-else-if="!loading" class="empty">暂无收藏</view>
@@ -70,7 +72,8 @@ export default {
             id: it?.available_product_id || it?.product_id || it?.id || ('f' + i),
             title: it?.name || it?.title || ('收藏 ' + (i + 1)),
             price: (it?.price === '-' || it?.price === '—') ? '-' : (Number(it?.price ?? 0) || 0),
-            image: img
+            image: img,
+            favorite_status: Number(it?.favorite_status) || 1
           }
         })
       }).catch(() => {
@@ -127,10 +130,12 @@ export default {
      * @example
      * this.openProduct('1001')
      */
-    openProduct(id) {
+    openProduct(item) {
       if (!this.ensureLoggedIn()) return
+      if (item.favorite_status === 2) { uni.showToast({ title: '该商品暂无权限查看', icon: 'none' }); return }
+      const id = item.id
       if (!id) return
-      const target = (this.favorites || []).find((item) => item.id === id)
+      const target = (this.favorites || []).find((f) => f.id === id)
       if (target) cacheProductPreview(target)
       const url = '/pages/product/index?id=' + encodeURIComponent(id)
       if (typeof window !== 'undefined' && window.open) {
@@ -291,5 +296,29 @@ export default {
   background: #2c2c2c;
   border-radius: 12rpx;
   margin-top: 40rpx;
+}
+
+.item.no-permission {
+  position: relative;
+  opacity: 0.7;
+}
+.no-perm-mask {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 12rpx;
+}
+.no-perm-tag {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  background: rgba(225, 37, 27, 0.9);
+  color: #fff;
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  z-index: 3;
 }
 </style>
