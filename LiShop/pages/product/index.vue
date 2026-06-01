@@ -404,6 +404,9 @@ import OnboardingGuide from '@/components/OnboardingGuide.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
 import { getCachedProductPreview } from '@/utils/product-preview.js'
 
+const HLS_SCRIPT_URL = 'https://cdn.jsdelivr.net/npm/hls.js@1'
+let hlsScriptPromise = null
+
 export default {
   components: { RoomSelector, FloatingNav, Skeleton, OnboardingGuide, LoginPrompt },
   data() { return { hasUserInteracted: false, hls: null, product: null, pageLoading: true, shareProductId: '', current: 0, qty: 1, specTemp: '', specLength: '', lengthLimitTip: '', roomName: '', roomId: '', roomsRaw: [], mpSheet: false, mpRoomSheet: false, mpTemp: '', mpLength: '', mpRoom: '', mpQty: 1, mpOrderNote: '', specs: [], specsLoading: false, roomSheet: false, roomsList: [], roomInput: '', selectedSpecIndex: -1, isSpecsCollapsed: true, lockScroll: false, lockScrollTop: 0, roomSelectorVisible: false, roomSelectorMode: 'h5', addresses: [], selectedAddress: null, h5OrderNote: '', isFavorite: false, swiperTimer: null, carouselInterval: 3000, lockCarousel: false, showOnboarding: false, onboardingRects: [], onboardingSteps: [], onboardingIndex: 0, showLoginModal: false, coupons: [], selectedCoupon: null, couponSheetVisible: false, packageFeeByProductId: {}, realTimePriceData: null } },
@@ -772,6 +775,37 @@ export default {
       } catch (e) {}
     },
     /**
+     * 按需加载 HLS 播放库，避免首页等非视频页面首屏额外下载脚本。
+     * @returns {Promise<any>}
+     * @example
+     * this.ensureHlsLibrary().then((Hls) => { if (Hls) console.log('ready') })
+     */
+    ensureHlsLibrary() {
+      // #ifdef H5
+      if (typeof window === 'undefined') return Promise.resolve(null)
+      if (window.Hls) return Promise.resolve(window.Hls)
+      if (hlsScriptPromise) return hlsScriptPromise
+      hlsScriptPromise = new Promise((resolve, reject) => {
+        try {
+          const script = document.createElement('script')
+          script.src = HLS_SCRIPT_URL
+          script.async = true
+          script.onload = () => resolve(window.Hls || null)
+          script.onerror = () => {
+            hlsScriptPromise = null
+            reject(new Error('HLS script load failed'))
+          }
+          document.head.appendChild(script)
+        } catch (e) {
+          hlsScriptPromise = null
+          reject(e)
+        }
+      })
+      return hlsScriptPromise
+      // #endif
+      return Promise.resolve(null)
+    },
+    /**
      * 延后加载非首屏必要数据。
      * @description
      * 将优惠券与地址请求放到首屏渲染之后，减少新标签页刚打开时的网络竞争。
@@ -926,32 +960,39 @@ export default {
       if (!normalizedSrc || !this.isM3u8Video(normalizedSrc)) return
 
       this.$nextTick(() => {
-        let el = document.querySelector('#pd-video video') || document.querySelector('#pd-video')
-        if (el && el.tagName !== 'VIDEO') el = el.querySelector('video')
-        if (!el) return
+        this.ensureHlsLibrary()
+          .then((Hls) => {
+            const latestSrc = this.normalizeMediaUrl(this.currentImage)
+            if (latestSrc !== normalizedSrc) return
 
-        if (window.Hls && window.Hls.isSupported()) {
-          this.hls = new window.Hls()
-          const bust = this.withCacheBust(normalizedSrc)
-          this.hls.loadSource(bust)
-          this.hls.attachMedia(el)
-          this.hls.on(window.Hls.Events.ERROR, (event, data) => {
-            if (data && data.fatal) {
-              try { this.hls.destroy() } catch (e) { }
-              this.hls = null
-              try { uni.showToast({ title: '视频资源未找到', icon: 'none' }) } catch (e) { }
-              const imgs = (this.images || []).filter(u => !this.isVideo(u))
-              if (imgs.length) {
-                const idx = (this.images || []).findIndex(u => u === imgs[0])
-                this.current = idx >= 0 ? idx : 0
-              } else {
-                this.current = 0
-              }
+            let el = document.querySelector('#pd-video video') || document.querySelector('#pd-video')
+            if (el && el.tagName !== 'VIDEO') el = el.querySelector('video')
+            if (!el) return
+
+            if (Hls && Hls.isSupported()) {
+              this.hls = new Hls()
+              const bust = this.withCacheBust(normalizedSrc)
+              this.hls.loadSource(bust)
+              this.hls.attachMedia(el)
+              this.hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data && data.fatal) {
+                  try { this.hls.destroy() } catch (e) { }
+                  this.hls = null
+                  try { uni.showToast({ title: '视频资源未找到', icon: 'none' }) } catch (e) { }
+                  const imgs = (this.images || []).filter(u => !this.isVideo(u))
+                  if (imgs.length) {
+                    const idx = (this.images || []).findIndex(u => u === imgs[0])
+                    this.current = idx >= 0 ? idx : 0
+                  } else {
+                    this.current = 0
+                  }
+                }
+              })
+            } else if (el.canPlayType && el.canPlayType('application/vnd.apple.mpegurl')) {
+              el.src = this.withCacheBust(normalizedSrc)
             }
           })
-        } else if (el && el.canPlayType && el.canPlayType('application/vnd.apple.mpegurl')) {
-          el.src = this.withCacheBust(normalizedSrc)
-        }
+          .catch(() => {})
       })
       // #endif
     },

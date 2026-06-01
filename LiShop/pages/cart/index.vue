@@ -48,7 +48,7 @@
                   <view class="qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
               <text class="del-btn" v-if="it.isOutOfStock" @click.stop="removeById(it.id)">删除</text>
-              <view class="stock-tip" v-if="it.isNoPermission">无权限</view>
+              <view class="stock-tip" v-if="it.isNoPermission">无货</view>
               <view class="stock-tip" v-else-if="it.isOutOfStock">无货</view>
             </view>
           </view>
@@ -187,7 +187,7 @@
                 <text class="act-txt del" v-if="it.isOutOfStock" @click.stop="removeById(it.id)">删除</text>
               </view>
             </view>
-            <view class="stock-tip" v-if="it.isNoPermission">无权限</view>
+            <view class="stock-tip" v-if="it.isNoPermission">无货</view>
             <view class="stock-tip" v-else-if="it.isOutOfStock">无货</view>
           </view>
         </view>
@@ -497,7 +497,7 @@ export default {
       goBack() { this.goHome() },
       openDetail(item) {
         try {
-          if (item.isNoPermission) { uni.showToast({ title: '该商品暂无权限查看', icon: 'none' }); return }
+          if (item.isNoPermission) { uni.showToast({ title: '该商品暂无货', icon: 'none' }); return }
           const id = (item && (item.availableProductId || item.available_product_id || item.productId || item.id)) || ''
           if (!id) { uni.showToast({ title: '商品ID缺失', icon: 'none' }); return }
           uni.navigateTo({ url: '/pages/product/index?id=' + encodeURIComponent(id) })
@@ -837,7 +837,7 @@ export default {
       if (!this.ensureLoggedIn()) return
       if (this.selectedCount === 0) { uni.showToast({ title: '请选择商品', icon: 'none' }); return }
       const hasNoPermission = this.cart.filter(it => it.selected).some(it => it.isNoPermission)
-      if (hasNoPermission) { uni.showToast({ title: '选中商品中包含无权限商品，请取消勾选后再结算', icon: 'none' }); return }
+      if (hasNoPermission) { uni.showToast({ title: '选中商品中包含无货商品，请取消勾选后再结算', icon: 'none' }); return }
       const selectedItems = this.cart.filter(it => it.selected)
       const selectedIds = selectedItems.map(it => it.id)
       const addressId = this.selectedAddress?.id || ''

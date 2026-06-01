@@ -48,7 +48,8 @@ const _sfc_main = {
             id: (it == null ? void 0 : it.available_product_id) || (it == null ? void 0 : it.product_id) || (it == null ? void 0 : it.id) || "f" + i,
             title: (it == null ? void 0 : it.name) || (it == null ? void 0 : it.title) || "收藏 " + (i + 1),
             price: (it == null ? void 0 : it.price) === "-" || (it == null ? void 0 : it.price) === "—" ? "-" : Number((it == null ? void 0 : it.price) ?? 0) || 0,
-            image: img
+            image: img,
+            favorite_status: Number(it == null ? void 0 : it.favorite_status) || 1
           };
         });
       }).catch(() => {
@@ -134,12 +135,17 @@ const _sfc_main = {
      * @example
      * this.openProduct('1001')
      */
-    openProduct(id) {
+    openProduct(item) {
       if (!this.ensureLoggedIn())
         return;
+      if (item.favorite_status === 2) {
+        common_vendor.index.showToast({ title: "该商品暂无权限查看", icon: "none" });
+        return;
+      }
+      const id = item.id;
       if (!id)
         return;
-      const target = (this.favorites || []).find((item) => item.id === id);
+      const target = (this.favorites || []).find((f) => f.id === id);
       if (target)
         utils_productPreview.cacheProductPreview(target);
       const url = "/pages/product/index?id=" + encodeURIComponent(id);
@@ -167,13 +173,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: $data.favorites.length
   }, $data.favorites.length ? {
     c: common_vendor.f($data.favorites, (it, i, i0) => {
-      return {
-        a: it.image,
-        b: common_vendor.t(it.title),
-        c: common_vendor.t($options.formatPriceWithSymbol(it.price)),
-        d: i,
-        e: common_vendor.o(($event) => $options.openProduct(it.id), i)
-      };
+      return common_vendor.e({
+        a: it.favorite_status === 2
+      }, it.favorite_status === 2 ? {} : {}, {
+        b: it.image,
+        c: common_vendor.t(it.title),
+        d: common_vendor.t($options.formatPriceWithSymbol(it.price)),
+        e: it.favorite_status === 2
+      }, it.favorite_status === 2 ? {} : {}, {
+        f: i,
+        g: it.favorite_status === 2 ? 1 : "",
+        h: common_vendor.o(($event) => $options.openProduct(it), i)
+      });
     })
   } : !$data.loading ? {} : {}, {
     d: !$data.loading,

@@ -62,6 +62,12 @@
   font-size: 26rpx;
   color: #fff;
 }
+.sub-empty.data-v-3cdc7548 {
+  text-align: center;
+  color: #777;
+  font-size: 28rpx;
+  padding: 60rpx 0;
+}
 .left-item.data-v-3cdc7548, .sub-title.data-v-3cdc7548, .sub-name.data-v-3cdc7548 {
   font-size: 28rpx !important;
 }

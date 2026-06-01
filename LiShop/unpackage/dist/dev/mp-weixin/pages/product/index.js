@@ -382,8 +382,25 @@ const _sfc_main = {
         };
         this.isFavorite = String(d.is_favorite) === "1" || d.is_favorite === 1 || d.is_favorite === true;
         this.fetchSpecs(this.product.id);
-      }).catch(() => {
+      }).catch((err) => {
         this.packageFeeByProductId = {};
+        const errData = (err == null ? void 0 : err.data) || err || {};
+        const msg = (errData == null ? void 0 : errData.message) || "";
+        const statusCode = (err == null ? void 0 : err.statusCode) || 0;
+        const isNotFound = statusCode === 404 || msg.includes("不存在") || msg.includes("not found");
+        if (isNotFound) {
+          this.product = null;
+          this.pageLoading = false;
+          common_vendor.index.showToast({ title: "商品不存在", icon: "none" });
+          setTimeout(() => {
+            try {
+              common_vendor.index.navigateBack();
+            } catch (e) {
+              common_vendor.index.switchTab({ url: "/pages/home/index" });
+            }
+          }, 1500);
+          return;
+        }
         if (!this.product) {
           this.product = { id: productId, title: "商品 " + productId, price: 0, sales: 0, shipping_origin: "", image: "/static/logo.png", images: ["/static/logo.png"], main_media: ["/static/logo.png"], details_images: [] };
         }
@@ -498,7 +515,7 @@ const _sfc_main = {
           }
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/product/index.vue:832", "实时计价失败", err);
+        common_vendor.index.__f__("error", "at pages/product/index.vue:847", "实时计价失败", err);
         this.realTimePriceData = null;
         const errMsg = (err && typeof err.data === "string" ? err.data : "") || err && err.message || "";
         if (errMsg && errMsg.includes("长度")) {

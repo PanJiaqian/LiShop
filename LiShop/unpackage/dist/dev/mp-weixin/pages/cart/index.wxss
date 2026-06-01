@@ -62,6 +62,9 @@
 }
 .item.out-of-stock .chk.data-v-8039fbf1 { pointer-events: none;
 }
+.item.no-permission .stock-tip.data-v-8039fbf1 {
+  background: rgba(225, 37, 27, 0.9);
+}
 .cover.data-v-8039fbf1 {
   width: 160rpx;
   height: 160rpx;

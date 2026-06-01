@@ -138,7 +138,7 @@ if (!Array) {
   _component_Skeleton();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return {
+  return common_vendor.e({
     a: common_vendor.p({
       loading: $data.loading,
       showTitle: true,
@@ -154,7 +154,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     }),
     d: common_vendor.t($options.activeCategory.name),
-    e: common_vendor.f($data.rightChildren, (s, i, i0) => {
+    e: $data.rightChildren.length
+  }, $data.rightChildren.length ? {
+    f: common_vendor.f($data.rightChildren, (s, i, i0) => {
       return {
         a: s.icon || "/static/logo.png",
         b: common_vendor.t(s.name),
@@ -162,7 +164,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => $options.openList(s), i)
       };
     })
-  };
+  } : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-3cdc7548"]]);
 wx.createPage(MiniProgramPage);

@@ -3,7 +3,6 @@
     <Skeleton :loading="loading" :showTitle="true" :showGrid="true" />
     <!-- H5 三栏布局（包含分类、我的、商品） -->
     <!-- #ifdef H5 -->
-    <image class="page-bg" src="/static/product_detail_background.jpg" mode="aspectFill" />
     <view class="h5-container">
       <!-- 顶部 Header -->
       <view class="h5-header">
@@ -70,7 +69,7 @@
             <view class="uc-header">
               <!-- <image class="uc-avatar" :src="user?.avatar || '/static/logo.png'" @click="onAvatarClick" /> -->
               <view class="uc-info">
-                <text class="uc-greet">下午好 {{ user?.username || '用户' }}</text>
+                <text class="uc-greet">{{ greetingText }} {{ user?.username || '用户' }}</text>
               </view>
             </view>
 
@@ -246,6 +245,8 @@ export default {
       keyword: '',
       roomName: '',
       user: null,
+      currentTimestamp: Date.now(),
+      greetingTimer: null,
       banners: ['/static/logo.png', '/static/logo.png', '/static/logo.png'],
       topCategories: [],
       activeCateId: '',
@@ -257,7 +258,10 @@ export default {
         { id: 's2', title: '爆款秒杀2', price: 129, image: '/static/logo.png' },
         { id: 's3', title: '爆款秒杀3', price: 59, image: '/static/logo.png' }
       ],
-      recommendList: []
+      recommendList: [],
+      hasHomeCoreLoaded: false,
+      categoryChildrenCache: {},
+      categoryLoadingId: ''
       , panelTop: 20
       , panelLeft: 0
       , panelRight: 0
@@ -310,8 +314,19 @@ export default {
         uni.removeStorageSync('just_logged_in')
       }
     } catch (e) { }
+    try {
+      const h = () => { this.showLoginModal = true }
+      this._globalLoginHandler = h
+      uni.$on('global-login-prompt', h)
+    } catch (e) { }
   },
   computed: {
+    greetingText() {
+      const hour = new Date(this.currentTimestamp || Date.now()).getHours()
+      if (hour < 12) return '上午好'
+      if (hour < 18) return '下午好'
+      return '晚上好'
+    },
     displayTime() {
       try {
         const t = this.announcement?.created_at || this.announcement?.timestamp || ''
@@ -328,6 +343,11 @@ export default {
     }
   },
   onShow() {
+    this.syncCurrentTime()
+    this.startGreetingTimer()
+    if (!this.hasHomeCoreLoaded) {
+      this.loading = true
+    }
     // #ifdef H5
     try {
       const p = uni.hideTabBar({ animation: false })
@@ -394,32 +414,61 @@ export default {
         })
         .catch(() => { })
 
-      Promise.allSettled([p1, p2, p3]).then(() => {
+      Promise.allSettled([p1, p2]).then(() => {
+        this.hasHomeCoreLoaded = true
         this.loading = false
         try { this.generateSharePosterIfNeeded() } catch (e) { }
       })
     } catch (e) { this.loading = false }
-  },
-  onLoad() {
-    try {
-      const h = () => { this.showLoginModal = true }
-      this._globalLoginHandler = h
-      uni.$on('global-login-prompt', h)
-    } catch (e) { }
   },
   onUnload() {
     try {
       if (this._globalLoginHandler) uni.$off('global-login-prompt', this._globalLoginHandler)
       this._globalLoginHandler = null
     } catch (e) { }
+    this.stopGreetingTimer()
   },
   onPullDownRefresh() {
     setTimeout(() => { uni.stopPullDownRefresh() }, 600)
   },
   onHide() {
     this.showOnboarding = false
+    this.stopGreetingTimer()
   },
   methods: {
+    /**
+     * 同步当前时间戳，供问候语按本地时间动态计算。
+     * @returns {void}
+     * @example
+     * this.syncCurrentTime()
+     */
+    syncCurrentTime() {
+      this.currentTimestamp = Date.now()
+    },
+    /**
+     * 启动问候语刷新定时器，确保页面停留时跨时段自动更新。
+     * @returns {void}
+     * @example
+     * this.startGreetingTimer()
+     */
+    startGreetingTimer() {
+      this.stopGreetingTimer()
+      this.greetingTimer = setInterval(() => {
+        this.syncCurrentTime()
+      }, 60 * 1000)
+    },
+    /**
+     * 停止问候语刷新定时器，避免页面切换后残留定时任务。
+     * @returns {void}
+     * @example
+     * this.stopGreetingTimer()
+     */
+    stopGreetingTimer() {
+      if (this.greetingTimer) {
+        clearInterval(this.greetingTimer)
+        this.greetingTimer = null
+      }
+    },
     getSharePosterSignature() {
       try {
         const v = 'v2'
@@ -809,14 +858,31 @@ export default {
         }
       } catch (err) { }
       // #endif
+      if (Object.prototype.hasOwnProperty.call(this.categoryChildrenCache, id)) {
+        this.leftChildren = this.categoryChildrenCache[id] || []
+        return
+      }
+      if (this.categoryLoadingId === id) return
+      this.categoryLoadingId = id
       try {
         getVisibleCategories({ page: 1, page_size: 50, sort_by: 'id', categories_id: id })
           .then((res) => {
             const items = Array.isArray(res?.data?.items) ? res.data.items : []
-            this.leftChildren = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '', icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : '') }))
+            const children = items.map((it, i) => ({ name: it?.name || ('子分类' + (i + 1)), categories_id: it?.categories_id || it?.id || '', icon: (typeof it?.thumbnail === 'string' ? it.thumbnail.replace(/`/g, '').trim() : '') || (typeof it?.icon === 'string' ? it.icon.replace(/`/g, '').trim() : '') }))
+            this.categoryChildrenCache = { ...this.categoryChildrenCache, [id]: children }
+            if (this.activeCateId === id) this.leftChildren = children
           })
-          .catch(() => { this.leftChildren = [] })
-      } catch (e) { this.leftChildren = [] }
+          .catch(() => {
+            this.categoryChildrenCache = { ...this.categoryChildrenCache, [id]: [] }
+            if (this.activeCateId === id) this.leftChildren = []
+          })
+          .finally(() => {
+            if (this.categoryLoadingId === id) this.categoryLoadingId = ''
+          })
+      } catch (e) {
+        if (this.categoryLoadingId === id) this.categoryLoadingId = ''
+        this.leftChildren = []
+      }
     },
     onCateListLeave() {
       try { if (this.leaveTimer) { clearTimeout(this.leaveTimer) } } catch (e) { }

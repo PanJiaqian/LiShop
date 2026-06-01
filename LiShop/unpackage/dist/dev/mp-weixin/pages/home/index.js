@@ -31,6 +31,8 @@ const _sfc_main = {
       keyword: "",
       roomName: "",
       user: null,
+      currentTimestamp: Date.now(),
+      greetingTimer: null,
       banners: ["/static/logo.png", "/static/logo.png", "/static/logo.png"],
       topCategories: [],
       activeCateId: "",
@@ -98,6 +100,14 @@ const _sfc_main = {
     }
   },
   computed: {
+    greetingText() {
+      const hour = new Date(this.currentTimestamp || Date.now()).getHours();
+      if (hour < 12)
+        return "上午好";
+      if (hour < 18)
+        return "下午好";
+      return "晚上好";
+    },
     displayTime() {
       var _a, _b;
       try {
@@ -119,6 +129,8 @@ const _sfc_main = {
     }
   },
   onShow() {
+    this.syncCurrentTime();
+    this.startGreetingTimer();
     try {
       const cont = !!common_vendor.index.getStorageSync("onboarding_continue");
       const idx = Number(common_vendor.index.getStorageSync("onboarding_index") || 0);
@@ -201,6 +213,7 @@ const _sfc_main = {
       this._globalLoginHandler = null;
     } catch (e) {
     }
+    this.stopGreetingTimer();
   },
   onPullDownRefresh() {
     setTimeout(() => {
@@ -209,8 +222,42 @@ const _sfc_main = {
   },
   onHide() {
     this.showOnboarding = false;
+    this.stopGreetingTimer();
   },
   methods: {
+    /**
+     * 同步当前时间戳，供问候语按本地时间动态计算。
+     * @returns {void}
+     * @example
+     * this.syncCurrentTime()
+     */
+    syncCurrentTime() {
+      this.currentTimestamp = Date.now();
+    },
+    /**
+     * 启动问候语刷新定时器，确保页面停留时跨时段自动更新。
+     * @returns {void}
+     * @example
+     * this.startGreetingTimer()
+     */
+    startGreetingTimer() {
+      this.stopGreetingTimer();
+      this.greetingTimer = setInterval(() => {
+        this.syncCurrentTime();
+      }, 60 * 1e3);
+    },
+    /**
+     * 停止问候语刷新定时器，避免页面切换后残留定时任务。
+     * @returns {void}
+     * @example
+     * this.stopGreetingTimer()
+     */
+    stopGreetingTimer() {
+      if (this.greetingTimer) {
+        clearInterval(this.greetingTimer);
+        this.greetingTimer = null;
+      }
+    },
     getSharePosterSignature() {
       try {
         const v = "v2";
@@ -796,7 +843,7 @@ const _sfc_main = {
         common_vendor.index.setStorageSync("cart", cart);
         common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/home/index.vue:940", e);
+        common_vendor.index.__f__("error", "at pages/home/index.vue:985", e);
       }
     },
     goLogin() {
