@@ -34,7 +34,7 @@ const _sfc_main = {
   },
   onLoad(query) {
     this.parentId = decodeURIComponent((query == null ? void 0 : query.parent_id) || "");
-    this.activeChildId = decodeURIComponent((query == null ? void 0 : query.category_id) || "");
+    this.activeChildId = decodeURIComponent((query == null ? void 0 : query.category_id) || (query == null ? void 0 : query.categories_id) || "");
     this.activeName = decodeURIComponent((query == null ? void 0 : query.active) || "");
   },
   onReachBottom() {

@@ -28,9 +28,9 @@
               <!-- <text class="arrow">></text> -->
             </view>
             <view class="item h5-row" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock, 'no-permission': it.isNoPermission }">
-              <view class="out-stock-mask" v-if="it.isOutOfStock"></view>
+              <view class="out-stock-mask" v-if="it.isBlocked"></view>
               <view class="chk" @click="toggleById(it.id)">
-                <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
+                <view class="chk-ico" :class="{ on: it.selected, disabled: it.isBlocked }"></view>
               </view>
               <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" @click="openDetail(it)" />
               <text class="title" @click="openDetail(it)">
@@ -39,15 +39,15 @@
               </text>
               <view style="flex: 1; display:flex; flex-direction:column; gap:4rpx; align-items:center; justify-content:center;">
                 <text class="attr-txt" style="flex:none;">{{ it.attr }}</text>
-                <text class="attr-txt" v-if="it.package_fee > 0" style="flex:none; color: #faa21b; font-size: 20rpx;">含包装费 ¥{{ Number(it.package_fee).toFixed(2) }}</text>
+                <text class="attr-txt" v-if="getItemPackageFeeLabel(it)" style="flex:none; color: #faa21b; font-size: 20rpx;">{{ getItemPackageFeeLabel(it) }}</text>
               </view>
-              <text class="price">¥{{ it.price.toFixed(2) }}</text>
+              <text class="price">¥{{ getItemDisplayPrice(it).toFixed(2) }}</text>
               <view class="qty-box">
                   <view class="qty-btn" @click.stop="decById(it.id)">-</view>
                   <text class="qty-num">{{ it.quantity }}</text>
                   <view class="qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
-              <text class="del-btn" v-if="it.isOutOfStock" @click.stop="removeById(it.id)">删除</text>
+              <text class="del-btn" v-if="it.isBlocked" @click.stop="removeById(it.id)">删除</text>
               <view class="stock-tip" v-if="it.isNoPermission">无货</view>
               <view class="stock-tip" v-else-if="it.isOutOfStock">无货</view>
             </view>
@@ -88,7 +88,7 @@
             </view>
             <view class="rows">
               <view class="row">
-                <text class="label">商品总价</text>
+                <text class="label">订单原价</text>
                 <text class="value">¥{{ selectedTotal.toFixed(2) }}</text>
               </view>
               <view class="row" v-if="summaryData.total_package_fee > 0">
@@ -158,9 +158,9 @@
           <text class="room mp-room">{{ grp.name }}</text>
         </view>
         <view class="item" v-for="it in grp.items" :key="it.id" :class="{ 'out-of-stock': it.isOutOfStock, 'no-permission': it.isNoPermission }">
-          <view class="out-stock-mask" v-if="it.isOutOfStock"></view>
+          <view class="out-stock-mask" v-if="it.isBlocked"></view>
           <view class="chk" @click="toggleById(it.id)">
-            <view class="chk-ico" :class="{ on: it.selected, disabled: it.isOutOfStock }"></view>
+            <view class="chk-ico" :class="{ on: it.selected, disabled: it.isBlocked }"></view>
           </view>
           <image class="cover" :src="it.image || '/static/logo.png'" mode="aspectFill" @click="openDetail(it)" />
           <view class="meta">
@@ -172,11 +172,11 @@
             </view>
             <view class="row-attr" style="display:flex; flex-direction:column; gap:4rpx; align-items:flex-start; background:transparent; padding:0; margin-top:8rpx;">
               <text class="attr-txt" style="background:#f7f7f7; padding:4rpx 12rpx; border-radius:8rpx;">{{ it.attr }}</text>
-              <text class="attr-txt" v-if="it.package_fee > 0" style="color: #faa21b; font-size: 20rpx; background: rgba(250, 162, 27, 0.1); padding: 4rpx 12rpx; border-radius: 8rpx;">含包装费 ¥{{ Number(it.package_fee).toFixed(2) }}</text>
+              <text class="attr-txt" v-if="getItemPackageFeeLabel(it)" style="color: #faa21b; font-size: 20rpx; background: rgba(250, 162, 27, 0.1); padding: 4rpx 12rpx; border-radius: 8rpx;">{{ getItemPackageFeeLabel(it) }}</text>
             </view>
             <view class="row-main">
               <view class="price-box">
-                <text class="price">¥{{ it.price.toFixed(2) }}</text>
+                <text class="price">¥{{ getItemDisplayPrice(it).toFixed(2) }}</text>
               </view>
               <view class="qty-box mp-qty-box">
                 <view class="qty-btn mp-qty-btn" @click.stop="decById(it.id)">-</view>
@@ -184,7 +184,7 @@
                 <view class="qty-btn mp-qty-btn" @click.stop="incById(it.id)">+</view>
               </view>
               <view class="actions-col">
-                <text class="act-txt del" v-if="it.isOutOfStock" @click.stop="removeById(it.id)">删除</text>
+                <text class="act-txt del" v-if="it.isBlocked" @click.stop="removeById(it.id)">删除</text>
               </view>
             </view>
             <view class="stock-tip" v-if="it.isNoPermission">无货</view>
@@ -325,11 +325,6 @@ export default {
       showAddressSelector: false,
       orderNote: '',
       mpOrderNote: '',
-      summaryData: {
-        total_price: 0,
-        total_original: 0,
-        is_free_shipping: 0
-      },
       couponDiscount: 0,
       showLoginModal: false,
       // 优惠券相关
@@ -340,7 +335,16 @@ export default {
       _noteLimitMax: 250,
       customToastVisible: false,
       customToastMessage: '',
-      _customToastTimer: null
+      _customToastTimer: null,
+      _summaryRequestSeq: 0,
+      summaryData: {
+        total_price: 0,
+        total_original: 0,
+        total_package_fee: 0,
+        is_free_shipping: 0,
+        items: [],
+        package_fee_groups: []
+      }
     }
   },
   computed: {
@@ -349,7 +353,7 @@ export default {
     selectedTotal() { return this.summaryData.total_original || 0 }, // 使用API返回的总价
     selectedCount() { return this.cart.filter(it => it.selected).length },
     isAllSelected() { 
-        const validItems = this.cart.filter(it => !it.isOutOfStock)
+        const validItems = this.cart.filter(it => !it.isBlocked)
         return validItems.length > 0 && validItems.every(it => it.selected)
     },
     orderNoteCount() { return Array.from(this.orderNote || '').length },
@@ -381,6 +385,15 @@ export default {
         console.error('groups computed error', e)
         return []
       }
+    },
+    summaryItemMap() {
+      const map = {}
+      ;((this.summaryData && this.summaryData.items) || []).forEach(item => {
+        if (item && item.cart_item_id) {
+          map[item.cart_item_id] = item
+        }
+      })
+      return map
     }
   },
   watch: {
@@ -552,6 +565,88 @@ export default {
         uni.showToast({ title: '保存失败', icon: 'none' })
       })
     },
+    /**
+     * 重置购物车条目的聚合包装费回填状态。
+     * @returns {void}
+     * @example
+     * this.resetCartAggregationState()
+     */
+    resetCartAggregationState() {
+      this.cart = (this.cart || []).map(it => ({
+        ...it,
+        package_fee: 0,
+        package_fee_group_key: '',
+        package_fee_selected_package_id: '',
+        package_fee_is_group_owner: 0,
+        item_amount: null,
+        item_original: null
+      }))
+    },
+    /**
+     * 清空购物车条目的优惠券使用标记。
+     * @returns {void}
+     * @example
+     * this.clearCouponUsageFlags()
+     */
+    clearCouponUsageFlags() {
+      this.cart = (this.cart || []).map(it => ({
+        ...it,
+        has_used_coupon: false
+      }))
+    },
+    /**
+     * 将结算接口返回的聚合明细回填到购物车列表。
+     * @param {Array<Object>} items 结算接口返回的明细列表
+     * @returns {void}
+     * @example
+     * this.applySummaryItems(res.data.items)
+     */
+    applySummaryItems(items) {
+      this.resetCartAggregationState()
+      ;(Array.isArray(items) ? items : []).forEach(detail => {
+        const idx = this.cart.findIndex(it => it.id === detail.cart_item_id)
+        if (idx >= 0) {
+          const current = this.cart[idx]
+          this.cart.splice(idx, 1, {
+            ...current,
+            package_fee: Number(detail.package_fee) || 0,
+            package_fee_group_key: detail.package_fee_group_key || '',
+            package_fee_selected_package_id: detail.package_fee_selected_package_id || '',
+            package_fee_is_group_owner: Number(detail.package_fee_is_group_owner) || 0,
+            item_amount: Number(detail.item_amount) || 0,
+            item_original: Number(detail.item_original) || 0
+          })
+        }
+      })
+    },
+    /**
+     * 获取购物车行展示价格。
+     * @param {Object} item 购物车条目
+     * @returns {number} 当前条目应展示的金额
+     * @example
+     * const price = this.getItemDisplayPrice(row)
+     */
+    getItemDisplayPrice(item) {
+      const detail = this.summaryItemMap[item?.id] || null
+      if (item?.selected && detail && detail.item_amount !== undefined && detail.item_amount !== null) {
+        return Number(detail.item_amount) || 0
+      }
+      return Number(item?.price) || 0
+    },
+    /**
+     * 获取购物车条目的包装费标签文案。
+     * @param {Object} item 购物车条目
+     * @returns {string} 展示文案；不展示时返回空字符串
+     * @example
+     * const label = this.getItemPackageFeeLabel(row)
+     */
+    getItemPackageFeeLabel(item) {
+      if (!item || !item.selected) return ''
+      if (Number(item.package_fee_is_group_owner || 0) !== 1) return ''
+      const fee = Number(item.package_fee || 0)
+      if (fee <= 0) return ''
+      return `本组包装费 ¥${fee.toFixed(2)}`
+    },
     toAddressPage() { uni.navigateTo({ url: '/pages/address/index' }) },
     load() {
       getCartItems()
@@ -590,13 +685,19 @@ export default {
                 inventory: x.inventory,
                 status: x.status,
                 available: x.available_product_status,
-                stockMessage: x.message || (isOutOfStock ? '该商品已无库存' : ''),
-                isOutOfStock: isOutOfStock || isNoPermission,
+                stockMessage: x.message || (isNoPermission ? '该商品当前暂无货' : (isOutOfStock ? '该商品已无库存' : '')),
+                isOutOfStock: isOutOfStock,
                 isNoPermission: isNoPermission,
+                isBlocked: isOutOfStock || isNoPermission,
                 cart_item_status: cartItemStatus,
                 category_id: x.category_id || '',
                 has_used_coupon: false,
-                package_fee: Number(x.package_fee) || 0
+                package_fee: Number(x.package_fee) || 0,
+                package_fee_group_key: x.package_fee_group_key || '',
+                package_fee_selected_package_id: x.package_fee_selected_package_id || '',
+                package_fee_is_group_owner: Number(x.package_fee_is_group_owner) || 0,
+                item_amount: null,
+                item_original: null
               })
             }
           }
@@ -616,11 +717,14 @@ export default {
         })
     },
     fetchSummary() {
+        const requestSeq = ++this._summaryRequestSeq
         const selectedItems = this.cart.filter(it => it.selected)
         const selectedIds = selectedItems.map(it => it.id)
+        this.resetCartAggregationState()
         if (selectedIds.length === 0) {
-            this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, is_free_shipping: 0 }
+            this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, is_free_shipping: 0, items: [], package_fee_groups: [] }
             this.couponDiscount = 0
+            this.clearCouponUsageFlags()
             return
         }
         let token = ''
@@ -629,6 +733,9 @@ export default {
           token = (u && (u.token || (u.data && u.data.token))) || ''
         } catch (e) {}
         calculateCartPrice({ cart_item_ids: selectedIds, token }).then(res => {
+            if (requestSeq !== this._summaryRequestSeq) {
+                return
+            }
             if (res && res.success && res.data) {
                 // 使用专门的计价接口返回的数据
                 this.summaryData = {
@@ -636,27 +743,24 @@ export default {
                     total_original: res.data.total_original || 0,
                     total_package_fee: res.data.total_package_fee || 0,
                     is_free_shipping: 0,
-                    items: Array.isArray(res.data.items) ? res.data.items : []
+                    items: Array.isArray(res.data.items) ? res.data.items : [],
+                    package_fee_groups: Array.isArray(res.data.package_fee_groups) ? res.data.package_fee_groups : []
                 }
-                
-                // 将后端算好的每个 item 的包装费/单价等回填到前端列表，保证显示一致
-                if (res.data.items && Array.isArray(res.data.items)) {
-                    res.data.items.forEach(detail => {
-                        const idx = this.cart.findIndex(it => it.id === detail.cart_item_id)
-                        if (idx >= 0) {
-                            this.cart[idx].package_fee = detail.package_fee || 0;
-                        }
-                    })
-                }
+                this.applySummaryItems(res.data.items)
                 
                 this.updateCouponDiscount()
             }
-        }).catch(e => console.error(e))
+        }).catch(e => {
+            if (requestSeq !== this._summaryRequestSeq) {
+                return
+            }
+            console.error(e)
+        })
     },
     updateCouponDiscount() {
       if (!this.selectedCouponRecordId || this.summaryData.total_price <= 0) {
         this.couponDiscount = 0
-        this.cart.forEach(it => { it.has_used_coupon = false })
+        this.clearCouponUsageFlags()
         return
       }
       
@@ -713,7 +817,7 @@ export default {
       const i = this.findIndexById(id)
       if (i >= 0) {
         const item = this.cart[i]
-        if (item.isOutOfStock) return
+        if (item.isBlocked) return
         this.updateItemQuantity(item, item.quantity + 1)
       }
     },
@@ -721,6 +825,7 @@ export default {
       const i = this.findIndexById(id)
       if (i >= 0) {
         const item = this.cart[i]
+        if (item.isBlocked) return
         if (item.quantity > 1) {
           this.updateItemQuantity(item, item.quantity - 1)
         }
@@ -767,7 +872,23 @@ export default {
               it.quantity = Number(found.quantity !== undefined ? found.quantity : it.quantity) || it.quantity
               it.inventory = found.inventory
               it.available = found.available_product_status
-              it.isOutOfStock = (found.inventory === 0 || found.available_product_status === 0)
+              const typeRaw = (found && (found.product_type || found.available_product_type || found.type || found.comment)) || ''
+              const typeLower = String(typeRaw || '').toLowerCase()
+              const isStagnant = typeLower.includes('stagnant') || typeLower.includes('呆滞')
+              const isOutOfStock = (found.available_product_status === 0) || ((found.inventory === 0) && isStagnant)
+              const cartItemStatus = Number(found.cart_item_status) || it.cart_item_status || 1
+              const isNoPermission = cartItemStatus === 2
+              it.isOutOfStock = isOutOfStock
+              it.isNoPermission = isNoPermission
+              it.isBlocked = isOutOfStock || isNoPermission
+              it.cart_item_status = cartItemStatus
+              it.price = Number(found.price !== undefined ? found.price : it.price) || it.price
+              it.package_fee = Number(found.package_fee) || 0
+              it.package_fee_group_key = found.package_fee_group_key || ''
+              it.package_fee_selected_package_id = found.package_fee_selected_package_id || ''
+              it.package_fee_is_group_owner = Number(found.package_fee_is_group_owner) || 0
+              it.item_amount = null
+              it.item_original = null
             }
           }
         })
@@ -813,20 +934,20 @@ export default {
     toggleById(id) { 
         const i = this.findIndexById(id); 
         if (i >= 0) { 
-            if (this.cart[i].isOutOfStock) return
+            if (this.cart[i].isBlocked) return
             this.cart[i].selected = !this.cart[i].selected; 
             this.sync() 
             this.fetchSummary()
         } 
     },
     toggleAll() {
-      const validItems = this.cart.filter(it => !it.isOutOfStock)
+      const validItems = this.cart.filter(it => !it.isBlocked)
       if (validItems.length === 0) return
       
       const makeSelected = !this.isAllSelected
       
       this.cart.forEach(it => {
-          if (!it.isOutOfStock) it.selected = makeSelected
+          if (!it.isBlocked) it.selected = makeSelected
           else it.selected = false
       })
       this.sync()
@@ -837,7 +958,7 @@ export default {
       if (!this.ensureLoggedIn()) return
       if (this.selectedCount === 0) { uni.showToast({ title: '请选择商品', icon: 'none' }); return }
       const hasNoPermission = this.cart.filter(it => it.selected).some(it => it.isNoPermission)
-      if (hasNoPermission) { uni.showToast({ title: '选中商品中包含无货商品，请取消勾选后再结算', icon: 'none' }); return }
+      if (hasNoPermission) { uni.showToast({ title: '选中商品中包含无货商品，请删除或取消勾选后再结算', icon: 'none' }); return }
       const selectedItems = this.cart.filter(it => it.selected)
       const selectedIds = selectedItems.map(it => it.id)
       const addressId = this.selectedAddress?.id || ''

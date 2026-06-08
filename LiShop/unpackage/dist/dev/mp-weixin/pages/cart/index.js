@@ -19,11 +19,6 @@ const _sfc_main = {
       showAddressSelector: false,
       orderNote: "",
       mpOrderNote: "",
-      summaryData: {
-        total_price: 0,
-        total_original: 0,
-        is_free_shipping: 0
-      },
       couponDiscount: 0,
       showLoginModal: false,
       // 优惠券相关
@@ -34,7 +29,16 @@ const _sfc_main = {
       _noteLimitMax: 250,
       customToastVisible: false,
       customToastMessage: "",
-      _customToastTimer: null
+      _customToastTimer: null,
+      _summaryRequestSeq: 0,
+      summaryData: {
+        total_price: 0,
+        total_original: 0,
+        total_package_fee: 0,
+        is_free_shipping: 0,
+        items: [],
+        package_fee_groups: []
+      }
     };
   },
   computed: {
@@ -50,7 +54,7 @@ const _sfc_main = {
       return this.cart.filter((it) => it.selected).length;
     },
     isAllSelected() {
-      const validItems = this.cart.filter((it) => !it.isOutOfStock);
+      const validItems = this.cart.filter((it) => !it.isBlocked);
       return validItems.length > 0 && validItems.every((it) => it.selected);
     },
     orderNoteCount() {
@@ -93,9 +97,18 @@ const _sfc_main = {
         });
         return Object.keys(map).map((name) => ({ name, items: map[name] }));
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:381", "groups computed error", e);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:385", "groups computed error", e);
         return [];
       }
+    },
+    summaryItemMap() {
+      const map = {};
+      (this.summaryData && this.summaryData.items || []).forEach((item) => {
+        if (item && item.cart_item_id) {
+          map[item.cart_item_id] = item;
+        }
+      });
+      return map;
     }
   },
   watch: {
@@ -304,6 +317,91 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "保存失败", icon: "none" });
       });
     },
+    /**
+     * 重置购物车条目的聚合包装费回填状态。
+     * @returns {void}
+     * @example
+     * this.resetCartAggregationState()
+     */
+    resetCartAggregationState() {
+      this.cart = (this.cart || []).map((it) => ({
+        ...it,
+        package_fee: 0,
+        package_fee_group_key: "",
+        package_fee_selected_package_id: "",
+        package_fee_is_group_owner: 0,
+        item_amount: null,
+        item_original: null
+      }));
+    },
+    /**
+     * 清空购物车条目的优惠券使用标记。
+     * @returns {void}
+     * @example
+     * this.clearCouponUsageFlags()
+     */
+    clearCouponUsageFlags() {
+      this.cart = (this.cart || []).map((it) => ({
+        ...it,
+        has_used_coupon: false
+      }));
+    },
+    /**
+     * 将结算接口返回的聚合明细回填到购物车列表。
+     * @param {Array<Object>} items 结算接口返回的明细列表
+     * @returns {void}
+     * @example
+     * this.applySummaryItems(res.data.items)
+     */
+    applySummaryItems(items) {
+      this.resetCartAggregationState();
+      (Array.isArray(items) ? items : []).forEach((detail) => {
+        const idx = this.cart.findIndex((it) => it.id === detail.cart_item_id);
+        if (idx >= 0) {
+          const current = this.cart[idx];
+          this.cart.splice(idx, 1, {
+            ...current,
+            package_fee: Number(detail.package_fee) || 0,
+            package_fee_group_key: detail.package_fee_group_key || "",
+            package_fee_selected_package_id: detail.package_fee_selected_package_id || "",
+            package_fee_is_group_owner: Number(detail.package_fee_is_group_owner) || 0,
+            item_amount: Number(detail.item_amount) || 0,
+            item_original: Number(detail.item_original) || 0
+          });
+        }
+      });
+    },
+    /**
+     * 获取购物车行展示价格。
+     * @param {Object} item 购物车条目
+     * @returns {number} 当前条目应展示的金额
+     * @example
+     * const price = this.getItemDisplayPrice(row)
+     */
+    getItemDisplayPrice(item) {
+      const detail = this.summaryItemMap[item == null ? void 0 : item.id] || null;
+      if ((item == null ? void 0 : item.selected) && detail && detail.item_amount !== void 0 && detail.item_amount !== null) {
+        return Number(detail.item_amount) || 0;
+      }
+      return Number(item == null ? void 0 : item.price) || 0;
+    },
+    /**
+     * 获取购物车条目的包装费标签文案。
+     * @param {Object} item 购物车条目
+     * @returns {string} 展示文案；不展示时返回空字符串
+     * @example
+     * const label = this.getItemPackageFeeLabel(row)
+     */
+    getItemPackageFeeLabel(item) {
+      if (!item || !item.selected)
+        return "";
+      if (Number(item.package_fee_is_group_owner || 0) !== 1)
+        return "";
+      const fee = Number(item.package_fee || 0);
+      if (fee <= 0)
+        return "";
+      return `本组包装费 ¥${fee.toFixed(2)}`;
+    },
     toAddressPage() {
       common_vendor.index.navigateTo({ url: "/pages/address/index" });
     },
@@ -345,13 +443,19 @@ const _sfc_main = {
               inventory: x.inventory,
               status: x.status,
               available: x.available_product_status,
-              stockMessage: x.message || (isOutOfStock ? "该商品已无库存" : ""),
-              isOutOfStock: isOutOfStock || isNoPermission,
+              stockMessage: x.message || (isNoPermission ? "该商品当前暂无货" : isOutOfStock ? "该商品已无库存" : ""),
+              isOutOfStock,
               isNoPermission,
+              isBlocked: isOutOfStock || isNoPermission,
               cart_item_status: cartItemStatus,
               category_id: x.category_id || "",
               has_used_coupon: false,
-              package_fee: Number(x.package_fee) || 0
+              package_fee: Number(x.package_fee) || 0,
+              package_fee_group_key: x.package_fee_group_key || "",
+              package_fee_selected_package_id: x.package_fee_selected_package_id || "",
+              package_fee_is_group_owner: Number(x.package_fee_is_group_owner) || 0,
+              item_amount: null,
+              item_original: null
             });
           }
         }
@@ -359,7 +463,7 @@ const _sfc_main = {
         this.fetchSummary();
         this.loading = false;
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:608", "Get cart failed", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:709", "Get cart failed", err);
         try {
           this.cart = common_vendor.index.getStorageSync("cart") || [];
         } catch (e) {
@@ -374,11 +478,14 @@ const _sfc_main = {
       });
     },
     fetchSummary() {
+      const requestSeq = ++this._summaryRequestSeq;
       const selectedItems = this.cart.filter((it) => it.selected);
       const selectedIds = selectedItems.map((it) => it.id);
+      this.resetCartAggregationState();
       if (selectedIds.length === 0) {
-        this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, is_free_shipping: 0 };
+        this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, is_free_shipping: 0, items: [], package_fee_groups: [] };
         this.couponDiscount = 0;
+        this.clearCouponUsageFlags();
         return;
       }
       let token = "";
@@ -388,32 +495,32 @@ const _sfc_main = {
       } catch (e) {
       }
       api_index.calculateCartPrice({ cart_item_ids: selectedIds, token }).then((res) => {
+        if (requestSeq !== this._summaryRequestSeq) {
+          return;
+        }
         if (res && res.success && res.data) {
           this.summaryData = {
             total_price: res.data.total_amount || 0,
             total_original: res.data.total_original || 0,
             total_package_fee: res.data.total_package_fee || 0,
             is_free_shipping: 0,
-            items: Array.isArray(res.data.items) ? res.data.items : []
+            items: Array.isArray(res.data.items) ? res.data.items : [],
+            package_fee_groups: Array.isArray(res.data.package_fee_groups) ? res.data.package_fee_groups : []
           };
-          if (res.data.items && Array.isArray(res.data.items)) {
-            res.data.items.forEach((detail) => {
-              const idx = this.cart.findIndex((it) => it.id === detail.cart_item_id);
-              if (idx >= 0) {
-                this.cart[idx].package_fee = detail.package_fee || 0;
-              }
-            });
-          }
+          this.applySummaryItems(res.data.items);
           this.updateCouponDiscount();
         }
-      }).catch((e) => common_vendor.index.__f__("error", "at pages/cart/index.vue:654", e));
+      }).catch((e) => {
+        if (requestSeq !== this._summaryRequestSeq) {
+          return;
+        }
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:757", e);
+      });
     },
     updateCouponDiscount() {
       if (!this.selectedCouponRecordId || this.summaryData.total_price <= 0) {
         this.couponDiscount = 0;
-        this.cart.forEach((it) => {
-          it.has_used_coupon = false;
-        });
+        this.clearCouponUsageFlags();
         return;
       }
       const coupon = this.availableCoupons.find((c) => c.record_id === this.selectedCouponRecordId);
@@ -472,7 +579,7 @@ const _sfc_main = {
       const i = this.findIndexById(id);
       if (i >= 0) {
         const item = this.cart[i];
-        if (item.isOutOfStock)
+        if (item.isBlocked)
           return;
         this.updateItemQuantity(item, item.quantity + 1);
       }
@@ -481,6 +588,8 @@ const _sfc_main = {
       const i = this.findIndexById(id);
       if (i >= 0) {
         const item = this.cart[i];
+        if (item.isBlocked)
+          return;
         if (item.quantity > 1) {
           this.updateItemQuantity(item, item.quantity - 1);
         }
@@ -504,7 +613,7 @@ const _sfc_main = {
           common_vendor.index.showToast({ title: "更新失败", icon: "none" });
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:747", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:852", err);
         common_vendor.index.showToast({ title: "更新出错", icon: "none" });
       });
     },
@@ -529,7 +638,23 @@ const _sfc_main = {
             it.quantity = Number(found.quantity !== void 0 ? found.quantity : it.quantity) || it.quantity;
             it.inventory = found.inventory;
             it.available = found.available_product_status;
-            it.isOutOfStock = found.inventory === 0 || found.available_product_status === 0;
+            const typeRaw = found && (found.product_type || found.available_product_type || found.type || found.comment) || "";
+            const typeLower = String(typeRaw || "").toLowerCase();
+            const isStagnant = typeLower.includes("stagnant") || typeLower.includes("呆滞");
+            const isOutOfStock = found.available_product_status === 0 || found.inventory === 0 && isStagnant;
+            const cartItemStatus = Number(found.cart_item_status) || it.cart_item_status || 1;
+            const isNoPermission = cartItemStatus === 2;
+            it.isOutOfStock = isOutOfStock;
+            it.isNoPermission = isNoPermission;
+            it.isBlocked = isOutOfStock || isNoPermission;
+            it.cart_item_status = cartItemStatus;
+            it.price = Number(found.price !== void 0 ? found.price : it.price) || it.price;
+            it.package_fee = Number(found.package_fee) || 0;
+            it.package_fee_group_key = found.package_fee_group_key || "";
+            it.package_fee_selected_package_id = found.package_fee_selected_package_id || "";
+            it.package_fee_is_group_owner = Number(found.package_fee_is_group_owner) || 0;
+            it.item_amount = null;
+            it.item_original = null;
           }
         }
       }).finally(() => {
@@ -589,7 +714,7 @@ const _sfc_main = {
     toggleById(id) {
       const i = this.findIndexById(id);
       if (i >= 0) {
-        if (this.cart[i].isOutOfStock)
+        if (this.cart[i].isBlocked)
           return;
         this.cart[i].selected = !this.cart[i].selected;
         this.sync();
@@ -597,12 +722,12 @@ const _sfc_main = {
       }
     },
     toggleAll() {
-      const validItems = this.cart.filter((it) => !it.isOutOfStock);
+      const validItems = this.cart.filter((it) => !it.isBlocked);
       if (validItems.length === 0)
         return;
       const makeSelected = !this.isAllSelected;
       this.cart.forEach((it) => {
-        if (!it.isOutOfStock)
+        if (!it.isBlocked)
           it.selected = makeSelected;
         else
           it.selected = false;
@@ -625,7 +750,7 @@ const _sfc_main = {
       }
       const hasNoPermission = this.cart.filter((it) => it.selected).some((it) => it.isNoPermission);
       if (hasNoPermission) {
-        common_vendor.index.showToast({ title: "选中商品中包含无货商品，请取消勾选后再结算", icon: "none" });
+        common_vendor.index.showToast({ title: "选中商品中包含无货商品，请删除或取消勾选后再结算", icon: "none" });
         return;
       }
       const selectedItems = this.cart.filter((it) => it.selected);
@@ -664,7 +789,7 @@ const _sfc_main = {
         }
       }).catch((err) => {
         common_vendor.index.showToast({ title: "下单出错", icon: "none" });
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:876", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:997", err);
       });
     },
     handleExportExcel() {
@@ -732,10 +857,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         a: common_vendor.t(grp.name),
         b: common_vendor.f(grp.items, (it, k1, i1) => {
           return common_vendor.e({
-            a: it.isOutOfStock
-          }, it.isOutOfStock ? {} : {}, {
+            a: it.isBlocked
+          }, it.isBlocked ? {} : {}, {
             b: it.selected ? 1 : "",
-            c: it.isOutOfStock ? 1 : "",
+            c: it.isBlocked ? 1 : "",
             d: common_vendor.o(($event) => $options.toggleById(it.id), it.id),
             e: it.image || "/static/logo.png",
             f: common_vendor.o(($event) => $options.openDetail(it), it.id),
@@ -744,16 +869,16 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
             h: common_vendor.t(it.title),
             i: common_vendor.o(($event) => $options.openDetail(it), it.id),
             j: common_vendor.t(it.attr),
-            k: it.package_fee > 0
-          }, it.package_fee > 0 ? {
-            l: common_vendor.t(Number(it.package_fee).toFixed(2))
+            k: $options.getItemPackageFeeLabel(it)
+          }, $options.getItemPackageFeeLabel(it) ? {
+            l: common_vendor.t($options.getItemPackageFeeLabel(it))
           } : {}, {
-            m: common_vendor.t(it.price.toFixed(2)),
+            m: common_vendor.t($options.getItemDisplayPrice(it).toFixed(2)),
             n: common_vendor.o(($event) => $options.decById(it.id), it.id),
             o: common_vendor.t(it.quantity),
             p: common_vendor.o(($event) => $options.incById(it.id), it.id),
-            q: it.isOutOfStock
-          }, it.isOutOfStock ? {
+            q: it.isBlocked
+          }, it.isBlocked ? {
             r: common_vendor.o(($event) => $options.removeById(it.id), it.id)
           } : {}, {
             s: it.isNoPermission

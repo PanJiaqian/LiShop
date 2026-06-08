@@ -139,7 +139,7 @@ const _sfc_main = {
       if (!this.ensureLoggedIn())
         return;
       if (item.favorite_status === 2) {
-        common_vendor.index.showToast({ title: "该商品暂无权限查看", icon: "none" });
+        common_vendor.index.showToast({ title: "该商品暂无货", icon: "none" });
         return;
       }
       const id = item.id;

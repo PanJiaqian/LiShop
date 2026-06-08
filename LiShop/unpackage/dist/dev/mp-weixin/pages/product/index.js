@@ -219,6 +219,11 @@ const _sfc_main = {
         this.hasUserInteracted = true;
       this.triggerRealTimePriceCalc();
     },
+    mpRoom(newVal, oldVal) {
+      if (oldVal !== void 0)
+        this.hasUserInteracted = true;
+      this.triggerRealTimePriceCalc();
+    },
     selectedCoupon(newVal, oldVal) {
       if (oldVal !== void 0)
         this.hasUserInteracted = true;
@@ -439,6 +444,15 @@ const _sfc_main = {
       }
     },
     /**
+     * 按需加载 HLS 播放库，避免首页等非视频页面首屏额外下载脚本。
+     * @returns {Promise<any>}
+     * @example
+     * this.ensureHlsLibrary().then((Hls) => { if (Hls) uni.__f__('log','at pages/product/index.vue:785','ready') })
+     */
+    ensureHlsLibrary() {
+      return Promise.resolve(null);
+    },
+    /**
      * 延后加载非首屏必要数据。
      * @description
      * 将优惠券与地址请求放到首屏渲染之后，减少新标签页刚打开时的网络竞争。
@@ -488,7 +502,9 @@ const _sfc_main = {
       const qtyRaw = isH5 ? this.qty : this.mpQty;
       const qty = Math.max(1, Number(qtyRaw || 1));
       const cid = this.selectedCoupon ? this.selectedCoupon.record_id : "";
-      const roomId = this.roomId || "";
+      const mpChosen = String(this.mpRoom || "").trim();
+      const mpRoomId = mpChosen ? ((this.roomsRaw || []).find((it) => it && it.name === mpChosen) || {}).id || "" : "";
+      const roomId = isH5 ? this.roomId || "" : mpRoomId;
       const addrId = ((_b = this.selectedAddress) == null ? void 0 : _b.id) || "";
       let token = "";
       try {
@@ -515,7 +531,7 @@ const _sfc_main = {
           }
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/product/index.vue:847", "实时计价失败", err);
+        common_vendor.index.__f__("error", "at pages/product/index.vue:889", "实时计价失败", err);
         this.realTimePriceData = null;
         const errMsg = (err && typeof err.data === "string" ? err.data : "") || err && err.message || "";
         if (errMsg && errMsg.includes("长度")) {
@@ -1248,24 +1264,7 @@ const _sfc_main = {
       common_vendor.index.navigateTo({ url: "/pages/login/index" });
     },
     addToCart() {
-      var _a;
-      if (!this.ensureLoggedIn())
-        return;
-      const spec = this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex] ? this.specs[this.selectedSpecIndex] : null;
-      const pid = spec ? spec.product_id : ((_a = this.product) == null ? void 0 : _a.id) || "";
-      const cid = this.selectedCoupon ? this.selectedCoupon.record_id : "";
-      api_index.addCartItem({ product_id: pid, quantity: 1, coupon_record_id: cid }).then((res) => {
-        var _a2;
-        if (res && res.success)
-          common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
-        else {
-          const tip = typeof (res == null ? void 0 : res.data) === "string" ? res.data : ((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.reason) || "";
-          const msg = tip || (res == null ? void 0 : res.message) || "加入失败";
-          common_vendor.index.showToast({ title: msg, icon: "none" });
-        }
-      }).catch(() => {
-        common_vendor.index.showToast({ title: "加入购物车失败", icon: "none" });
-      });
+      this.addToCartWithQty();
     },
     incQty() {
       this.qty = Math.max(1, Number(this.qty || 0) + 1);
@@ -1373,6 +1372,10 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "请先填写房间名", icon: "none" });
         return;
       }
+      if (!this.roomId) {
+        common_vendor.index.showToast({ title: "请先选择房间", icon: "none" });
+        return;
+      }
       const lengthNum = (this.specLength || "").replace(/[^0-9.]/g, "");
       const lengthVal = lengthNum ? Number(lengthNum) : void 0;
       const needLength = this.selectedSpec && this.selectedSpec.has_length === 1;
@@ -1428,6 +1431,10 @@ const _sfc_main = {
           return;
         }
         const roomId = this.roomId || "";
+        if (!roomId) {
+          common_vendor.index.showToast({ title: "请先选择房间", icon: "none" });
+          return;
+        }
         const qty = this.qty || 1;
         const note = this.h5OrderNote || "";
         const lenMeters = !needLength ? "" : lenNum;
@@ -1616,6 +1623,10 @@ const _sfc_main = {
       const chosen = (this.mpRoom || "").trim();
       const found = (this.roomsRaw || []).find((it) => it.name === chosen);
       const rid = found ? found.id : "";
+      if (!rid) {
+        common_vendor.index.showToast({ title: "请先选择房间", icon: "none" });
+        return;
+      }
       const lengthNum = (this.mpLength || "").replace(/[^0-9.]/g, "");
       const lengthVal = lengthNum ? Number(lengthNum) : void 0;
       const spec = this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex] ? this.specs[this.selectedSpecIndex] : null;

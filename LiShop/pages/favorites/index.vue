@@ -12,7 +12,7 @@
           <text class="name">{{ it.title }}</text>
           <text class="price">{{ formatPriceWithSymbol(it.price) }}</text>
         </view>
-        <view class="no-perm-tag" v-if="it.favorite_status === 2">无权限</view>
+        <view class="no-perm-tag" v-if="it.favorite_status === 2">无货</view>
       </view>
     </view>
     <view v-else-if="!loading" class="empty">暂无收藏</view>
@@ -132,7 +132,7 @@ export default {
      */
     openProduct(item) {
       if (!this.ensureLoggedIn()) return
-      if (item.favorite_status === 2) { uni.showToast({ title: '该商品暂无权限查看', icon: 'none' }); return }
+      if (item.favorite_status === 2) { uni.showToast({ title: '该商品暂无货', icon: 'none' }); return }
       const id = item.id
       if (!id) return
       const target = (this.favorites || []).find((f) => f.id === id)

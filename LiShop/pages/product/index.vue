@@ -577,6 +577,10 @@ export default {
       if (oldVal !== undefined) this.hasUserInteracted = true
       this.triggerRealTimePriceCalc()
     },
+    mpRoom(newVal, oldVal) {
+      if (oldVal !== undefined) this.hasUserInteracted = true
+      this.triggerRealTimePriceCalc()
+    },
     selectedCoupon(newVal, oldVal) {
       if (oldVal !== undefined) this.hasUserInteracted = true
       this.triggerRealTimePriceCalc()
@@ -850,7 +854,11 @@ export default {
       const qty = Math.max(1, Number(qtyRaw || 1))
       
       const cid = this.selectedCoupon ? this.selectedCoupon.record_id : ''
-      const roomId = this.roomId || ''
+      const mpChosen = String(this.mpRoom || '').trim()
+      const mpRoomId = mpChosen
+        ? (((this.roomsRaw || []).find(it => it && it.name === mpChosen) || {}).id || '')
+        : ''
+      const roomId = isH5 ? (this.roomId || '') : mpRoomId
       const addrId = this.selectedAddress?.id || ''
       
       let token = ''
@@ -1537,20 +1545,7 @@ export default {
     closeLoginModal() { this.showLoginModal = false },
     goLogin() { this.showLoginModal = false; uni.navigateTo({ url: '/pages/login/index' }) },
     addToCart() {
-      if (!this.ensureLoggedIn()) return
-      const spec = (this.selectedSpecIndex >= 0 && this.specs[this.selectedSpecIndex]) ? this.specs[this.selectedSpecIndex] : null
-      const pid = spec ? spec.product_id : (this.product?.id || '')
-      const cid = this.selectedCoupon ? this.selectedCoupon.record_id : ''
-      addCartItem({ product_id: pid, quantity: 1, coupon_record_id: cid })
-        .then((res) => {
-          if (res && res.success) uni.showToast({ title: '已加入购物车', icon: 'success' })
-          else {
-            const tip = typeof res?.data === 'string' ? res.data : (res?.data?.reason || '')
-            const msg = tip || res?.message || '加入失败'
-            uni.showToast({ title: msg, icon: 'none' })
-          }
-        })
-        .catch(() => { uni.showToast({ title: '加入购物车失败', icon: 'none' }) })
+      this.addToCartWithQty()
     },
     incQty() { this.qty = Math.max(1, Number(this.qty || 0) + 1) },
     decQty() { this.qty = Math.max(1, Number(this.qty || 0) - 1) },
@@ -1646,6 +1641,7 @@ export default {
       if (!this.ensureLoggedIn()) return
       const chosen = (this.roomName || '').trim()
       if (!chosen) { uni.showToast({ title: '请先填写房间名', icon: 'none' }); return }
+      if (!this.roomId) { uni.showToast({ title: '请先选择房间', icon: 'none' }); return }
       const lengthNum = (this.specLength || '').replace(/[^0-9.]/g, '')
       const lengthVal = lengthNum ? Number(lengthNum) : undefined
       const needLength = this.selectedSpec && this.selectedSpec.has_length === 1
@@ -1698,6 +1694,10 @@ export default {
           return
         }
         const roomId = this.roomId || ''
+        if (!roomId) {
+          uni.showToast({ title: '请先选择房间', icon: 'none' })
+          return
+        }
         const qty = this.qty || 1
         const note = this.h5OrderNote || ''
         const lenMeters = !needLength ? '' : lenNum
@@ -1867,6 +1867,10 @@ export default {
       const chosen = (this.mpRoom || '').trim()
       const found = (this.roomsRaw || []).find(it => it.name === chosen)
       const rid = found ? found.id : ''
+      if (!rid) {
+        uni.showToast({ title: '请先选择房间', icon: 'none' })
+        return
+      }
 
       const lengthNum = (this.mpLength || '').replace(/[^0-9.]/g, '')
       const lengthVal = lengthNum ? Number(lengthNum) : undefined

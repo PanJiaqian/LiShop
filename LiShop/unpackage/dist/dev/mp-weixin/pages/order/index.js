@@ -329,16 +329,138 @@ const _sfc_main = {
         return false;
       }
     },
+    /**
+     * 将时间值格式化为订单页面统一显示格式。
+     * @param {string|number|Date} t 原始时间值
+     * @returns {string} 格式化后的时间字符串
+     * @example
+     * this.formatTime('2026-06-08T14:29:56')
+     */
     formatTime(t) {
       try {
-        let dateStr = t;
-        if (typeof dateStr === "string") {
-          dateStr = dateStr.replace(/-/g, "/");
-        }
-        return new Date(dateStr).toLocaleString();
-      } catch {
+        const date = this.parseDateValue(t);
+        if (!date)
+          return t;
+        return this.formatDateObject(date);
+      } catch (e) {
         return t;
       }
+    },
+    /**
+     * 解析接口返回的时间值，兼容 ISO 字符串与无时区时间字符串。
+     * @param {string|number|Date} value 原始时间值
+     * @returns {Date|null} 解析后的时间对象，失败时返回 null
+     * @example
+     * const date = this.parseDateValue('2026-06-08T14:29:56')
+     */
+    parseDateValue(value) {
+      try {
+        if (!value)
+          return null;
+        if (value instanceof Date) {
+          return isNaN(value.getTime()) ? null : value;
+        }
+        const raw = String(value).split("`").join("").trim();
+        if (!raw)
+          return null;
+        const directDate = new Date(raw);
+        if (!isNaN(directDate.getTime()))
+          return directDate;
+        const match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\.(\d{1,3}))?)?$/);
+        if (!match)
+          return null;
+        const year = match[1];
+        const month = match[2];
+        const day = match[3];
+        const hour = match[4] || "0";
+        const minute = match[5] || "0";
+        const second = match[6] || "0";
+        const millisecond = match[7] || "0";
+        const msText = String(millisecond);
+        const normalizedMs = (msText + "000").slice(0, 3);
+        const parsedDate = new Date(
+          Number(year),
+          Number(month) - 1,
+          Number(day),
+          Number(hour),
+          Number(minute),
+          Number(second),
+          Number(normalizedMs)
+        );
+        return isNaN(parsedDate.getTime()) ? null : parsedDate;
+      } catch (e) {
+        return null;
+      }
+    },
+    /**
+     * 将时间对象格式化为 yyyy-MM-dd HH:mm:ss。
+     * @param {Date} date 时间对象
+     * @returns {string} 格式化后的字符串
+     * @example
+     * this.formatDateObject(new Date())
+     */
+    formatDateObject(date) {
+      const pad = function(num) {
+        return num < 10 ? "0" + num : String(num);
+      };
+      return [
+        date.getFullYear(),
+        pad(date.getMonth() + 1),
+        pad(date.getDate())
+      ].join("-") + " " + [
+        pad(date.getHours()),
+        pad(date.getMinutes()),
+        pad(date.getSeconds())
+      ].join(":");
+    },
+    /**
+     * 对金额执行两位小数舍入，避免浮点误差污染展示结果。
+     * @param {number|string} amount 原始金额
+     * @returns {number} 舍入后的金额
+     * @example
+     * this.roundCurrency(10.005)
+     */
+    roundCurrency(amount) {
+      const num = Number(amount || 0);
+      if (isNaN(num))
+        return 0;
+      return Math.round(num * 100) / 100;
+    },
+    /**
+     * 获取对象自身可枚举属性值数组，兼容较旧的运行环境。
+     * @param {Object} obj 原始对象
+     * @returns {Array} 属性值数组
+     * @example
+     * const values = this.getObjectValues({ a: 1, b: 2 })
+     */
+    getObjectValues(obj) {
+      const result = [];
+      const source = obj || {};
+      for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          result.push(source[key]);
+        }
+      }
+      return result;
+    },
+    /**
+     * 将房间小计与订单总额做轻量对齐，修正前端逐项求和带来的分角差。
+     * @param {Array} rooms 房间列表
+     * @param {number|string} totalPrice 订单总额
+     * @returns {void} 直接修改 rooms 中的 roomTotal
+     * @example
+     * this.reconcileRoomTotals(order.rooms, order.total)
+     */
+    reconcileRoomTotals(rooms, totalPrice) {
+      if (!Array.isArray(rooms) || !rooms.length)
+        return;
+      const safeTotal = this.roundCurrency(totalPrice);
+      const currentTotal = this.roundCurrency(rooms.reduce((sum, room) => sum + Number(room.roomTotal || 0), 0));
+      const diff = this.roundCurrency(safeTotal - currentTotal);
+      if (!diff || Math.abs(diff) > 0.1)
+        return;
+      const targetRoom = rooms[rooms.length - 1];
+      targetRoom.roomTotal = this.roundCurrency(Number(targetRoom.roomTotal || 0) + diff);
     },
     copyWaybill(no) {
       try {
@@ -427,14 +549,26 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "导出出错", icon: "none" });
       }
     },
+    /**
+     * 将后端订单接口数据转换为前端页面展示结构。
+     * @param {Object} apiOrder 后端返回的订单对象
+     * @returns {Object} 前端展示使用的订单对象
+     * @example
+     * const order = this.mapApiOrderToLocal(res.data)
+     */
     mapApiOrderToLocal(apiOrder) {
       const roomsMap = {};
-      (apiOrder.items || []).forEach((item) => {
+      const orderTotal = Number(apiOrder.total_price || 0);
+      const items = apiOrder.items || [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         const roomName = item.room_name || "默认房间";
         if (!roomsMap[roomName]) {
           roomsMap[roomName] = { name: roomName, roomTotal: 0, items: [] };
         }
         const price = Number(item.price || 0);
+        const quantity = Number(item.quantity || 0) || 0;
+        const lineTotal = Number(item.line_total_price || price * quantity || 0);
         const localItem = {
           title: item.product_name || item.available_product_name,
           available_product_name: item.available_product_name || "",
@@ -442,12 +576,22 @@ const _sfc_main = {
           specTemp: item.color_temperature && item.color_temperature !== "None" && item.color_temperature !== "无" ? item.color_temperature : "",
           specLength: item.length,
           price,
-          quantity: item.quantity,
-          image: item.main_picture
+          quantity,
+          lineTotal,
+          image: String(item.main_picture || "").split("`").join("").trim(),
+          productNote: item.product_note || "",
+          itemNumber: item.item_number || "",
+          nuomiItemNumber: item.nuomi_item_number || "",
+          packageFee: Number(item.package_fee || 0),
+          packageFeeGroupKey: item.package_fee_group_key || "",
+          packageFeeSelectedPackageId: item.package_fee_selected_package_id || "",
+          packageFeeIsGroupOwner: Number(item.package_fee_is_group_owner || 0) || 0
         };
         roomsMap[roomName].items.push(localItem);
-        roomsMap[roomName].roomTotal += price * (item.quantity || 0);
-      });
+        roomsMap[roomName].roomTotal = this.roundCurrency(roomsMap[roomName].roomTotal + lineTotal);
+      }
+      const rooms = this.getObjectValues(roomsMap);
+      this.reconcileRoomTotals(rooms, orderTotal);
       const tracking = [];
       let rawList = [];
       let trackingMessage = "";
@@ -456,7 +600,7 @@ const _sfc_main = {
         const last = apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult;
         rawList = last && Array.isArray(last.data) ? last.data : [];
         trackingMessage = last && (last.message || last.msg) || apiOrder && apiOrder.logistics_message || "";
-        mapUrl = last && last.trailUrl ? String(last.trailUrl).replace(/`/g, "").trim() : "";
+        mapUrl = last && last.trailUrl ? String(last.trailUrl).split("`").join("").trim() : "";
       } catch (e) {
         rawList = [];
       }
@@ -483,8 +627,9 @@ const _sfc_main = {
       return {
         id: apiOrder.order_id,
         orderNo: apiOrder.order_id,
-        createdAt: null,
-        total: Number(apiOrder.total_price || 0),
+        createdAt: apiOrder.created_at || null,
+        total: orderTotal,
+        totalPackageFee: Number(apiOrder.total_package_fee || 0),
         coupon_record_id: apiOrder.coupon_record_id || "",
         coupon_discount_amount: Number(apiOrder.coupon_discount_amount || 0),
         waybillNo: apiOrder && apiOrder.tracking_number || apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult && apiOrder.logistics_data.lastResult.nu || "",
@@ -492,7 +637,7 @@ const _sfc_main = {
         trackingMessage: tracking.length ? "" : trackingMessage || "",
         mapUrl,
         status: apiOrder.status || "unknown",
-        rooms: Object.values(roomsMap)
+        rooms
       };
     },
     switchTab(tab) {
@@ -532,11 +677,18 @@ const _sfc_main = {
                 seenIds.add(o.order_id);
                 if (status && !o.status)
                   o.status = status;
-                allOrders.push(this.mapApiOrderToLocal(o));
+                try {
+                  const mapped = this.mapApiOrderToLocal(o);
+                  if (mapped)
+                    allOrders.push(mapped);
+                } catch (mapErr) {
+                  common_vendor.index.__f__("error", "at pages/order/index.vue:786", "Map order error:", o.order_id, mapErr);
+                }
               }
             });
           }
         } catch (e) {
+          common_vendor.index.__f__("error", "at pages/order/index.vue:792", "fetchOrders error:", e);
         }
       }
       this.orders = allOrders;
@@ -547,12 +699,17 @@ const _sfc_main = {
       try {
         const res = await api_index.getOrderDetail({ order_id: id });
         if (res.success && res.data) {
-          this.order = this.mapApiOrderToLocal(res.data);
-          if (this.order && (!this.order.status || this.order.status === "unknown") && this.detailStatusHint) {
-            this.order.status = this.detailStatusHint;
+          try {
+            this.order = this.mapApiOrderToLocal(res.data);
+            if (this.order && (!this.order.status || this.order.status === "unknown") && this.detailStatusHint) {
+              this.order.status = this.detailStatusHint;
+            }
+          } catch (err) {
+            common_vendor.index.__f__("error", "at pages/order/index.vue:809", "Detail map error:", err);
           }
         }
       } catch (e) {
+        common_vendor.index.__f__("error", "at pages/order/index.vue:813", "fetchDetail error:", e);
       }
       this.loading = false;
     },
@@ -761,43 +918,56 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return {
         a: common_vendor.t(r.name),
         b: common_vendor.t(r.roomTotal.toFixed(2)),
-        c: common_vendor.f(r.items, (x, k1, i1) => {
+        c: common_vendor.f(r.items, (x, index, i1) => {
           return common_vendor.e({
             a: common_vendor.t(x.available_product_name),
             b: common_vendor.t(x.title),
             c: common_vendor.t(x.specTemp || "-"),
             d: common_vendor.t(x.specLength || "-"),
-            e: x.package_capacity > 0
-          }, x.package_capacity > 0 ? {
-            f: common_vendor.t(x.package_capacity),
-            g: common_vendor.t(Number(x.package_price).toFixed(2))
+            e: x.itemNumber || x.nuomiItemNumber
+          }, x.itemNumber || x.nuomiItemNumber ? {
+            f: common_vendor.t(x.itemNumber || "-"),
+            g: common_vendor.t(x.nuomiItemNumber || "-")
           } : {}, {
-            h: common_vendor.t(x.price.toFixed(2)),
-            i: common_vendor.t(x.quantity),
-            j: x.id + "_" + x.specLength + "_" + x.specTemp
+            h: x.productNote
+          }, x.productNote ? {
+            i: common_vendor.t(x.productNote)
+          } : {}, {
+            j: x.packageFee > 0
+          }, x.packageFee > 0 ? {
+            k: common_vendor.t(Number(x.packageFee).toFixed(2))
+          } : {}, {
+            l: common_vendor.t(x.price.toFixed(2)),
+            m: common_vendor.t(x.quantity),
+            n: common_vendor.t(x.lineTotal.toFixed(2)),
+            o: x.id + "_" + index
           });
         }),
         d: r.name
       };
     }),
     M: common_vendor.t($data.order.total.toFixed(2)),
-    N: $data.order.coupon_discount_amount > 0
+    N: $data.order.totalPackageFee > 0
+  }, $data.order.totalPackageFee > 0 ? {
+    O: common_vendor.t(Number($data.order.totalPackageFee).toFixed(2))
+  } : {}, {
+    P: $data.order.coupon_discount_amount > 0
   }, $data.order.coupon_discount_amount > 0 ? {
-    O: common_vendor.t(Number($data.order.coupon_discount_amount).toFixed(2))
+    Q: common_vendor.t(Number($data.order.coupon_discount_amount).toFixed(2))
   } : {}, {
-    P: $options.isPendingReceipt($data.order.status)
+    R: $options.isPendingReceipt($data.order.status)
   }, $options.isPendingReceipt($data.order.status) ? {
-    Q: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+    S: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
   } : {}, {
-    R: ["pending_payment", "pending_shipment"].includes($data.order.status)
+    T: ["pending_payment", "pending_shipment"].includes($data.order.status)
   }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
-    S: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+    U: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
   } : {}, {
-    T: common_vendor.o(($event) => $options.exportExcel($data.order))
+    V: common_vendor.o(($event) => $options.exportExcel($data.order))
   }) : common_vendor.e({
-    U: $data.orders.length
+    W: $data.orders.length
   }, $data.orders.length ? {
-    V: common_vendor.f($data.orders, (o, k0, i0) => {
+    X: common_vendor.f($data.orders, (o, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(o.orderNo || o.id),
         b: o.createdAt
@@ -828,12 +998,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}), {
-    W: $data.showOnboarding
+    Y: $data.showOnboarding
   }, $data.showOnboarding ? {
-    X: common_vendor.o($options.handleOnboardingNext),
-    Y: common_vendor.o($options.handleOnboardingPrev),
-    Z: common_vendor.o($options.closeOnboarding),
-    aa: common_vendor.p({
+    Z: common_vendor.o($options.handleOnboardingNext),
+    aa: common_vendor.o($options.handleOnboardingPrev),
+    ab: common_vendor.o($options.closeOnboarding),
+    ac: common_vendor.p({
       steps: $data.onboardingSteps,
       targets: $data.onboardingRects,
       initialIndex: $data.onboardingIndex

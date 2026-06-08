@@ -87,7 +87,7 @@ export default {
   },
   onLoad(query) {
     this.parentId = decodeURIComponent(query?.parent_id || '')
-    this.activeChildId = decodeURIComponent(query?.category_id || '')
+    this.activeChildId = decodeURIComponent(query?.category_id || query?.categories_id || '')
     this.activeName = decodeURIComponent(query?.active || '')
   },
   onReachBottom() {

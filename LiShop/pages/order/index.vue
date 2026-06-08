@@ -84,15 +84,18 @@
             <text class="room-total">小计：¥{{ r.roomTotal.toFixed(2) }}</text>
           </view>
           <view class="items">
-            <view class="item" v-for="x in r.items" :key="x.id + '_' + x.specLength + '_' + x.specTemp">
+            <view class="item" v-for="(x, index) in r.items" :key="x.id + '_' + index">
               <view class="meta">
                 <text class="title">{{ x.available_product_name }}</text>
                 <text class="spec">型号：{{ x.title }}｜色温：{{ x.specTemp || '-' }}｜长度：{{ x.specLength || '-' }}</text>
-                <text class="spec" v-if="x.package_capacity > 0">包装容量：{{ x.package_capacity }} | 包装价：¥{{ Number(x.package_price).toFixed(2) }}</text>
+                <text class="spec" v-if="x.itemNumber || x.nuomiItemNumber">品号：{{ x.itemNumber || '-' }}｜诺米品号：{{ x.nuomiItemNumber || '-' }}</text>
+                <text class="spec" v-if="x.productNote">备注：{{ x.productNote }}</text>
+                <text class="spec" v-if="x.packageFee > 0">同系列包装费：¥{{ Number(x.packageFee).toFixed(2) }}</text>
               </view>
               <view class="price-row">
                 <text class="price">¥{{ x.price.toFixed(2) }}</text>
-                <text>× {{ x.quantity }}</text>
+                <text class="quantity">× {{ x.quantity }}</text>
+                <text>＝ ¥{{ x.lineTotal.toFixed(2) }}</text>
                 <!-- #ifndef H5 -->
                 <!-- <text>＝ ¥{{ (x.price * x.quantity).toFixed(2) }}</text> -->
                 <!-- #endif -->
@@ -104,6 +107,7 @@
       <view class="ops">
         <view style="display:flex; flex-direction:column; align-items:flex-end;">
           <text class="total-text">合计：¥{{ order.total.toFixed(2) }}</text>
+          <text v-if="order.totalPackageFee > 0" style="color:#faa21b; font-size:24rpx; margin-top:8rpx;">(其中包装费 ¥{{ Number(order.totalPackageFee).toFixed(2) }})</text>
           <text v-if="order.coupon_discount_amount > 0" style="color:#ff4d4f; font-size:24rpx; margin-top:8rpx;">(已使用优惠券抵扣 ¥{{ Number(order.coupon_discount_amount).toFixed(2) }})</text>
         </view>
         <view class="btns">
@@ -430,14 +434,130 @@ export default {
         return s === 'pending_receipt' || s.includes('待收货')
       } catch (e) { return false }
     },
+    /**
+     * 将时间值格式化为订单页面统一显示格式。
+     * @param {string|number|Date} t 原始时间值
+     * @returns {string} 格式化后的时间字符串
+     * @example
+     * this.formatTime('2026-06-08T14:29:56')
+     */
     formatTime(t) {
       try {
-        let dateStr = t;
-        if (typeof dateStr === 'string') {
-          dateStr = dateStr.replace(/-/g, '/')
+        const date = this.parseDateValue(t)
+        if (!date) return t
+        return this.formatDateObject(date)
+      } catch (e) {
+        return t
+      }
+    },
+    /**
+     * 解析接口返回的时间值，兼容 ISO 字符串与无时区时间字符串。
+     * @param {string|number|Date} value 原始时间值
+     * @returns {Date|null} 解析后的时间对象，失败时返回 null
+     * @example
+     * const date = this.parseDateValue('2026-06-08T14:29:56')
+     */
+    parseDateValue(value) {
+      try {
+        if (!value) return null
+        if (value instanceof Date) {
+          return isNaN(value.getTime()) ? null : value
         }
-        return new Date(dateStr).toLocaleString()
-      } catch { return t }
+        const raw = String(value).split('`').join('').trim()
+        if (!raw) return null
+        const directDate = new Date(raw)
+        if (!isNaN(directDate.getTime())) return directDate
+        const match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\.(\d{1,3}))?)?$/)
+        if (!match) return null
+        const year = match[1]
+        const month = match[2]
+        const day = match[3]
+        const hour = match[4] || '0'
+        const minute = match[5] || '0'
+        const second = match[6] || '0'
+        const millisecond = match[7] || '0'
+        const msText = String(millisecond)
+        const normalizedMs = (msText + '000').slice(0, 3)
+        const parsedDate = new Date(
+          Number(year),
+          Number(month) - 1,
+          Number(day),
+          Number(hour),
+          Number(minute),
+          Number(second),
+          Number(normalizedMs)
+        )
+        return isNaN(parsedDate.getTime()) ? null : parsedDate
+      } catch (e) {
+        return null
+      }
+    },
+    /**
+     * 将时间对象格式化为 yyyy-MM-dd HH:mm:ss。
+     * @param {Date} date 时间对象
+     * @returns {string} 格式化后的字符串
+     * @example
+     * this.formatDateObject(new Date())
+     */
+    formatDateObject(date) {
+      const pad = function(num) {
+        return num < 10 ? '0' + num : String(num)
+      }
+      return [
+        date.getFullYear(),
+        pad(date.getMonth() + 1),
+        pad(date.getDate())
+      ].join('-') + ' ' + [
+        pad(date.getHours()),
+        pad(date.getMinutes()),
+        pad(date.getSeconds())
+      ].join(':')
+    },
+    /**
+     * 对金额执行两位小数舍入，避免浮点误差污染展示结果。
+     * @param {number|string} amount 原始金额
+     * @returns {number} 舍入后的金额
+     * @example
+     * this.roundCurrency(10.005)
+     */
+    roundCurrency(amount) {
+      const num = Number(amount || 0)
+      if (isNaN(num)) return 0
+      return Math.round(num * 100) / 100
+    },
+    /**
+     * 获取对象自身可枚举属性值数组，兼容较旧的运行环境。
+     * @param {Object} obj 原始对象
+     * @returns {Array} 属性值数组
+     * @example
+     * const values = this.getObjectValues({ a: 1, b: 2 })
+     */
+    getObjectValues(obj) {
+      const result = []
+      const source = obj || {}
+      for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          result.push(source[key])
+        }
+      }
+      return result
+    },
+    /**
+     * 将房间小计与订单总额做轻量对齐，修正前端逐项求和带来的分角差。
+     * @param {Array} rooms 房间列表
+     * @param {number|string} totalPrice 订单总额
+     * @returns {void} 直接修改 rooms 中的 roomTotal
+     * @example
+     * this.reconcileRoomTotals(order.rooms, order.total)
+     */
+    reconcileRoomTotals(rooms, totalPrice) {
+      if (!Array.isArray(rooms) || !rooms.length) return
+      const safeTotal = this.roundCurrency(totalPrice)
+      const currentTotal = this.roundCurrency(rooms.reduce((sum, room) => sum + Number(room.roomTotal || 0), 0))
+      const diff = this.roundCurrency(safeTotal - currentTotal)
+      if (!diff || Math.abs(diff) > 0.1) return
+      const targetRoom = rooms[rooms.length - 1]
+      targetRoom.roomTotal = this.roundCurrency(Number(targetRoom.roomTotal || 0) + diff)
     },
     copyWaybill(no) { try { uni.setClipboardData({ data: String(no) }); uni.showToast({ title: '已复制运单号', icon: 'success' }) } catch (e) { } },
     openDetail(id, status) {
@@ -532,14 +652,26 @@ export default {
       }
     },
 
+    /**
+     * 将后端订单接口数据转换为前端页面展示结构。
+     * @param {Object} apiOrder 后端返回的订单对象
+     * @returns {Object} 前端展示使用的订单对象
+     * @example
+     * const order = this.mapApiOrderToLocal(res.data)
+     */
     mapApiOrderToLocal(apiOrder) {
       const roomsMap = {};
-      (apiOrder.items || []).forEach(item => {
+      const orderTotal = Number(apiOrder.total_price || 0);
+      const items = apiOrder.items || [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         const roomName = item.room_name || '默认房间';
         if (!roomsMap[roomName]) {
           roomsMap[roomName] = { name: roomName, roomTotal: 0, items: [] };
         }
         const price = Number(item.price || 0);
+        const quantity = Number(item.quantity || 0) || 0;
+        const lineTotal = Number(item.line_total_price || (price * quantity) || 0);
         const localItem = {
           title: item.product_name || item.available_product_name,
           available_product_name: item.available_product_name || '',
@@ -547,12 +679,22 @@ export default {
           specTemp: (item.color_temperature && item.color_temperature !== 'None' && item.color_temperature !== '无') ? item.color_temperature : '',
           specLength: item.length,
           price: price,
-          quantity: item.quantity,
-          image: item.main_picture
+          quantity: quantity,
+          lineTotal: lineTotal,
+          image: String(item.main_picture || '').split('`').join('').trim(),
+          productNote: item.product_note || '',
+          itemNumber: item.item_number || '',
+          nuomiItemNumber: item.nuomi_item_number || '',
+          packageFee: Number(item.package_fee || 0),
+          packageFeeGroupKey: item.package_fee_group_key || '',
+          packageFeeSelectedPackageId: item.package_fee_selected_package_id || '',
+          packageFeeIsGroupOwner: Number(item.package_fee_is_group_owner || 0) || 0
         };
         roomsMap[roomName].items.push(localItem);
-        roomsMap[roomName].roomTotal += (price * (item.quantity || 0));
-      });
+        roomsMap[roomName].roomTotal = this.roundCurrency(roomsMap[roomName].roomTotal + lineTotal);
+      }
+      const rooms = this.getObjectValues(roomsMap);
+      this.reconcileRoomTotals(rooms, orderTotal);
       const tracking = [];
       let rawList = [];
       let trackingMessage = '';
@@ -561,7 +703,7 @@ export default {
         const last = apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult
         rawList = last && Array.isArray(last.data) ? last.data : [];
         trackingMessage = (last && (last.message || last.msg)) || (apiOrder && apiOrder.logistics_message) || ''
-        mapUrl = (last && last.trailUrl) ? String(last.trailUrl).replace(/`/g, '').trim() : ''
+        mapUrl = (last && last.trailUrl) ? String(last.trailUrl).split('`').join('').trim() : ''
       } catch (e) { rawList = [] }
       rawList.forEach(ev => {
         let lat = null
@@ -586,8 +728,9 @@ export default {
       return {
         id: apiOrder.order_id,
         orderNo: apiOrder.order_id,
-        createdAt: null,
-        total: Number(apiOrder.total_price || 0),
+        createdAt: apiOrder.created_at || null,
+        total: orderTotal,
+        totalPackageFee: Number(apiOrder.total_package_fee || 0),
         coupon_record_id: apiOrder.coupon_record_id || '',
         coupon_discount_amount: Number(apiOrder.coupon_discount_amount || 0),
         waybillNo: (apiOrder && apiOrder.tracking_number) || (apiOrder && apiOrder.logistics_data && apiOrder.logistics_data.lastResult && apiOrder.logistics_data.lastResult.nu) || '',
@@ -595,7 +738,7 @@ export default {
         trackingMessage: tracking.length ? '' : (trackingMessage || ''),
         mapUrl: mapUrl,
         status: apiOrder.status || 'unknown',
-        rooms: Object.values(roomsMap)
+        rooms: rooms
       };
     },
     switchTab(tab) {
@@ -636,11 +779,18 @@ export default {
               if (!seenIds.has(o.order_id)) {
                 seenIds.add(o.order_id)
                 if (status && !o.status) o.status = status
-                allOrders.push(this.mapApiOrderToLocal(o))
+                try {
+                  const mapped = this.mapApiOrderToLocal(o)
+                  if (mapped) allOrders.push(mapped)
+                } catch (mapErr) {
+                  console.error('Map order error:', o.order_id, mapErr)
+                }
               }
             })
           }
-        } catch (e) { }
+        } catch (e) {
+          console.error('fetchOrders error:', e)
+        }
       }
       this.orders = allOrders
       this.loading = false
@@ -650,12 +800,18 @@ export default {
       try {
         const res = await getOrderDetail({ order_id: id })
         if (res.success && res.data) {
-          this.order = this.mapApiOrderToLocal(res.data)
-          if (this.order && (!this.order.status || this.order.status === 'unknown') && this.detailStatusHint) {
-            this.order.status = this.detailStatusHint
+          try {
+            this.order = this.mapApiOrderToLocal(res.data)
+            if (this.order && (!this.order.status || this.order.status === 'unknown') && this.detailStatusHint) {
+              this.order.status = this.detailStatusHint
+            }
+          } catch (err) {
+            console.error('Detail map error:', err)
           }
         }
-      } catch (e) { }
+      } catch (e) {
+        console.error('fetchDetail error:', e)
+      }
       this.loading = false
     },
     goHome() {
@@ -921,6 +1077,11 @@ export default {
   gap: 12rpx;
   align-items: center;
   color: #333333;
+}
+
+.price-row .quantity {
+  font-size: 22rpx;
+  color: #666666;
 }
 
 .ops {
@@ -1294,6 +1455,10 @@ export default {
   font-weight: bold;
 }
 
+.price-row .quantity {
+  font-size: 28rpx;
+}
+
 .header .title,
 .ops .total-text,
 .card-hd .id,
@@ -1359,6 +1524,10 @@ export default {
 
 .price-row .price {
   color: #e1251b;
+}
+
+.price-row .quantity {
+  font-size: 20rpx;
 }
 
 /* #endif */

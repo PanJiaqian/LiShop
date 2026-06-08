@@ -45,6 +45,9 @@ const _sfc_main = {
         { id: "s3", title: "爆款秒杀3", price: 59, image: "/static/logo.png" }
       ],
       recommendList: [],
+      hasHomeCoreLoaded: false,
+      categoryChildrenCache: {},
+      categoryLoadingId: "",
       panelTop: 20,
       panelLeft: 0,
       panelRight: 0,
@@ -98,6 +101,14 @@ const _sfc_main = {
       }
     } catch (e) {
     }
+    try {
+      const h = () => {
+        this.showLoginModal = true;
+      };
+      this._globalLoginHandler = h;
+      common_vendor.index.$on("global-login-prompt", h);
+    } catch (e) {
+    }
   },
   computed: {
     greetingText() {
@@ -131,6 +142,9 @@ const _sfc_main = {
   onShow() {
     this.syncCurrentTime();
     this.startGreetingTimer();
+    if (!this.hasHomeCoreLoaded) {
+      this.loading = true;
+    }
     try {
       const cont = !!common_vendor.index.getStorageSync("onboarding_continue");
       const idx = Number(common_vendor.index.getStorageSync("onboarding_index") || 0);
@@ -185,7 +199,8 @@ const _sfc_main = {
         }));
       }).catch(() => {
       });
-      Promise.allSettled([p1, p2, p3]).then(() => {
+      Promise.allSettled([p1, p2]).then(() => {
+        this.hasHomeCoreLoaded = true;
         this.loading = false;
         try {
           this.generateSharePosterIfNeeded();
@@ -194,16 +209,6 @@ const _sfc_main = {
       });
     } catch (e) {
       this.loading = false;
-    }
-  },
-  onLoad() {
-    try {
-      const h = () => {
-        this.showLoginModal = true;
-      };
-      this._globalLoginHandler = h;
-      common_vendor.index.$on("global-login-prompt", h);
-    } catch (e) {
     }
   },
   onUnload() {
@@ -714,15 +719,32 @@ const _sfc_main = {
         return;
       this.activeCateId = id;
       this.activeCateName = (cat == null ? void 0 : cat.name) || "";
+      if (Object.prototype.hasOwnProperty.call(this.categoryChildrenCache, id)) {
+        this.leftChildren = this.categoryChildrenCache[id] || [];
+        return;
+      }
+      if (this.categoryLoadingId === id)
+        return;
+      this.categoryLoadingId = id;
       try {
         api_index.getVisibleCategories({ page: 1, page_size: 50, sort_by: "id", categories_id: id }).then((res) => {
           var _a;
           const items = Array.isArray((_a = res == null ? void 0 : res.data) == null ? void 0 : _a.items) ? res.data.items : [];
-          this.leftChildren = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "", icon: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : "") }));
+          const children = items.map((it, i) => ({ name: (it == null ? void 0 : it.name) || "子分类" + (i + 1), categories_id: (it == null ? void 0 : it.categories_id) || (it == null ? void 0 : it.id) || "", icon: (typeof (it == null ? void 0 : it.thumbnail) === "string" ? it.thumbnail.replace(/`/g, "").trim() : "") || (typeof (it == null ? void 0 : it.icon) === "string" ? it.icon.replace(/`/g, "").trim() : "") }));
+          this.categoryChildrenCache = { ...this.categoryChildrenCache, [id]: children };
+          if (this.activeCateId === id)
+            this.leftChildren = children;
         }).catch(() => {
-          this.leftChildren = [];
+          this.categoryChildrenCache = { ...this.categoryChildrenCache, [id]: [] };
+          if (this.activeCateId === id)
+            this.leftChildren = [];
+        }).finally(() => {
+          if (this.categoryLoadingId === id)
+            this.categoryLoadingId = "";
         });
       } catch (e2) {
+        if (this.categoryLoadingId === id)
+          this.categoryLoadingId = "";
         this.leftChildren = [];
       }
     },
@@ -843,7 +865,7 @@ const _sfc_main = {
         common_vendor.index.setStorageSync("cart", cart);
         common_vendor.index.showToast({ title: "已加入购物车", icon: "success" });
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/home/index.vue:985", e);
+        common_vendor.index.__f__("error", "at pages/home/index.vue:1006", e);
       }
     },
     goLogin() {
