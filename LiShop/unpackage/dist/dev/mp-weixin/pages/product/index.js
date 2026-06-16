@@ -197,6 +197,7 @@ const _sfc_main = {
       if (oldVal !== -1 && oldVal !== void 0) {
         this.hasUserInteracted = true;
       }
+      this.fetchCoupons();
       this.triggerRealTimePriceCalc();
     },
     qty(newVal, oldVal) {
@@ -416,7 +417,7 @@ const _sfc_main = {
         this.$nextTick(() => {
           this.startMediaAutoplayIfNeeded();
         });
-        this.deferDetailSideRequests(productId);
+        this.deferDetailSideRequests();
       });
     },
     /**
@@ -447,7 +448,7 @@ const _sfc_main = {
      * 按需加载 HLS 播放库，避免首页等非视频页面首屏额外下载脚本。
      * @returns {Promise<any>}
      * @example
-     * this.ensureHlsLibrary().then((Hls) => { if (Hls) uni.__f__('log','at pages/product/index.vue:785','ready') })
+     * this.ensureHlsLibrary().then((Hls) => { if (Hls) uni.__f__('log','at pages/product/index.vue:828','ready') })
      */
     ensureHlsLibrary() {
       return Promise.resolve(null);
@@ -459,16 +460,15 @@ const _sfc_main = {
      * @param {string} productId 商品 ID
      * @returns {void}
      * @example
-     * this.deferDetailSideRequests('1001')
+     * this.deferDetailSideRequests()
      */
-    deferDetailSideRequests(productId) {
+    deferDetailSideRequests() {
       try {
         if (this._detailDeferredTimer)
           clearTimeout(this._detailDeferredTimer);
       } catch (e) {
       }
       this._detailDeferredTimer = setTimeout(() => {
-        this.fetchCoupons(productId);
         this.loadAddresses();
       }, 120);
     },
@@ -531,7 +531,7 @@ const _sfc_main = {
           }
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/product/index.vue:889", "实时计价失败", err);
+        common_vendor.index.__f__("error", "at pages/product/index.vue:931", "实时计价失败", err);
         this.realTimePriceData = null;
         const errMsg = (err && typeof err.data === "string" ? err.data : "") || err && err.message || "";
         if (errMsg && errMsg.includes("长度")) {
@@ -539,39 +539,138 @@ const _sfc_main = {
         }
       });
     },
-    fetchCoupons(productId) {
+    /**
+     * 获取当前规格可用优惠券。
+     * @description
+     * 优惠券接口要求传入明细商品 ID，因此这里始终使用当前选中的规格 `product_id`。
+     * 当规格尚未完成初始化或用户未登录时，直接清空优惠券状态，避免误传母商品 ID。
+     * @returns {void}
+     * @example
+     * this.fetchCoupons()
+     */
+    fetchCoupons() {
+      var _a;
       let token = "";
       try {
         const u = common_vendor.index.getStorageSync("user") || null;
         token = u && (u.token || u.data && u.data.token) || "";
       } catch (e) {
       }
-      if (!token || !productId)
-        return;
-      api_index.getAvailableCoupons({ product_id: productId, token }).then((res) => {
-        if (res.success && res.data && res.data.items) {
-          this.coupons = res.data.items;
-        }
-      }).catch(() => {
-      });
-    },
-    openCouponSheet() {
-      if (!this.coupons || this.coupons.length === 0) {
-        common_vendor.index.showToast({ title: "暂无可用优惠券", icon: "none" });
+      const detailProductId = String(((_a = this.selectedSpec) == null ? void 0 : _a.product_id) || "").trim();
+      if (!token || !detailProductId) {
+        this.coupons = [];
+        this.selectedCoupon = null;
         return;
       }
-      const list = ["不使用优惠券", ...this.coupons.map((c) => c.name)];
-      common_vendor.index.showActionSheet({
-        itemList: list,
-        success: (res) => {
-          this.hasUserInteracted = true;
-          if (res.tapIndex === 0) {
+      api_index.getAvailableCoupons({ product_id: detailProductId, token }).then((res) => {
+        var _a2;
+        if (res.success && res.data && res.data.items) {
+          this.coupons = res.data.items;
+          const selectedRecordId = String(((_a2 = this.selectedCoupon) == null ? void 0 : _a2.record_id) || "").trim();
+          if (selectedRecordId && !this.coupons.some((c) => String((c == null ? void 0 : c.record_id) || "").trim() === selectedRecordId)) {
             this.selectedCoupon = null;
-          } else {
-            this.selectedCoupon = this.coupons[res.tapIndex - 1];
           }
         }
+      }).catch(() => {
+        this.coupons = [];
+        this.selectedCoupon = null;
       });
+    },
+    /**
+     * 关闭优惠券弹层。
+     * @returns {void}
+     * @example
+     * this.closeCouponSheet()
+     */
+    closeCouponSheet() {
+      this.couponSheetVisible = false;
+    },
+    /**
+     * 选择优惠券并保留弹层，等待用户确认完成。
+     * @param {Object|null} coupon 当前选择的优惠券对象
+     * @returns {void}
+     * @example
+     * this.selectCouponOption(coupon)
+     */
+    selectCouponOption(coupon) {
+      this.hasUserInteracted = true;
+      this.selectedCoupon = coupon || null;
+    },
+    openCouponSheet() {
+      this.couponSheetVisible = true;
+    },
+    /**
+     * 获取优惠券主视觉数值文本。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponDiscountPrimaryText(coupon)
+     */
+    couponDiscountPrimaryText(coupon) {
+      const rule = (coupon == null ? void 0 : coupon.rule) || {};
+      const discountType = Number(rule.discount_type || 0);
+      const discountValue = Number(rule.discount_value || 0);
+      if (discountType === 1)
+        return String(Number(discountValue || 0));
+      return discountValue.toFixed(0);
+    },
+    /**
+     * 获取优惠券优惠值后缀。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponDiscountSuffixText(coupon)
+     */
+    couponDiscountSuffixText(coupon) {
+      const rule = (coupon == null ? void 0 : coupon.rule) || {};
+      return Number(rule.discount_type || 0) === 1 ? "%" : "";
+    },
+    /**
+     * 获取优惠券门槛文案。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponThresholdText(coupon)
+     */
+    couponThresholdText(coupon) {
+      var _a;
+      const minAmount = Number(((_a = coupon == null ? void 0 : coupon.rule) == null ? void 0 : _a.min_order_amount) || 0);
+      if (minAmount > 0)
+        return `满¥${minAmount.toFixed(2)}可用`;
+      return "无门槛";
+    },
+    /**
+     * 获取优惠券规则摘要文案。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponRuleSummaryText(coupon)
+     */
+    couponRuleSummaryText(coupon) {
+      const rule = (coupon == null ? void 0 : coupon.rule) || {};
+      const discountType = Number(rule.discount_type || 0);
+      const discountValue = Number(rule.discount_value || 0);
+      const categories = Array.isArray(rule.applicable_categories) ? rule.applicable_categories : [];
+      const scopeText = categories.includes("ALL") ? "全场商品可用" : "指定分类可用";
+      if (discountType === 1)
+        return `${scopeText}，下单可享 ${discountValue}% 优惠`;
+      return `${scopeText}，下单立减 ¥${discountValue.toFixed(2)}`;
+    },
+    /**
+     * 获取优惠券有效期文案。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponValidityText(coupon)
+     */
+    couponValidityText(coupon) {
+      const start = String((coupon == null ? void 0 : coupon.valid_start_time) || "").replace("T", " ").slice(0, 16);
+      const end = String((coupon == null ? void 0 : coupon.valid_end_time) || "").replace("T", " ").slice(0, 16);
+      if (start && end)
+        return `${start} - ${end}`;
+      if (end)
+        return `有效期至 ${end}`;
+      return "长期可用";
     },
     tryShowOnboarding(sel, tries) {
       const max = Math.max(1, Number(tries || 6));
@@ -1915,7 +2014,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       type: $options.selectorType,
       selectedName: $options.selectorSelectedName
     }),
-    al: $data.mpSheet || $data.roomSelectorVisible ? 1 : "",
+    al: $data.mpSheet || $data.roomSelectorVisible || $data.couponSheetVisible ? 1 : "",
     am: $data.showOnboarding
   }, $data.showOnboarding ? {
     an: common_vendor.o($options.handleOnboardingNext),
@@ -1931,8 +2030,35 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     as: common_vendor.o($options.goLogin),
     at: common_vendor.p({
       visible: $data.showLoginModal
+    }),
+    av: $data.couponSheetVisible
+  }, $data.couponSheetVisible ? common_vendor.e({
+    aw: common_vendor.o((...args) => $options.closeCouponSheet && $options.closeCouponSheet(...args)),
+    ax: $data.coupons && $data.coupons.length
+  }, $data.coupons && $data.coupons.length ? {
+    ay: common_vendor.f($data.coupons, (c, k0, i0) => {
+      var _a;
+      return {
+        a: common_vendor.t(Number(((_a = c == null ? void 0 : c.rule) == null ? void 0 : _a.discount_type) || 0) === 2 ? "¥" : ""),
+        b: common_vendor.t($options.couponDiscountPrimaryText(c)),
+        c: common_vendor.t($options.couponDiscountSuffixText(c)),
+        d: common_vendor.t(c.name || "优惠券"),
+        e: common_vendor.t($options.couponThresholdText(c)),
+        f: common_vendor.t($options.couponRuleSummaryText(c)),
+        g: common_vendor.t($options.couponValidityText(c)),
+        h: common_vendor.t($data.selectedCoupon && $data.selectedCoupon.record_id === c.record_id ? "已选" : "使用"),
+        i: c.record_id,
+        j: $data.selectedCoupon && $data.selectedCoupon.record_id === c.record_id ? 1 : "",
+        k: common_vendor.o(($event) => $options.selectCouponOption(c), c.record_id)
+      };
     })
-  });
+  } : {}, {
+    az: common_vendor.t($data.selectedCoupon ? "已选择：" + $data.selectedCoupon.name : "未选择优惠券"),
+    aA: common_vendor.o((...args) => $options.closeCouponSheet && $options.closeCouponSheet(...args)),
+    aB: common_vendor.o(() => {
+    }),
+    aC: common_vendor.o((...args) => $options.closeCouponSheet && $options.closeCouponSheet(...args))
+  }) : {});
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a911e391"]]);
 _sfc_main.__runtimeHooks = 6;

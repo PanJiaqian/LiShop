@@ -116,6 +116,13 @@
   color: #aaaaaa;
   margin-top: 4rpx;
 }
+.meta .spec.original-line.data-v-17a44f9d {
+  color: #999999;
+  text-decoration: line-through;
+}
+.meta .spec.discount-line.data-v-17a44f9d {
+  color: #ff4d4f;
+}
 .price-row.data-v-17a44f9d {
   display: flex;
   gap: 12rpx;
@@ -137,6 +144,12 @@
   font-size: 28rpx;
   font-weight: 600;
   color: #333333;
+}
+.total-original.data-v-17a44f9d {
+  font-size: 24rpx;
+  color: #999999;
+  text-decoration: line-through;
+  margin-bottom: 6rpx;
 }
 .btns.data-v-17a44f9d {
   display: flex;

@@ -558,7 +558,8 @@ const _sfc_main = {
      */
     mapApiOrderToLocal(apiOrder) {
       const roomsMap = {};
-      const orderTotal = Number(apiOrder.total_price || 0);
+      const orderTotal = this.roundCurrency(apiOrder.total_amount ?? apiOrder.total_price ?? 0);
+      const orderOriginalTotal = this.roundCurrency(apiOrder.original_total_amount ?? (apiOrder.total_price || 0));
       const items = apiOrder.items || [];
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
@@ -566,9 +567,14 @@ const _sfc_main = {
         if (!roomsMap[roomName]) {
           roomsMap[roomName] = { name: roomName, roomTotal: 0, items: [] };
         }
-        const price = Number(item.price || 0);
         const quantity = Number(item.quantity || 0) || 0;
-        const lineTotal = Number(item.line_total_price || price * quantity || 0);
+        const lineTotal = this.roundCurrency(item.detail_total_price ?? item.line_total_price ?? 0);
+        const fallbackUnitPrice = quantity > 0 ? this.roundCurrency(lineTotal / quantity) : 0;
+        const price = this.roundCurrency(item.unit_price ?? item.price ?? fallbackUnitPrice);
+        const originalLineTotal = this.roundCurrency(item.original_detail_total_price ?? item.original_price ?? lineTotal);
+        const fallbackOriginalUnitPrice = quantity > 0 ? this.roundCurrency(originalLineTotal / quantity) : 0;
+        const originalUnitPrice = this.roundCurrency(item.original_unit_price ?? fallbackOriginalUnitPrice);
+        const couponDiscountAmount = this.roundCurrency(item.coupon_discount_amount ?? Math.max(0, originalLineTotal - lineTotal));
         const localItem = {
           title: item.product_name || item.available_product_name,
           available_product_name: item.available_product_name || "",
@@ -577,7 +583,11 @@ const _sfc_main = {
           specLength: item.length,
           price,
           quantity,
-          lineTotal,
+          lineTotal: this.roundCurrency(lineTotal || price * quantity || 0),
+          originalUnitPrice,
+          originalLineTotal,
+          couponDiscountAmount,
+          showOriginalPrice: originalLineTotal > this.roundCurrency(lineTotal || 0),
           image: String(item.main_picture || "").split("`").join("").trim(),
           productNote: item.product_note || "",
           itemNumber: item.item_number || "",
@@ -592,6 +602,10 @@ const _sfc_main = {
       }
       const rooms = this.getObjectValues(roomsMap);
       this.reconcileRoomTotals(rooms, orderTotal);
+      const roomsOriginalTotal = this.roundCurrency(rooms.reduce((sum, room) => {
+        const roomItems = Array.isArray(room.items) ? room.items : [];
+        return sum + roomItems.reduce((itemSum, current) => itemSum + Number(current.originalLineTotal || 0), 0);
+      }, 0));
       const tracking = [];
       let rawList = [];
       let trackingMessage = "";
@@ -629,6 +643,7 @@ const _sfc_main = {
         orderNo: apiOrder.order_id,
         createdAt: apiOrder.created_at || null,
         total: orderTotal,
+        originalTotal: orderOriginalTotal > 0 ? orderOriginalTotal : roomsOriginalTotal > 0 ? roomsOriginalTotal : orderTotal,
         totalPackageFee: Number(apiOrder.total_package_fee || 0),
         coupon_record_id: apiOrder.coupon_record_id || "",
         coupon_discount_amount: Number(apiOrder.coupon_discount_amount || 0),
@@ -682,13 +697,13 @@ const _sfc_main = {
                   if (mapped)
                     allOrders.push(mapped);
                 } catch (mapErr) {
-                  common_vendor.index.__f__("error", "at pages/order/index.vue:786", "Map order error:", o.order_id, mapErr);
+                  common_vendor.index.__f__("error", "at pages/order/index.vue:804", "Map order error:", o.order_id, mapErr);
                 }
               }
             });
           }
         } catch (e) {
-          common_vendor.index.__f__("error", "at pages/order/index.vue:792", "fetchOrders error:", e);
+          common_vendor.index.__f__("error", "at pages/order/index.vue:810", "fetchOrders error:", e);
         }
       }
       this.orders = allOrders;
@@ -705,11 +720,11 @@ const _sfc_main = {
               this.order.status = this.detailStatusHint;
             }
           } catch (err) {
-            common_vendor.index.__f__("error", "at pages/order/index.vue:809", "Detail map error:", err);
+            common_vendor.index.__f__("error", "at pages/order/index.vue:827", "Detail map error:", err);
           }
         }
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/order/index.vue:813", "fetchDetail error:", e);
+        common_vendor.index.__f__("error", "at pages/order/index.vue:831", "fetchDetail error:", e);
       }
       this.loading = false;
     },
@@ -937,37 +952,51 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
           }, x.packageFee > 0 ? {
             k: common_vendor.t(Number(x.packageFee).toFixed(2))
           } : {}, {
-            l: common_vendor.t(x.price.toFixed(2)),
-            m: common_vendor.t(x.quantity),
-            n: common_vendor.t(x.lineTotal.toFixed(2)),
-            o: x.id + "_" + index
+            l: x.showOriginalPrice
+          }, x.showOriginalPrice ? {
+            m: common_vendor.t(x.originalUnitPrice.toFixed(2)),
+            n: common_vendor.t(x.quantity),
+            o: common_vendor.t(x.originalLineTotal.toFixed(2))
+          } : {}, {
+            p: x.couponDiscountAmount > 0
+          }, x.couponDiscountAmount > 0 ? {
+            q: common_vendor.t(x.couponDiscountAmount.toFixed(2))
+          } : {}, {
+            r: common_vendor.t(x.price.toFixed(2)),
+            s: common_vendor.t(x.quantity),
+            t: common_vendor.t(x.lineTotal.toFixed(2)),
+            v: x.id + "_" + index
           });
         }),
         d: r.name
       };
     }),
-    M: common_vendor.t($data.order.total.toFixed(2)),
-    N: $data.order.totalPackageFee > 0
+    M: $data.order.originalTotal > $data.order.total
+  }, $data.order.originalTotal > $data.order.total ? {
+    N: common_vendor.t($data.order.originalTotal.toFixed(2))
+  } : {}, {
+    O: common_vendor.t($data.order.total.toFixed(2)),
+    P: $data.order.totalPackageFee > 0
   }, $data.order.totalPackageFee > 0 ? {
-    O: common_vendor.t(Number($data.order.totalPackageFee).toFixed(2))
+    Q: common_vendor.t(Number($data.order.totalPackageFee).toFixed(2))
   } : {}, {
-    P: $data.order.coupon_discount_amount > 0
+    R: $data.order.coupon_discount_amount > 0
   }, $data.order.coupon_discount_amount > 0 ? {
-    Q: common_vendor.t(Number($data.order.coupon_discount_amount).toFixed(2))
+    S: common_vendor.t(Number($data.order.coupon_discount_amount).toFixed(2))
   } : {}, {
-    R: $options.isPendingReceipt($data.order.status)
+    T: $options.isPendingReceipt($data.order.status)
   }, $options.isPendingReceipt($data.order.status) ? {
-    S: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+    U: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
   } : {}, {
-    T: ["pending_payment", "pending_shipment"].includes($data.order.status)
+    V: ["pending_payment", "pending_shipment"].includes($data.order.status)
   }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
-    U: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+    W: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
   } : {}, {
-    V: common_vendor.o(($event) => $options.exportExcel($data.order))
+    X: common_vendor.o(($event) => $options.exportExcel($data.order))
   }) : common_vendor.e({
-    W: $data.orders.length
+    Y: $data.orders.length
   }, $data.orders.length ? {
-    X: common_vendor.f($data.orders, (o, k0, i0) => {
+    Z: common_vendor.f($data.orders, (o, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(o.orderNo || o.id),
         b: o.createdAt
@@ -998,12 +1027,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     })
   } : {}), {
-    Y: $data.showOnboarding
+    aa: $data.showOnboarding
   }, $data.showOnboarding ? {
-    Z: common_vendor.o($options.handleOnboardingNext),
-    aa: common_vendor.o($options.handleOnboardingPrev),
-    ab: common_vendor.o($options.closeOnboarding),
-    ac: common_vendor.p({
+    ab: common_vendor.o($options.handleOnboardingNext),
+    ac: common_vendor.o($options.handleOnboardingPrev),
+    ad: common_vendor.o($options.closeOnboarding),
+    ae: common_vendor.p({
       steps: $data.onboardingSteps,
       targets: $data.onboardingRects,
       initialIndex: $data.onboardingIndex

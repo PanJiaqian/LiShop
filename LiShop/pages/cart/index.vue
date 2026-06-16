@@ -41,7 +41,11 @@
                 <text class="attr-txt" style="flex:none;">{{ it.attr }}</text>
                 <text class="attr-txt" v-if="getItemPackageFeeLabel(it)" style="flex:none; color: #faa21b; font-size: 20rpx;">{{ getItemPackageFeeLabel(it) }}</text>
               </view>
-              <text class="price">¥{{ getItemDisplayPrice(it).toFixed(2) }}</text>
+              <view class="price-stack h5-price-stack">
+                <text class="price">¥{{ getItemDisplayPrice(it).toFixed(2) }}</text>
+                <text v-if="shouldShowOriginalPrice(it)" class="origin-price">¥{{ getItemOriginalPrice(it).toFixed(2) }}</text>
+                <text v-if="getItemCouponDiscount(it) > 0" class="coupon-tip">已优惠 ¥{{ getItemCouponDiscount(it).toFixed(2) }}</text>
+              </view>
               <view class="qty-box">
                   <view class="qty-btn" @click.stop="decById(it.id)">-</view>
                   <text class="qty-num">{{ it.quantity }}</text>
@@ -176,7 +180,11 @@
             </view>
             <view class="row-main">
               <view class="price-box">
-                <text class="price">¥{{ getItemDisplayPrice(it).toFixed(2) }}</text>
+                <view class="price-stack">
+                  <text class="price">¥{{ getItemDisplayPrice(it).toFixed(2) }}</text>
+                  <text v-if="shouldShowOriginalPrice(it)" class="origin-price">¥{{ getItemOriginalPrice(it).toFixed(2) }}</text>
+                </view>
+                <text v-if="getItemCouponDiscount(it) > 0" class="coupon-tip">已优惠 ¥{{ getItemCouponDiscount(it).toFixed(2) }}</text>
               </view>
               <view class="qty-box mp-qty-box">
                 <view class="qty-btn mp-qty-btn" @click.stop="decById(it.id)">-</view>
@@ -579,7 +587,8 @@ export default {
         package_fee_selected_package_id: '',
         package_fee_is_group_owner: 0,
         item_amount: null,
-        item_original: null
+        item_original: null,
+        item_coupon_discount: 0
       }))
     },
     /**
@@ -614,7 +623,8 @@ export default {
             package_fee_selected_package_id: detail.package_fee_selected_package_id || '',
             package_fee_is_group_owner: Number(detail.package_fee_is_group_owner) || 0,
             item_amount: Number(detail.item_amount) || 0,
-            item_original: Number(detail.item_original) || 0
+            item_original: Number(detail.item_original) || 0,
+            item_coupon_discount: Number(detail.coupon_discount_amount) || 0
           })
         }
       })
@@ -632,6 +642,50 @@ export default {
         return Number(detail.item_amount) || 0
       }
       return Number(item?.price) || 0
+    },
+    /**
+     * 获取购物车条目的原价展示金额。
+     * @param {Object} item 购物车条目
+     * @returns {number} 当前条目原价金额
+     * @example
+     * const original = this.getItemOriginalPrice(row)
+     */
+    getItemOriginalPrice(item) {
+      const detail = this.summaryItemMap[item?.id] || null
+      if (item?.selected && detail && detail.item_original !== undefined && detail.item_original !== null) {
+        return Number(detail.item_original) || 0
+      }
+      if (item?.item_original !== undefined && item?.item_original !== null) {
+        return Number(item.item_original) || 0
+      }
+      return Number(item?.original_price) || 0
+    },
+    /**
+     * 获取购物车条目的优惠金额。
+     * @param {Object} item 购物车条目
+     * @returns {number} 当前条目优惠金额
+     * @example
+     * const discount = this.getItemCouponDiscount(row)
+     */
+    getItemCouponDiscount(item) {
+      const detail = this.summaryItemMap[item?.id] || null
+      if (item?.selected && detail && detail.coupon_discount_amount !== undefined && detail.coupon_discount_amount !== null) {
+        return Number(detail.coupon_discount_amount) || 0
+      }
+      if (item?.item_coupon_discount !== undefined && item?.item_coupon_discount !== null) {
+        return Number(item.item_coupon_discount) || 0
+      }
+      return Number(item?.coupon_discount_amount) || 0
+    },
+    /**
+     * 判断购物车条目是否需要展示原价划线价。
+     * @param {Object} item 购物车条目
+     * @returns {boolean} 是否展示原价
+     * @example
+     * const visible = this.shouldShowOriginalPrice(row)
+     */
+    shouldShowOriginalPrice(item) {
+      return this.getItemOriginalPrice(item) > this.getItemDisplayPrice(item)
     },
     /**
      * 获取购物车条目的包装费标签文案。
@@ -673,6 +727,11 @@ export default {
                 productId: (x && x.product_id) ? x.product_id : '',
                 availableProductId: (x && x.available_product_id) ? x.available_product_id : ((x && x.product_id) ? x.product_id : ''),
                 price: Number((x && x.price) !== undefined ? x.price : 0) || 0,
+                final_price: Number((x && x.final_price) !== undefined ? x.final_price : ((x && x.price) !== undefined ? x.price : 0)) || 0,
+                original_price: Number((x && x.original_price) !== undefined ? x.original_price : 0) || 0,
+                coupon_discount_amount: Number((x && x.coupon_discount_amount) !== undefined ? x.coupon_discount_amount : 0) || 0,
+                coupon_valid: Number((x && x.coupon_valid) !== undefined ? x.coupon_valid : 1) || 0,
+                coupon_message: (x && x.coupon_message) ? x.coupon_message : '',
                 quantity: Number((x && x.quantity) !== undefined ? x.quantity : 1) || 1,
                 image: '/static/logo.png',
                 roomName: roomName || '默认房间',
@@ -697,7 +756,8 @@ export default {
                 package_fee_selected_package_id: x.package_fee_selected_package_id || '',
                 package_fee_is_group_owner: Number(x.package_fee_is_group_owner) || 0,
                 item_amount: null,
-                item_original: null
+                item_original: null,
+                item_coupon_discount: Number((x && x.coupon_discount_amount) !== undefined ? x.coupon_discount_amount : 0) || 0
               })
             }
           }
@@ -869,6 +929,11 @@ export default {
             if (i >= 0) {
               const it = this.cart[i]
               it.price = Number(found.price !== undefined ? found.price : it.price) || it.price
+              it.final_price = Number(found.final_price !== undefined ? found.final_price : it.final_price) || it.final_price
+              it.original_price = Number(found.original_price !== undefined ? found.original_price : it.original_price) || 0
+              it.coupon_discount_amount = Number(found.coupon_discount_amount !== undefined ? found.coupon_discount_amount : it.coupon_discount_amount) || 0
+              it.coupon_valid = Number(found.coupon_valid !== undefined ? found.coupon_valid : it.coupon_valid) || 0
+              it.coupon_message = found.coupon_message !== undefined ? found.coupon_message : it.coupon_message
               it.quantity = Number(found.quantity !== undefined ? found.quantity : it.quantity) || it.quantity
               it.inventory = found.inventory
               it.available = found.available_product_status
@@ -889,6 +954,7 @@ export default {
               it.package_fee_is_group_owner = Number(found.package_fee_is_group_owner) || 0
               it.item_amount = null
               it.item_original = null
+              it.item_coupon_discount = Number(found.coupon_discount_amount !== undefined ? found.coupon_discount_amount : 0) || 0
             }
           }
         })
@@ -1196,6 +1262,27 @@ export default {
   font-weight: 600;
   margin-top: 8rpx;
   display: block;
+}
+
+.price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4rpx;
+}
+
+.origin-price {
+  color: #999999;
+  font-size: 22rpx;
+  text-decoration: line-through;
+  line-height: 1.2;
+}
+
+.coupon-tip {
+  color: #ff4d4f;
+  font-size: 20rpx;
+  line-height: 1.2;
+  margin-top: 4rpx;
 }
 
 .qty {
@@ -1966,13 +2053,22 @@ export default {
   align-self: center;
 }
 .h5-row .price {
-  width: 140rpx;
+  width: auto;
   font-size: 32rpx;
   font-weight: 600;
   color: #e1251b;
-  text-align: center;
+  text-align: left;
   flex-shrink: 0;
   align-self: center;
+}
+.h5-price-stack {
+  width: 170rpx;
+  flex-shrink: 0;
+  align-self: center;
+}
+.h5-row .origin-price,
+.h5-row .coupon-tip {
+  text-align: left;
 }
 .h5-row .qty-box {
   margin: 0 20rpx;

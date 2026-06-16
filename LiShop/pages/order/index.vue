@@ -91,6 +91,8 @@
                 <text class="spec" v-if="x.itemNumber || x.nuomiItemNumber">品号：{{ x.itemNumber || '-' }}｜诺米品号：{{ x.nuomiItemNumber || '-' }}</text>
                 <text class="spec" v-if="x.productNote">备注：{{ x.productNote }}</text>
                 <text class="spec" v-if="x.packageFee > 0">同系列包装费：¥{{ Number(x.packageFee).toFixed(2) }}</text>
+                <text class="spec original-line" v-if="x.showOriginalPrice">原价：¥{{ x.originalUnitPrice.toFixed(2) }} × {{ x.quantity }} = ¥{{ x.originalLineTotal.toFixed(2) }}</text>
+                <text class="spec discount-line" v-if="x.couponDiscountAmount > 0">优惠券抵扣：-¥{{ x.couponDiscountAmount.toFixed(2) }}</text>
               </view>
               <view class="price-row">
                 <text class="price">¥{{ x.price.toFixed(2) }}</text>
@@ -106,6 +108,7 @@
       </view>
       <view class="ops">
         <view style="display:flex; flex-direction:column; align-items:flex-end;">
+          <text v-if="order.originalTotal > order.total" class="total-original">原总价：¥{{ order.originalTotal.toFixed(2) }}</text>
           <text class="total-text">合计：¥{{ order.total.toFixed(2) }}</text>
           <text v-if="order.totalPackageFee > 0" style="color:#faa21b; font-size:24rpx; margin-top:8rpx;">(其中包装费 ¥{{ Number(order.totalPackageFee).toFixed(2) }})</text>
           <text v-if="order.coupon_discount_amount > 0" style="color:#ff4d4f; font-size:24rpx; margin-top:8rpx;">(已使用优惠券抵扣 ¥{{ Number(order.coupon_discount_amount).toFixed(2) }})</text>
@@ -661,7 +664,8 @@ export default {
      */
     mapApiOrderToLocal(apiOrder) {
       const roomsMap = {};
-      const orderTotal = Number(apiOrder.total_price || 0);
+      const orderTotal = this.roundCurrency(apiOrder.total_amount ?? apiOrder.total_price ?? 0);
+      const orderOriginalTotal = this.roundCurrency(apiOrder.original_total_amount ?? (apiOrder.total_price || 0));
       const items = apiOrder.items || [];
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
@@ -669,9 +673,14 @@ export default {
         if (!roomsMap[roomName]) {
           roomsMap[roomName] = { name: roomName, roomTotal: 0, items: [] };
         }
-        const price = Number(item.price || 0);
         const quantity = Number(item.quantity || 0) || 0;
-        const lineTotal = Number(item.line_total_price || (price * quantity) || 0);
+        const lineTotal = this.roundCurrency(item.detail_total_price ?? item.line_total_price ?? 0);
+        const fallbackUnitPrice = quantity > 0 ? this.roundCurrency(lineTotal / quantity) : 0;
+        const price = this.roundCurrency(item.unit_price ?? item.price ?? fallbackUnitPrice);
+        const originalLineTotal = this.roundCurrency(item.original_detail_total_price ?? item.original_price ?? lineTotal);
+        const fallbackOriginalUnitPrice = quantity > 0 ? this.roundCurrency(originalLineTotal / quantity) : 0;
+        const originalUnitPrice = this.roundCurrency(item.original_unit_price ?? fallbackOriginalUnitPrice);
+        const couponDiscountAmount = this.roundCurrency(item.coupon_discount_amount ?? Math.max(0, originalLineTotal - lineTotal));
         const localItem = {
           title: item.product_name || item.available_product_name,
           available_product_name: item.available_product_name || '',
@@ -680,7 +689,11 @@ export default {
           specLength: item.length,
           price: price,
           quantity: quantity,
-          lineTotal: lineTotal,
+          lineTotal: this.roundCurrency(lineTotal || (price * quantity) || 0),
+          originalUnitPrice: originalUnitPrice,
+          originalLineTotal: originalLineTotal,
+          couponDiscountAmount: couponDiscountAmount,
+          showOriginalPrice: originalLineTotal > this.roundCurrency(lineTotal || 0),
           image: String(item.main_picture || '').split('`').join('').trim(),
           productNote: item.product_note || '',
           itemNumber: item.item_number || '',
@@ -695,6 +708,10 @@ export default {
       }
       const rooms = this.getObjectValues(roomsMap);
       this.reconcileRoomTotals(rooms, orderTotal);
+      const roomsOriginalTotal = this.roundCurrency(rooms.reduce((sum, room) => {
+        const roomItems = Array.isArray(room.items) ? room.items : []
+        return sum + roomItems.reduce((itemSum, current) => itemSum + Number(current.originalLineTotal || 0), 0)
+      }, 0));
       const tracking = [];
       let rawList = [];
       let trackingMessage = '';
@@ -730,6 +747,7 @@ export default {
         orderNo: apiOrder.order_id,
         createdAt: apiOrder.created_at || null,
         total: orderTotal,
+        originalTotal: orderOriginalTotal > 0 ? orderOriginalTotal : (roomsOriginalTotal > 0 ? roomsOriginalTotal : orderTotal),
         totalPackageFee: Number(apiOrder.total_package_fee || 0),
         coupon_record_id: apiOrder.coupon_record_id || '',
         coupon_discount_amount: Number(apiOrder.coupon_discount_amount || 0),
@@ -1072,6 +1090,15 @@ export default {
   margin-top: 4rpx;
 }
 
+.meta .spec.original-line {
+  color: #999999;
+  text-decoration: line-through;
+}
+
+.meta .spec.discount-line {
+  color: #ff4d4f;
+}
+
 .price-row {
   display: flex;
   gap: 12rpx;
@@ -1096,6 +1123,13 @@ export default {
   font-size: 28rpx;
   font-weight: 600;
   color: #333333;
+}
+
+.total-original {
+  font-size: 24rpx;
+  color: #999999;
+  text-decoration: line-through;
+  margin-bottom: 6rpx;
 }
 
 .btns {

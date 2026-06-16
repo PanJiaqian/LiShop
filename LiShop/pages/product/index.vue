@@ -1,5 +1,5 @@
 <template>
-  <view class="page product-page" :class="{ 'no-scroll': mpSheet || roomSelectorVisible }">
+  <view class="page product-page" :class="{ 'no-scroll': mpSheet || roomSelectorVisible || couponSheetVisible }">
     <Skeleton :loading="pageLoading && !product" :showTitle="true" />
     <view v-if="pageLoading && !product" class="detail-skeleton">
       <view class="detail-skeleton-main"></view>
@@ -388,6 +388,48 @@
     @close="closeOnboarding"
   />
   <LoginPrompt :visible="showLoginModal" @close="closeLoginModal" @confirm="goLogin" />
+  <view v-if="couponSheetVisible" class="coupon-modal-mask" @click="closeCouponSheet" catchtouchmove="true">
+    <view class="coupon-modal-sheet" @click.stop>
+      <view class="coupon-modal-header">
+        <view class="coupon-modal-title-wrap">
+          <text class="coupon-modal-eyebrow">Coupon</text>
+          <text class="coupon-modal-title">选择优惠券</text>
+          <text class="coupon-modal-subtitle">为当前规格挑一张更合适的优惠券</text>
+        </view>
+        <view class="coupon-modal-close" @click="closeCouponSheet">×</view>
+      </view>
+      <scroll-view scroll-y class="coupon-modal-list">
+        <view v-if="coupons && coupons.length">
+          <view v-for="c in coupons" :key="c.record_id" class="coupon-option coupon-option-card" :class="{ active: selectedCoupon && selectedCoupon.record_id === c.record_id }" @click="selectCouponOption(c)">
+            <view class="coupon-card-amount">
+              <text class="coupon-card-amount-prefix">{{ Number(c?.rule?.discount_type || 0) === 2 ? '¥' : '' }}</text>
+              <text class="coupon-card-amount-value">{{ couponDiscountPrimaryText(c) }}</text>
+              <text class="coupon-card-amount-suffix">{{ couponDiscountSuffixText(c) }}</text>
+            </view>
+            <view class="coupon-card-body">
+              <view class="coupon-card-top">
+                <text class="coupon-card-name">{{ c.name || '优惠券' }}</text>
+                <text class="coupon-card-tag">{{ couponThresholdText(c) }}</text>
+              </view>
+              <text class="coupon-card-rule">{{ couponRuleSummaryText(c) }}</text>
+              <text class="coupon-card-validity">{{ couponValidityText(c) }}</text>
+            </view>
+            <view class="coupon-card-check">{{ selectedCoupon && selectedCoupon.record_id === c.record_id ? '已选' : '使用' }}</view>
+          </view>
+        </view>
+
+        <view v-else class="coupon-empty-state">
+          <text class="coupon-empty-icon">%</text>
+          <text class="coupon-empty-title">暂无可用优惠券</text>
+          <text class="coupon-empty-desc">当前规格暂时没有可用优惠券，后续可再回来看看</text>
+        </view>
+      </scroll-view>
+      <view class="coupon-modal-footer">
+        <text class="coupon-modal-footer-text">{{ selectedCoupon ? ('已选择：' + selectedCoupon.name) : '未选择优惠券' }}</text>
+        <button class="coupon-modal-btn" @click="closeCouponSheet">完成</button>
+      </view>
+    </view>
+  </view>
 </template>
 
 <script>
@@ -559,6 +601,7 @@ export default {
       if (oldVal !== -1 && oldVal !== undefined) {
         this.hasUserInteracted = true
       }
+      this.fetchCoupons()
       this.triggerRealTimePriceCalc()
     },
     qty(newVal, oldVal) {
@@ -755,7 +798,7 @@ export default {
           this.pageLoading = false
           this.resetCarouselTimer()
           this.$nextTick(() => { this.startMediaAutoplayIfNeeded() })
-          this.deferDetailSideRequests(productId)
+          this.deferDetailSideRequests()
         })
     },
     /**
@@ -816,14 +859,13 @@ export default {
      * @param {string} productId 商品 ID
      * @returns {void}
      * @example
-     * this.deferDetailSideRequests('1001')
+     * this.deferDetailSideRequests()
      */
-    deferDetailSideRequests(productId) {
+    deferDetailSideRequests() {
       try {
         if (this._detailDeferredTimer) clearTimeout(this._detailDeferredTimer)
       } catch (e) {}
       this._detailDeferredTimer = setTimeout(() => {
-        this.fetchCoupons(productId)
         this.loadAddresses()
       }, 120)
     },
@@ -894,37 +936,130 @@ export default {
         }
       })
     },
-    fetchCoupons(productId) {
+    /**
+     * 获取当前规格可用优惠券。
+     * @description
+     * 优惠券接口要求传入明细商品 ID，因此这里始终使用当前选中的规格 `product_id`。
+     * 当规格尚未完成初始化或用户未登录时，直接清空优惠券状态，避免误传母商品 ID。
+     * @returns {void}
+     * @example
+     * this.fetchCoupons()
+     */
+    fetchCoupons() {
       let token = ''
       try {
         const u = uni.getStorageSync('user') || null
         token = (u && (u.token || (u.data && u.data.token))) || ''
       } catch (e) {}
-      if (!token || !productId) return
-      getAvailableCoupons({ product_id: productId, token }).then(res => {
+      const detailProductId = String(this.selectedSpec?.product_id || '').trim()
+      if (!token || !detailProductId) {
+        this.coupons = []
+        this.selectedCoupon = null
+        return
+      }
+      getAvailableCoupons({ product_id: detailProductId, token }).then(res => {
         // 后端返回了专门筛选好的 items
         if (res.success && res.data && res.data.items) {
           this.coupons = res.data.items
-        }
-      }).catch(() => {})
-    },
-    openCouponSheet() {
-      if (!this.coupons || this.coupons.length === 0) {
-        uni.showToast({ title: '暂无可用优惠券', icon: 'none' })
-        return
-      }
-      const list = ['不使用优惠券', ...this.coupons.map(c => c.name)]
-      uni.showActionSheet({
-        itemList: list,
-        success: (res) => {
-          this.hasUserInteracted = true
-          if (res.tapIndex === 0) {
+          const selectedRecordId = String(this.selectedCoupon?.record_id || '').trim()
+          if (selectedRecordId && !this.coupons.some(c => String(c?.record_id || '').trim() === selectedRecordId)) {
             this.selectedCoupon = null
-          } else {
-            this.selectedCoupon = this.coupons[res.tapIndex - 1]
           }
         }
+      }).catch(() => {
+        this.coupons = []
+        this.selectedCoupon = null
       })
+    },
+    /**
+     * 关闭优惠券弹层。
+     * @returns {void}
+     * @example
+     * this.closeCouponSheet()
+     */
+    closeCouponSheet() {
+      this.couponSheetVisible = false
+    },
+    /**
+     * 选择优惠券并保留弹层，等待用户确认完成。
+     * @param {Object|null} coupon 当前选择的优惠券对象
+     * @returns {void}
+     * @example
+     * this.selectCouponOption(coupon)
+     */
+    selectCouponOption(coupon) {
+      this.hasUserInteracted = true
+      this.selectedCoupon = coupon || null
+    },
+    openCouponSheet() {
+      this.couponSheetVisible = true
+    },
+    /**
+     * 获取优惠券主视觉数值文本。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponDiscountPrimaryText(coupon)
+     */
+    couponDiscountPrimaryText(coupon) {
+      const rule = coupon?.rule || {}
+      const discountType = Number(rule.discount_type || 0)
+      const discountValue = Number(rule.discount_value || 0)
+      if (discountType === 1) return String(Number(discountValue || 0))
+      return discountValue.toFixed(0)
+    },
+    /**
+     * 获取优惠券优惠值后缀。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponDiscountSuffixText(coupon)
+     */
+    couponDiscountSuffixText(coupon) {
+      const rule = coupon?.rule || {}
+      return Number(rule.discount_type || 0) === 1 ? '%' : ''
+    },
+    /**
+     * 获取优惠券门槛文案。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponThresholdText(coupon)
+     */
+    couponThresholdText(coupon) {
+      const minAmount = Number(coupon?.rule?.min_order_amount || 0)
+      if (minAmount > 0) return `满¥${minAmount.toFixed(2)}可用`
+      return '无门槛'
+    },
+    /**
+     * 获取优惠券规则摘要文案。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponRuleSummaryText(coupon)
+     */
+    couponRuleSummaryText(coupon) {
+      const rule = coupon?.rule || {}
+      const discountType = Number(rule.discount_type || 0)
+      const discountValue = Number(rule.discount_value || 0)
+      const categories = Array.isArray(rule.applicable_categories) ? rule.applicable_categories : []
+      const scopeText = categories.includes('ALL') ? '全场商品可用' : '指定分类可用'
+      if (discountType === 1) return `${scopeText}，下单可享 ${discountValue}% 优惠`
+      return `${scopeText}，下单立减 ¥${discountValue.toFixed(2)}`
+    },
+    /**
+     * 获取优惠券有效期文案。
+     * @param {Object} coupon 优惠券对象
+     * @returns {string}
+     * @example
+     * this.couponValidityText(coupon)
+     */
+    couponValidityText(coupon) {
+      const start = String(coupon?.valid_start_time || '').replace('T', ' ').slice(0, 16)
+      const end = String(coupon?.valid_end_time || '').replace('T', ' ').slice(0, 16)
+      if (start && end) return `${start} - ${end}`
+      if (end) return `有效期至 ${end}`
+      return '长期可用'
     },
     tryShowOnboarding(sel, tries) {
       const max = Math.max(1, Number(tries || 6))
@@ -2467,6 +2602,11 @@ export default {
 
 /* #ifdef H5 */
 /* Hide scrollbars */
+.product-page.no-scroll {
+  height: 100vh;
+  overflow: hidden;
+}
+
 .product-page ::-webkit-scrollbar {
   display: none;
   width: 0 !important;
@@ -3130,6 +3270,295 @@ export default {
   box-shadow: 0 6rpx 16rpx rgba(255, 106, 0, 0.35);
 }
 
+.coupon-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  background: rgba(7, 10, 20, 0.48);
+  backdrop-filter: blur(14rpx);
+}
+
+.coupon-modal-sheet {
+  width: 760rpx;
+  max-width: calc(100vw - 64rpx);
+  max-height: calc(100vh - 96rpx);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 30rpx;
+  background: linear-gradient(180deg, #fffaf6 0%, #ffffff 26%);
+  box-shadow: 0 24rpx 60rpx rgba(16, 24, 40, 0.22);
+}
+
+.coupon-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 32rpx 32rpx 20rpx;
+}
+
+.coupon-modal-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.coupon-modal-eyebrow {
+  font-size: 22rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+  text-transform: uppercase;
+  color: #ff7a45;
+}
+
+.coupon-modal-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1f2329;
+}
+
+.coupon-modal-subtitle {
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #8a919f;
+}
+
+.coupon-modal-close {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 35, 41, 0.06);
+  color: #666f7c;
+  font-size: 40rpx;
+  line-height: 1;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.coupon-modal-list {
+  flex: 1;
+  min-height: 0;
+  padding: 8rpx 32rpx 0;
+  box-sizing: border-box;
+}
+
+.coupon-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-bottom: 20rpx;
+  border-radius: 24rpx;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.coupon-option:hover {
+  transform: translateY(-2rpx);
+}
+
+.coupon-option.active {
+  box-shadow: 0 14rpx 30rpx rgba(255, 106, 0, 0.14);
+}
+
+.coupon-option-check,
+.coupon-card-check {
+  flex-shrink: 0;
+  min-width: 84rpx;
+  height: 48rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 35, 41, 0.06);
+  color: #667085;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.coupon-option.active .coupon-option-check,
+.coupon-option.active .coupon-card-check {
+  background: linear-gradient(135deg, #ff8f5a 0%, #ff5a3d 100%);
+  color: #ffffff;
+}
+
+.coupon-option-card {
+  align-items: stretch;
+  padding: 0;
+  border: 1rpx solid rgba(255, 122, 69, 0.2);
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.coupon-card-amount {
+  width: 182rpx;
+  min-height: 180rpx;
+  padding: 24rpx 18rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  background: linear-gradient(180deg, #ff8858 0%, #ff5d3d 100%);
+  color: #ffffff;
+}
+
+.coupon-card-amount-prefix {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.coupon-card-amount-value {
+  font-size: 56rpx;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.coupon-card-amount-suffix {
+  font-size: 24rpx;
+  margin-left: 4rpx;
+  font-weight: 700;
+}
+
+.coupon-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 24rpx 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10rpx;
+}
+
+.coupon-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding-right: 18rpx;
+}
+
+.coupon-card-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2329;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-card-tag {
+  flex-shrink: 0;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 122, 69, 0.12);
+  color: #ff6a3d;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.coupon-card-rule,
+.coupon-card-validity {
+  padding-right: 18rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.coupon-card-rule {
+  color: #4d5761;
+}
+
+.coupon-card-validity {
+  color: #98a2b3;
+}
+
+.coupon-card-check {
+  align-self: center;
+  margin-right: 22rpx;
+}
+
+.coupon-empty-state {
+  min-height: 360rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24rpx 20rpx 32rpx;
+}
+
+.coupon-empty-icon {
+  width: 96rpx;
+  height: 96rpx;
+  margin-bottom: 18rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 143, 90, 0.18) 0%, rgba(255, 90, 61, 0.1) 100%);
+  color: #ff6a3d;
+  font-size: 42rpx;
+  font-weight: 800;
+}
+
+.coupon-empty-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2329;
+}
+
+.coupon-empty-desc {
+  max-width: 520rpx;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #98a2b3;
+}
+
+.coupon-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 24rpx 32rpx 30rpx;
+  background: #ffffff;
+  border-top: 1rpx solid rgba(15, 23, 42, 0.06);
+}
+
+.coupon-modal-footer-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #667085;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-modal-btn {
+  min-width: 180rpx;
+  height: 72rpx;
+  padding: 0 28rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #ff8f5a 0%, #ff5a3d 100%);
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 72rpx;
+  box-shadow: 0 10rpx 24rpx rgba(255, 106, 61, 0.25);
+}
+
 /* #endif */
 
 /* #ifdef MP-WEIXIN */
@@ -3187,6 +3616,290 @@ export default {
   width: 0;
   height: 0;
   display: none;
+}
+
+.coupon-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  background: rgba(7, 10, 20, 0.56);
+}
+
+.coupon-modal-sheet {
+  width: 690rpx;
+  max-width: calc(100vw - 48rpx);
+  max-height: calc(100vh - 120rpx);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 28rpx;
+  background: linear-gradient(180deg, #fff9f4 0%, #ffffff 28%);
+  box-shadow: 0 20rpx 54rpx rgba(16, 24, 40, 0.24);
+}
+
+.coupon-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 30rpx 28rpx 18rpx;
+}
+
+.coupon-modal-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.coupon-modal-eyebrow {
+  font-size: 22rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+  color: #ff7a45;
+}
+
+.coupon-modal-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1f2329;
+}
+
+.coupon-modal-subtitle {
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #8a919f;
+}
+
+.coupon-modal-close {
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 35, 41, 0.06);
+  color: #667085;
+  font-size: 40rpx;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.coupon-modal-list {
+  flex: 1;
+  min-height: 0;
+  padding: 8rpx 28rpx 0;
+  box-sizing: border-box;
+}
+
+.coupon-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-bottom: 20rpx;
+  border-radius: 24rpx;
+}
+
+.coupon-option.active {
+  box-shadow: 0 12rpx 26rpx rgba(255, 106, 0, 0.16);
+}
+
+.coupon-option-check,
+.coupon-card-check {
+  flex-shrink: 0;
+  min-width: 84rpx;
+  height: 48rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 35, 41, 0.06);
+  color: #667085;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.coupon-option.active .coupon-option-check,
+.coupon-option.active .coupon-card-check {
+  background: linear-gradient(135deg, #ff8f5a 0%, #ff5a3d 100%);
+  color: #ffffff;
+}
+
+.coupon-option-card {
+  align-items: stretch;
+  padding: 0;
+  border: 1rpx solid rgba(255, 122, 69, 0.22);
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.coupon-card-amount {
+  width: 176rpx;
+  min-height: 176rpx;
+  padding: 22rpx 16rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  background: linear-gradient(180deg, #ff8858 0%, #ff5d3d 100%);
+  color: #ffffff;
+}
+
+.coupon-card-amount-prefix {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.coupon-card-amount-value {
+  font-size: 54rpx;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.coupon-card-amount-suffix {
+  margin-left: 4rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.coupon-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 24rpx 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10rpx;
+}
+
+.coupon-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding-right: 16rpx;
+}
+
+.coupon-card-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2329;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-card-tag {
+  flex-shrink: 0;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 122, 69, 0.12);
+  color: #ff6a3d;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.coupon-card-rule,
+.coupon-card-validity {
+  padding-right: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.coupon-card-rule {
+  color: #4d5761;
+}
+
+.coupon-card-validity {
+  color: #98a2b3;
+}
+
+.coupon-card-check {
+  align-self: center;
+  margin-right: 18rpx;
+}
+
+.coupon-empty-state {
+  min-height: 340rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24rpx 20rpx 32rpx;
+}
+
+.coupon-empty-icon {
+  width: 96rpx;
+  height: 96rpx;
+  margin-bottom: 18rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 143, 90, 0.18) 0%, rgba(255, 90, 61, 0.1) 100%);
+  color: #ff6a3d;
+  font-size: 42rpx;
+  font-weight: 800;
+}
+
+.coupon-empty-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2329;
+}
+
+.coupon-empty-desc {
+  max-width: 500rpx;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #98a2b3;
+}
+
+.coupon-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 22rpx 28rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-top: 1rpx solid rgba(15, 23, 42, 0.06);
+}
+
+.coupon-modal-footer-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #667085;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coupon-modal-btn {
+  min-width: 180rpx;
+  height: 72rpx;
+  padding: 0 28rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #ff8f5a 0%, #ff5a3d 100%);
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 72rpx;
+  box-shadow: 0 10rpx 24rpx rgba(255, 106, 61, 0.25);
+}
+
+.coupon-modal-btn::after {
+  border: none;
 }
 
 .mp-title {
