@@ -392,7 +392,6 @@
     <view class="coupon-modal-sheet" @click.stop>
       <view class="coupon-modal-header">
         <view class="coupon-modal-title-wrap">
-          <text class="coupon-modal-eyebrow">Coupon</text>
           <text class="coupon-modal-title">选择优惠券</text>
           <text class="coupon-modal-subtitle">为当前规格挑一张更合适的优惠券</text>
         </view>
@@ -3290,7 +3289,7 @@ export default {
   flex-direction: column;
   overflow: hidden;
   border-radius: 30rpx;
-  background: linear-gradient(180deg, #fffaf6 0%, #ffffff 26%);
+  background: linear-gradient(180deg, #fff5f7 0%, #ffffff 26%);
   box-shadow: 0 24rpx 60rpx rgba(16, 24, 40, 0.22);
 }
 
@@ -3313,7 +3312,7 @@ export default {
   font-weight: 700;
   letter-spacing: 3rpx;
   text-transform: uppercase;
-  color: #ff7a45;
+  color: #ff5f7e;
 }
 
 .coupon-modal-title {
@@ -3367,7 +3366,7 @@ export default {
 }
 
 .coupon-option.active {
-  box-shadow: 0 14rpx 30rpx rgba(255, 106, 0, 0.14);
+  box-shadow: 0 14rpx 30rpx rgba(255, 95, 126, 0.18);
 }
 
 .coupon-option-check,
@@ -3388,14 +3387,14 @@ export default {
 
 .coupon-option.active .coupon-option-check,
 .coupon-option.active .coupon-card-check {
-  background: linear-gradient(135deg, #ff8f5a 0%, #ff5a3d 100%);
+  background: linear-gradient(135deg, #ff6b8b 0%, #ff9bb5 100%);
   color: #ffffff;
 }
 
 .coupon-option-card {
   align-items: stretch;
   padding: 0;
-  border: 1rpx solid rgba(255, 122, 69, 0.2);
+  border: 1rpx solid rgba(255, 95, 126, 0.22);
   background: #ffffff;
   overflow: hidden;
 }
@@ -3408,7 +3407,7 @@ export default {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  background: linear-gradient(180deg, #ff8858 0%, #ff5d3d 100%);
+  background: linear-gradient(180deg, #ff7b93 0%, #ff5f7e 100%);
   color: #ffffff;
 }
 
@@ -3461,8 +3460,8 @@ export default {
   flex-shrink: 0;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
-  background: rgba(255, 122, 69, 0.12);
-  color: #ff6a3d;
+  background: rgba(255, 95, 126, 0.12);
+  color: #ff5f7e;
   font-size: 20rpx;
   font-weight: 700;
 }
@@ -3505,8 +3504,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(255, 143, 90, 0.18) 0%, rgba(255, 90, 61, 0.1) 100%);
-  color: #ff6a3d;
+  background: linear-gradient(135deg, rgba(255, 107, 139, 0.18) 0%, rgba(255, 155, 181, 0.12) 100%);
+  color: #ff5f7e;
   font-size: 42rpx;
   font-weight: 800;
 }
@@ -3551,12 +3550,12 @@ export default {
   padding: 0 28rpx;
   border: none;
   border-radius: 999rpx;
-  background: linear-gradient(135deg, #ff8f5a 0%, #ff5a3d 100%);
+  background: linear-gradient(135deg, #ff6b8b 0%, #ff9bb5 100%);
   color: #ffffff;
   font-size: 28rpx;
   font-weight: 700;
   line-height: 72rpx;
-  box-shadow: 0 10rpx 24rpx rgba(255, 106, 61, 0.25);
+  box-shadow: 0 10rpx 24rpx rgba(255, 95, 126, 0.26);
 }
 
 /* #endif */
@@ -3637,7 +3636,7 @@ export default {
   flex-direction: column;
   overflow: hidden;
   border-radius: 28rpx;
-  background: linear-gradient(180deg, #fff9f4 0%, #ffffff 28%);
+  background: linear-gradient(180deg, #fff5f7 0%, #ffffff 28%);
   box-shadow: 0 20rpx 54rpx rgba(16, 24, 40, 0.24);
 }
 
@@ -3659,7 +3658,7 @@ export default {
   font-size: 22rpx;
   font-weight: 700;
   letter-spacing: 3rpx;
-  color: #ff7a45;
+  color: #ff5f7e;
 }
 
 .coupon-modal-title {
@@ -3706,7 +3705,7 @@ export default {
 }
 
 .coupon-option.active {
-  box-shadow: 0 12rpx 26rpx rgba(255, 106, 0, 0.16);
+  box-shadow: 0 12rpx 26rpx rgba(255, 95, 126, 0.2);
 }
 
 .coupon-option-check,
@@ -3727,14 +3726,14 @@ export default {
 
 .coupon-option.active .coupon-option-check,
 .coupon-option.active .coupon-card-check {
-  background: linear-gradient(135deg, #ff8f5a 0%, #ff5a3d 100%);
+  background: linear-gradient(135deg, #ff6b8b 0%, #ff9bb5 100%);
   color: #ffffff;
 }
 
 .coupon-option-card {
   align-items: stretch;
   padding: 0;
-  border: 1rpx solid rgba(255, 122, 69, 0.22);
+  border: 1rpx solid rgba(255, 95, 126, 0.24);
   background: #ffffff;
   overflow: hidden;
 }
@@ -3747,7 +3746,7 @@ export default {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  background: linear-gradient(180deg, #ff8858 0%, #ff5d3d 100%);
+  background: linear-gradient(180deg, #ff7b93 0%, #ff5f7e 100%);
   color: #ffffff;
 }
 
@@ -3800,8 +3799,8 @@ export default {
   flex-shrink: 0;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
-  background: rgba(255, 122, 69, 0.12);
-  color: #ff6a3d;
+  background: rgba(255, 95, 126, 0.12);
+  color: #ff5f7e;
   font-size: 20rpx;
   font-weight: 700;
 }
@@ -3844,8 +3843,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(255, 143, 90, 0.18) 0%, rgba(255, 90, 61, 0.1) 100%);
-  color: #ff6a3d;
+  background: linear-gradient(135deg, rgba(255, 107, 139, 0.18) 0%, rgba(255, 155, 181, 0.12) 100%);
+  color: #ff5f7e;
   font-size: 42rpx;
   font-weight: 800;
 }
@@ -3890,12 +3889,12 @@ export default {
   padding: 0 28rpx;
   border: none;
   border-radius: 999rpx;
-  background: linear-gradient(135deg, #ff8f5a 0%, #ff5a3d 100%);
+  background: linear-gradient(135deg, #ff6b8b 0%, #ff9bb5 100%);
   color: #ffffff;
   font-size: 28rpx;
   font-weight: 700;
   line-height: 72rpx;
-  box-shadow: 0 10rpx 24rpx rgba(255, 106, 61, 0.25);
+  box-shadow: 0 10rpx 24rpx rgba(255, 95, 126, 0.26);
 }
 
 .coupon-modal-btn::after {

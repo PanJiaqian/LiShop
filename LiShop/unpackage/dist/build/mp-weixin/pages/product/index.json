@@ -1,0 +1,12 @@
+{
+  "navigationBarTitleText": "商品详情",
+  "enablePullDownRefresh": true,
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
+  "usingComponents": {
+    "room-selector": "../../components/RoomSelector",
+    "skeleton": "../../components/Skeleton",
+    "onboarding-guide": "../../components/OnboardingGuide",
+    "login-prompt": "../../components/LoginPrompt"
+  }
+}

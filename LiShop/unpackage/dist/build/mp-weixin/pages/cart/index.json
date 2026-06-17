@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "购物车",
+  "enablePullDownRefresh": true,
+  "enableShareAppMessage": true,
+  "enableShareTimeline": true,
+  "usingComponents": {
+    "room-selector": "../../components/RoomSelector",
+    "skeleton": "../../components/Skeleton",
+    "login-prompt": "../../components/LoginPrompt"
+  }
+}

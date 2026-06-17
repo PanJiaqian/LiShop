@@ -19,13 +19,7 @@ const _sfc_main = {
       showAddressSelector: false,
       orderNote: "",
       mpOrderNote: "",
-      couponDiscount: 0,
       showLoginModal: false,
-      // 优惠券相关
-      availableCoupons: [],
-      selectedCouponRecordId: "",
-      showCouponModal: false,
-      _couponModalMousedownTarget: null,
       _noteLimitMax: 250,
       customToastVisible: false,
       customToastMessage: "",
@@ -35,6 +29,7 @@ const _sfc_main = {
         total_price: 0,
         total_original: 0,
         total_package_fee: 0,
+        total_coupon_discount_amount: 0,
         is_free_shipping: 0,
         items: [],
         package_fee_groups: []
@@ -71,10 +66,13 @@ const _sfc_main = {
     // extraReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.reduce || 0) : 0), 0) },
     // totalReduce() { return this.officialReduce + this.redReduce + this.extraReduce },
     totalReduce() {
-      return Math.max(0, (this.summaryData.total_original || 0) - (this.summaryData.total_price || 0)) + this.couponDiscount;
+      const apiDiscount = Number(this.summaryData.total_coupon_discount_amount || 0);
+      if (apiDiscount > 0)
+        return apiDiscount;
+      return Math.max(0, Number(this.summaryData.total_original || 0) - Number(this.summaryData.total_price || 0));
     },
     payable() {
-      return Math.max(0, (this.summaryData.total_price || 0) - this.couponDiscount);
+      return Math.max(0, Number(this.summaryData.total_price || 0));
     },
     needForCoupon() {
       const need = Math.max(0, 800 - this.payable);
@@ -97,7 +95,7 @@ const _sfc_main = {
         });
         return Object.keys(map).map((name) => ({ name, items: map[name] }));
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:393", "groups computed error", e);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:366", "groups computed error", e);
         return [];
       }
     },
@@ -130,7 +128,6 @@ const _sfc_main = {
       }
     } catch (e) {
     }
-    this.fetchCoupons();
     this.load();
     this.loadAddresses();
   },
@@ -153,15 +150,6 @@ const _sfc_main = {
     }
   },
   methods: {
-    handleCouponModalMaskMousedown(e) {
-      this._couponModalMousedownTarget = e.target;
-    },
-    handleCouponModalMaskMouseup(e) {
-      if (this._couponModalMousedownTarget === e.currentTarget && e.target === e.currentTarget) {
-        this.showCouponModal = false;
-      }
-      this._couponModalMousedownTarget = null;
-    },
     onOrderNoteInput(e) {
       const val = e.detail.value || e.target.value || "";
       if (Array.from(val).length >= this._noteLimitMax) {
@@ -182,27 +170,6 @@ const _sfc_main = {
       this._customToastTimer = setTimeout(() => {
         this.customToastVisible = false;
       }, 2e3);
-    },
-    fetchCoupons() {
-      let token = "";
-      try {
-        const u = common_vendor.index.getStorageSync("user") || null;
-        token = u && (u.token || u.data && u.data.token) || "";
-      } catch (e) {
-      }
-      if (!token)
-        return;
-      api_index.getUserCoupons({ token }).then((res) => {
-        if (res && res.success && res.data && res.data.items) {
-          this.availableCoupons = res.data.items.filter((c) => c.status === 1);
-        }
-      }).catch(() => {
-      });
-    },
-    selectCoupon(id) {
-      this.selectedCouponRecordId = id;
-      this.showCouponModal = false;
-      this.updateCouponDiscount();
     },
     closeLoginModal() {
       this.showLoginModal = false;
@@ -336,18 +303,6 @@ const _sfc_main = {
       }));
     },
     /**
-     * 清空购物车条目的优惠券使用标记。
-     * @returns {void}
-     * @example
-     * this.clearCouponUsageFlags()
-     */
-    clearCouponUsageFlags() {
-      this.cart = (this.cart || []).map((it) => ({
-        ...it,
-        has_used_coupon: false
-      }));
-    },
-    /**
      * 将结算接口返回的聚合明细回填到购物车列表。
      * @param {Array<Object>} items 结算接口返回的明细列表
      * @returns {void}
@@ -368,7 +323,8 @@ const _sfc_main = {
             package_fee_is_group_owner: Number(detail.package_fee_is_group_owner) || 0,
             item_amount: Number(detail.item_amount) || 0,
             item_original: Number(detail.item_original) || 0,
-            item_coupon_discount: Number(detail.coupon_discount_amount) || 0
+            item_coupon_discount: Number(detail.coupon_discount_amount) || 0,
+            has_used_coupon: (Number(detail.coupon_discount_amount) || 0) > 0 || !!current.has_used_coupon
           });
         }
       });
@@ -500,7 +456,7 @@ const _sfc_main = {
               isBlocked: isOutOfStock || isNoPermission,
               cart_item_status: cartItemStatus,
               category_id: x.category_id || "",
-              has_used_coupon: false,
+              has_used_coupon: Number((x && x.has_used_coupon) !== void 0 ? x.has_used_coupon : 0) === 1 || (Number((x && x.coupon_discount_amount) !== void 0 ? x.coupon_discount_amount : 0) || 0) > 0,
               package_fee: Number(x.package_fee) || 0,
               package_fee_group_key: x.package_fee_group_key || "",
               package_fee_selected_package_id: x.package_fee_selected_package_id || "",
@@ -515,7 +471,7 @@ const _sfc_main = {
         this.fetchSummary();
         this.loading = false;
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:769", "Get cart failed", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:703", "Get cart failed", err);
         try {
           this.cart = common_vendor.index.getStorageSync("cart") || [];
         } catch (e) {
@@ -535,9 +491,7 @@ const _sfc_main = {
       const selectedIds = selectedItems.map((it) => it.id);
       this.resetCartAggregationState();
       if (selectedIds.length === 0) {
-        this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, is_free_shipping: 0, items: [], package_fee_groups: [] };
-        this.couponDiscount = 0;
-        this.clearCouponUsageFlags();
+        this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, total_coupon_discount_amount: 0, is_free_shipping: 0, items: [], package_fee_groups: [] };
         return;
       }
       let token = "";
@@ -555,70 +509,18 @@ const _sfc_main = {
             total_price: res.data.total_amount || 0,
             total_original: res.data.total_original || 0,
             total_package_fee: res.data.total_package_fee || 0,
+            total_coupon_discount_amount: res.data.total_coupon_discount_amount || 0,
             is_free_shipping: 0,
             items: Array.isArray(res.data.items) ? res.data.items : [],
             package_fee_groups: Array.isArray(res.data.package_fee_groups) ? res.data.package_fee_groups : []
           };
           this.applySummaryItems(res.data.items);
-          this.updateCouponDiscount();
         }
       }).catch((e) => {
         if (requestSeq !== this._summaryRequestSeq) {
           return;
         }
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:817", e);
-      });
-    },
-    updateCouponDiscount() {
-      if (!this.selectedCouponRecordId || this.summaryData.total_price <= 0) {
-        this.couponDiscount = 0;
-        this.clearCouponUsageFlags();
-        return;
-      }
-      const coupon = this.availableCoupons.find((c) => c.record_id === this.selectedCouponRecordId);
-      let applicable_order_amount = this.summaryData.total_original || 0;
-      if (coupon && coupon.rule) {
-        const cats = coupon.rule.applicable_categories || [];
-        const isAll = cats.includes("ALL") || cats.length === 0;
-        const summaryItemMap = {};
-        (this.summaryData && this.summaryData.items || []).forEach((item) => {
-          if (item && item.cart_item_id)
-            summaryItemMap[item.cart_item_id] = item;
-        });
-        applicable_order_amount = 0;
-        this.cart.forEach((it) => {
-          if (!it.selected) {
-            it.has_used_coupon = false;
-            return;
-          }
-          if (isAll || cats.includes(it.category_id)) {
-            it.has_used_coupon = true;
-            const detail = summaryItemMap[it.id] || null;
-            applicable_order_amount += Number(detail ? detail.item_original : 0) || 0;
-          } else {
-            it.has_used_coupon = false;
-          }
-        });
-      }
-      let token = "";
-      try {
-        const u = common_vendor.index.getStorageSync("user") || null;
-        token = u && (u.token || u.data && u.data.token) || "";
-      } catch (e) {
-      }
-      api_index.calculateCoupon({
-        record_id: this.selectedCouponRecordId,
-        order_amount: this.summaryData.total_price || 0,
-        applicable_order_amount,
-        token
-      }).then((res) => {
-        if (res && res.code === 200 && res.data) {
-          this.couponDiscount = res.data.deduct_amount || 0;
-        } else {
-          this.couponDiscount = 0;
-        }
-      }).catch(() => {
-        this.couponDiscount = 0;
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:748", e);
       });
     },
     sync() {
@@ -665,7 +567,7 @@ const _sfc_main = {
           common_vendor.index.showToast({ title: "更新失败", icon: "none" });
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:912", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:789", err);
         common_vendor.index.showToast({ title: "更新出错", icon: "none" });
       });
     },
@@ -692,6 +594,7 @@ const _sfc_main = {
             it.coupon_discount_amount = Number(found.coupon_discount_amount !== void 0 ? found.coupon_discount_amount : it.coupon_discount_amount) || 0;
             it.coupon_valid = Number(found.coupon_valid !== void 0 ? found.coupon_valid : it.coupon_valid) || 0;
             it.coupon_message = found.coupon_message !== void 0 ? found.coupon_message : it.coupon_message;
+            it.has_used_coupon = Number(found.has_used_coupon !== void 0 ? found.has_used_coupon : it.has_used_coupon) === 1 || (Number(found.coupon_discount_amount !== void 0 ? found.coupon_discount_amount : it.coupon_discount_amount) || 0) > 0;
             it.quantity = Number(found.quantity !== void 0 ? found.quantity : it.quantity) || it.quantity;
             it.inventory = found.inventory;
             it.available = found.available_product_status;
@@ -818,14 +721,13 @@ const _sfc_main = {
         common_vendor.index.showToast({ title: "请先选择收货地址", icon: "none" });
         return;
       }
-      let coupon_record_id = this.selectedCouponRecordId || "";
       let token = "";
       try {
         const u = common_vendor.index.getStorageSync("user") || null;
         token = u && (u.token || u.data && u.data.token) || "";
       } catch (e) {
       }
-      api_index.createOrderByIds({ ids: selectedIds, address_id: addressId, note: this.orderNote || this.mpOrderNote || "", coupon_record_id, token }).then((res) => {
+      api_index.createOrderByIds({ ids: selectedIds, address_id: addressId, note: this.orderNote || this.mpOrderNote || "", token }).then((res) => {
         var _a2, _b;
         if (res && res.success) {
           common_vendor.index.showToast({ title: "下单成功", icon: "success" });
@@ -847,7 +749,7 @@ const _sfc_main = {
         }
       }).catch((err) => {
         common_vendor.index.showToast({ title: "下单出错", icon: "none" });
-        common_vendor.index.__f__("error", "at pages/cart/index.vue:1063", err);
+        common_vendor.index.__f__("error", "at pages/cart/index.vue:938", err);
       });
     },
     handleExportExcel() {
@@ -903,14 +805,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     i: common_vendor.t($options.mpOrderNoteCount),
     j: common_vendor.o([($event) => $data.mpOrderNote = $event.detail.value, (...args) => $options.onMpOrderNoteInput && $options.onMpOrderNoteInput(...args)]),
     k: $data.mpOrderNote,
-    l: $data.availableCoupons.length > 0
-  }, $data.availableCoupons.length > 0 ? {
-    m: common_vendor.t($data.selectedCouponRecordId ? "已选择1张" : "可使用优惠券 ▾"),
-    n: common_vendor.o(($event) => $data.showCouponModal = true)
-  } : {}, {
-    o: $data.cart.length
+    l: $data.cart.length
   }, $data.cart.length ? {
-    p: common_vendor.f($options.groups, (grp, gi, i0) => {
+    m: common_vendor.f($options.groups, (grp, gi, i0) => {
       return {
         a: common_vendor.t(grp.name),
         b: common_vendor.f(grp.items, (it, k1, i1) => {
@@ -959,72 +856,49 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    q: $options.isAllSelected ? 1 : "",
-    r: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
-    s: common_vendor.t($options.payable.toFixed(2)),
-    t: $data.summaryData.total_package_fee > 0
+    n: $options.isAllSelected ? 1 : "",
+    o: common_vendor.o((...args) => $options.toggleAll && $options.toggleAll(...args)),
+    p: common_vendor.t($options.payable.toFixed(2)),
+    q: $data.summaryData.total_package_fee > 0
   }, $data.summaryData.total_package_fee > 0 ? {
-    v: common_vendor.t($data.summaryData.total_package_fee.toFixed(2))
+    r: common_vendor.t($data.summaryData.total_package_fee.toFixed(2))
   } : {}, {
-    w: $data.couponDiscount > 0
-  }, $data.couponDiscount > 0 ? {
-    x: common_vendor.t(Number($data.couponDiscount).toFixed(2))
+    s: $data.summaryData.total_coupon_discount_amount > 0
+  }, $data.summaryData.total_coupon_discount_amount > 0 ? {
+    t: common_vendor.t(Number($data.summaryData.total_coupon_discount_amount).toFixed(2))
   } : {}, {
-    y: common_vendor.o((...args) => $options.removeSelected && $options.removeSelected(...args)),
-    z: common_vendor.t($options.selectedCount),
-    A: $options.selectedCount === 0 ? 1 : "",
-    B: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
-    C: $data.showSpecModal
+    v: common_vendor.o((...args) => $options.removeSelected && $options.removeSelected(...args)),
+    w: common_vendor.t($options.selectedCount),
+    x: $options.selectedCount === 0 ? 1 : "",
+    y: common_vendor.o((...args) => $options.checkout && $options.checkout(...args)),
+    z: $data.showSpecModal
   }, $data.showSpecModal ? {
-    D: $data.editingItem.image || "/static/logo.png",
-    E: common_vendor.t($data.editingItem.price),
-    F: common_vendor.t($data.editingItem.attr),
-    G: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    H: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    I: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
-    J: common_vendor.o(() => {
+    A: $data.editingItem.image || "/static/logo.png",
+    B: common_vendor.t($data.editingItem.price),
+    C: common_vendor.t($data.editingItem.attr),
+    D: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    E: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    F: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args)),
+    G: common_vendor.o(() => {
     }),
-    K: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
+    H: common_vendor.o((...args) => $options.closeSpecPopup && $options.closeSpecPopup(...args))
   } : {}, {
-    L: common_vendor.o(($event) => $data.showAddressSelector = false),
-    M: common_vendor.o($options.onAddressSelect),
-    N: common_vendor.o($options.onCreateAddress),
-    O: common_vendor.p({
+    I: common_vendor.o(($event) => $data.showAddressSelector = false),
+    J: common_vendor.o($options.onAddressSelect),
+    K: common_vendor.o($options.onCreateAddress),
+    L: common_vendor.p({
       visible: $data.showAddressSelector,
       rooms: $options.addressRooms,
       type: "addr",
       selectedName: $data.selectedAddress ? ($data.selectedAddress.receiver + " " + $data.selectedAddress.phone + " " + $data.selectedAddress.full).trim() : ""
     }),
-    P: $data.showCouponModal
-  }, $data.showCouponModal ? {
-    Q: common_vendor.o(($event) => $data.showCouponModal = false),
-    R: $data.selectedCouponRecordId === "" ? 1 : "",
-    S: common_vendor.o(($event) => $options.selectCoupon("")),
-    T: common_vendor.f($data.availableCoupons, (c, k0, i0) => {
-      return {
-        a: common_vendor.t(c.name),
-        b: common_vendor.t(c.balance),
-        c: c.record_id,
-        d: $data.selectedCouponRecordId === c.record_id ? 1 : "",
-        e: common_vendor.o(($event) => $options.selectCoupon(c.record_id), c.record_id)
-      };
-    }),
-    U: common_vendor.o(() => {
-    }),
-    V: common_vendor.o(() => {
-    }),
-    W: common_vendor.o(() => {
-    }),
-    X: common_vendor.o((...args) => $options.handleCouponModalMaskMousedown && $options.handleCouponModalMaskMousedown(...args)),
-    Y: common_vendor.o((...args) => $options.handleCouponModalMaskMouseup && $options.handleCouponModalMaskMouseup(...args))
-  } : {}, {
-    Z: $data.customToastVisible
+    M: $data.customToastVisible
   }, $data.customToastVisible ? {
-    aa: common_vendor.t($data.customToastMessage)
+    N: common_vendor.t($data.customToastMessage)
   } : {}, {
-    ab: common_vendor.o($options.closeLoginModal),
-    ac: common_vendor.o($options.goLogin),
-    ad: common_vendor.p({
+    O: common_vendor.o($options.closeLoginModal),
+    P: common_vendor.o($options.goLogin),
+    Q: common_vendor.p({
       visible: $data.showLoginModal
     })
   });

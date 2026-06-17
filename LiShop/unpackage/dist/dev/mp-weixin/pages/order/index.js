@@ -321,6 +321,35 @@ const _sfc_main = {
       } catch (e) {
       }
     },
+    /**
+     * 将订单状态转换为页面可读的中文标签。
+     * @param {string} status 订单状态标识
+     * @returns {string} 用于界面展示的订单状态文案
+     * @example
+     * this.orderStatusLabel('pending_receipt')
+     */
+    orderStatusLabel(status) {
+      try {
+        const raw = String(status || "").trim();
+        if (!raw)
+          return "订单处理中";
+        const normalized = raw.replace(/^OrderStatus\./, "").toLowerCase();
+        const mapping = {
+          pending_payment: "待付款",
+          pending_shipment: "待发货",
+          pending_receipt: "待收货",
+          cancelled: "已取消",
+          canceled: "已取消",
+          completed: "已完成",
+          shipped: "运输中",
+          paid: "已支付",
+          processing: "订单处理中"
+        };
+        return mapping[normalized] || mapping[raw] || raw;
+      } catch (e) {
+        return "订单处理中";
+      }
+    },
     isPendingReceipt(status) {
       try {
         const s = String(status || "");
@@ -697,13 +726,13 @@ const _sfc_main = {
                   if (mapped)
                     allOrders.push(mapped);
                 } catch (mapErr) {
-                  common_vendor.index.__f__("error", "at pages/order/index.vue:804", "Map order error:", o.order_id, mapErr);
+                  common_vendor.index.__f__("error", "at pages/order/index.vue:889", "Map order error:", o.order_id, mapErr);
                 }
               }
             });
           }
         } catch (e) {
-          common_vendor.index.__f__("error", "at pages/order/index.vue:810", "fetchOrders error:", e);
+          common_vendor.index.__f__("error", "at pages/order/index.vue:895", "fetchOrders error:", e);
         }
       }
       this.orders = allOrders;
@@ -720,11 +749,11 @@ const _sfc_main = {
               this.order.status = this.detailStatusHint;
             }
           } catch (err) {
-            common_vendor.index.__f__("error", "at pages/order/index.vue:827", "Detail map error:", err);
+            common_vendor.index.__f__("error", "at pages/order/index.vue:912", "Detail map error:", err);
           }
         }
       } catch (e) {
-        common_vendor.index.__f__("error", "at pages/order/index.vue:831", "fetchDetail error:", e);
+        common_vendor.index.__f__("error", "at pages/order/index.vue:916", "fetchDetail error:", e);
       }
       this.loading = false;
     },
@@ -888,14 +917,24 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $data.order.createdAt ? {
     o: common_vendor.t($options.formatTime($data.order.createdAt))
   } : {}, {
-    p: $data.order.waybillNo
-  }, $data.order.waybillNo ? {
-    q: common_vendor.t($data.order.waybillNo),
-    r: common_vendor.o(($event) => $options.copyWaybill($data.order.waybillNo))
+    p: common_vendor.t($options.orderStatusLabel($data.order.status)),
+    q: common_vendor.t($data.order.total.toFixed(2)),
+    r: $data.order.originalTotal > $data.order.total
+  }, $data.order.originalTotal > $data.order.total ? {
+    s: common_vendor.t($data.order.originalTotal.toFixed(2))
   } : {}, {
-    s: ($data.order.tracking || []).length
+    t: ($data.order.tracking || []).length
+  }, ($data.order.tracking || []).length ? {} : {}, {
+    v: $data.order.waybillNo
+  }, $data.order.waybillNo ? common_vendor.e({
+    w: $data.order.waybillNo
+  }, $data.order.waybillNo ? {
+    x: common_vendor.t($data.order.waybillNo),
+    y: common_vendor.o(($event) => $options.copyWaybill($data.order.waybillNo))
+  } : {}) : {}, {
+    z: ($data.order.tracking || []).length
   }, ($data.order.tracking || []).length ? {
-    t: common_vendor.f($data.logisticsCollapsed ? ($data.order.tracking || []).slice(0, 1) : $data.order.tracking, (ev, i, i0) => {
+    A: common_vendor.f($data.logisticsCollapsed ? ($data.order.tracking || []).slice(0, 1) : $data.order.tracking, (ev, i, i0) => {
       return {
         a: common_vendor.t(ev.status),
         b: common_vendor.t($options.formatTime(ev.time)),
@@ -904,135 +943,157 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {
-    v: common_vendor.t($data.order.trackingMessage || "暂无物流信息")
+    B: common_vendor.t($data.order.trackingMessage || "商家发货后，这里会显示物流轨迹和配送进度")
   }, {
-    w: common_vendor.t($data.logisticsCollapsed ? "展开更多物流明细 ▼" : "收起物流明细 ▲"),
-    x: common_vendor.o((...args) => $options.toggleLogistics && $options.toggleLogistics(...args)),
-    y: $data.order.mapUrl
+    C: ($data.order.tracking || []).length > 1
+  }, ($data.order.tracking || []).length > 1 ? {
+    D: common_vendor.t($data.logisticsCollapsed ? "展开更多物流明细 ▼" : "收起物流明细 ▲"),
+    E: common_vendor.o((...args) => $options.toggleLogistics && $options.toggleLogistics(...args))
+  } : {}, {
+    F: $data.order.mapUrl
   }, $data.order.mapUrl ? common_vendor.e({
-    z: $data.isH5
+    G: $data.isH5
   }, $data.isH5 ? {
-    A: $data.order.mapUrl
+    H: $data.order.mapUrl
   } : common_vendor.e({
-    B: $options.hasMapCoords($data.order.tracking)
+    I: $options.hasMapCoords($data.order.tracking)
   }, $options.hasMapCoords($data.order.tracking) ? {
-    C: $options.mapCenter($data.order.tracking).latitude,
-    D: $options.mapCenter($data.order.tracking).longitude,
-    E: $options.mapMarkers($data.order.tracking),
-    F: $options.mapPolyline($data.order.tracking)
+    J: $options.mapCenter($data.order.tracking).latitude,
+    K: $options.mapCenter($data.order.tracking).longitude,
+    L: $options.mapMarkers($data.order.tracking),
+    M: $options.mapPolyline($data.order.tracking)
   } : $options.isImageLink($data.order.mapUrl) ? {
-    H: $data.mapError ? "/static/logo.png" : $data.order.mapUrl,
-    I: common_vendor.o(($event) => $options.openMap($data.order.mapUrl)),
-    J: common_vendor.o((...args) => $options.onMapError && $options.onMapError(...args))
+    O: $data.mapError ? "/static/logo.png" : $data.order.mapUrl,
+    P: common_vendor.o(($event) => $options.openMap($data.order.mapUrl)),
+    Q: common_vendor.o((...args) => $options.onMapError && $options.onMapError(...args))
   } : {
-    K: common_vendor.o(($event) => $options.openMap($data.order.mapUrl))
+    R: common_vendor.o(($event) => $options.openMap($data.order.mapUrl))
   }, {
-    G: $options.isImageLink($data.order.mapUrl)
+    N: $options.isImageLink($data.order.mapUrl)
   })) : {}, {
-    L: common_vendor.f($data.order.rooms, (r, k0, i0) => {
+    S: common_vendor.f($data.order.rooms, (r, k0, i0) => {
       return {
         a: common_vendor.t(r.name),
         b: common_vendor.t(r.roomTotal.toFixed(2)),
         c: common_vendor.f(r.items, (x, index, i1) => {
           return common_vendor.e({
             a: common_vendor.t(x.available_product_name),
-            b: common_vendor.t(x.title),
-            c: common_vendor.t(x.specTemp || "-"),
-            d: common_vendor.t(x.specLength || "-"),
-            e: x.itemNumber || x.nuomiItemNumber
-          }, x.itemNumber || x.nuomiItemNumber ? {
-            f: common_vendor.t(x.itemNumber || "-"),
-            g: common_vendor.t(x.nuomiItemNumber || "-")
+            b: x.title
+          }, x.title ? {
+            c: common_vendor.t(x.title)
           } : {}, {
-            h: x.productNote
+            d: common_vendor.t(x.specTemp || "-"),
+            e: common_vendor.t(x.specLength || "-"),
+            f: x.itemNumber
+          }, x.itemNumber ? {
+            g: common_vendor.t(x.itemNumber)
+          } : {}, {
+            h: x.nuomiItemNumber
+          }, x.nuomiItemNumber ? {
+            i: common_vendor.t(x.nuomiItemNumber)
+          } : {}, {
+            j: x.productNote
           }, x.productNote ? {
-            i: common_vendor.t(x.productNote)
+            k: common_vendor.t(x.productNote)
           } : {}, {
-            j: x.packageFee > 0
+            l: x.packageFee > 0 || x.couponDiscountAmount > 0
+          }, x.packageFee > 0 || x.couponDiscountAmount > 0 ? common_vendor.e({
+            m: x.packageFee > 0
           }, x.packageFee > 0 ? {
-            k: common_vendor.t(Number(x.packageFee).toFixed(2))
+            n: common_vendor.t(Number(x.packageFee).toFixed(2))
           } : {}, {
-            l: x.showOriginalPrice
-          }, x.showOriginalPrice ? {
-            m: common_vendor.t(x.originalUnitPrice.toFixed(2)),
-            n: common_vendor.t(x.quantity),
-            o: common_vendor.t(x.originalLineTotal.toFixed(2))
-          } : {}, {
-            p: x.couponDiscountAmount > 0
+            o: x.couponDiscountAmount > 0
           }, x.couponDiscountAmount > 0 ? {
-            q: common_vendor.t(x.couponDiscountAmount.toFixed(2))
+            p: common_vendor.t(x.couponDiscountAmount.toFixed(2))
+          } : {}) : {}, {
+            q: common_vendor.t(x.price.toFixed(2)),
+            r: x.showOriginalPrice
+          }, x.showOriginalPrice ? {
+            s: common_vendor.t(x.originalUnitPrice.toFixed(2))
           } : {}, {
-            r: common_vendor.t(x.price.toFixed(2)),
-            s: common_vendor.t(x.quantity),
-            t: common_vendor.t(x.lineTotal.toFixed(2)),
-            v: x.id + "_" + index
+            t: common_vendor.t(x.quantity),
+            v: common_vendor.t(x.lineTotal.toFixed(2)),
+            w: x.id + "_" + index
           });
         }),
         d: r.name
       };
     }),
-    M: $data.order.originalTotal > $data.order.total
+    T: $data.order.originalTotal > $data.order.total
   }, $data.order.originalTotal > $data.order.total ? {
-    N: common_vendor.t($data.order.originalTotal.toFixed(2))
+    U: common_vendor.t($data.order.originalTotal.toFixed(2))
   } : {}, {
-    O: common_vendor.t($data.order.total.toFixed(2)),
-    P: $data.order.totalPackageFee > 0
+    V: $data.order.totalPackageFee > 0
   }, $data.order.totalPackageFee > 0 ? {
-    Q: common_vendor.t(Number($data.order.totalPackageFee).toFixed(2))
+    W: common_vendor.t(Number($data.order.totalPackageFee).toFixed(2))
   } : {}, {
-    R: $data.order.coupon_discount_amount > 0
+    X: $data.order.coupon_discount_amount > 0
   }, $data.order.coupon_discount_amount > 0 ? {
-    S: common_vendor.t(Number($data.order.coupon_discount_amount).toFixed(2))
+    Y: common_vendor.t(Number($data.order.coupon_discount_amount).toFixed(2))
   } : {}, {
-    T: $options.isPendingReceipt($data.order.status)
+    Z: common_vendor.t($data.order.total.toFixed(2)),
+    aa: $data.order.originalTotal > $data.order.total
+  }, $data.order.originalTotal > $data.order.total ? {
+    ab: common_vendor.t($data.order.originalTotal.toFixed(2))
+  } : {}, {
+    ac: $options.isPendingReceipt($data.order.status)
   }, $options.isPendingReceipt($data.order.status) ? {
-    U: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
+    ad: common_vendor.o(($event) => $options.confirmReceipt($data.order.id))
   } : {}, {
-    V: ["pending_payment", "pending_shipment"].includes($data.order.status)
+    ae: ["pending_payment", "pending_shipment"].includes($data.order.status)
   }, ["pending_payment", "pending_shipment"].includes($data.order.status) ? {
-    W: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
+    af: common_vendor.o(($event) => $options.handleCancelOrder($data.order.id))
   } : {}, {
-    X: common_vendor.o(($event) => $options.exportExcel($data.order))
+    ag: common_vendor.o(($event) => $options.exportExcel($data.order))
   }) : common_vendor.e({
-    Y: $data.orders.length
+    ah: $data.orders.length
   }, $data.orders.length ? {
-    Z: common_vendor.f($data.orders, (o, k0, i0) => {
+    ai: common_vendor.f($data.orders, (o, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(o.orderNo || o.id),
         b: o.createdAt
       }, o.createdAt ? {
         c: common_vendor.t($options.formatTime(o.createdAt))
       } : {}, {
-        d: common_vendor.t(o.total.toFixed(2)),
-        e: o.coupon_discount_amount > 0
-      }, o.coupon_discount_amount > 0 ? {
-        f: common_vendor.t(Number(o.coupon_discount_amount).toFixed(2))
-      } : {}, {
-        g: common_vendor.f($options.firstThumbs(o), (src, i, i1) => {
+        d: common_vendor.f($options.firstThumbs(o), (src, i, i1) => {
           return {
             a: i,
             b: src
           };
         }),
-        h: o.status === "pending_receipt"
+        e: common_vendor.t($options.orderStatusLabel(o.status)),
+        f: common_vendor.t(o.total.toFixed(2)),
+        g: o.originalTotal > o.total
+      }, o.originalTotal > o.total ? {
+        h: common_vendor.t(o.originalTotal.toFixed(2))
+      } : {}, {
+        i: o.coupon_discount_amount > 0
+      }, o.coupon_discount_amount > 0 ? {
+        j: common_vendor.t(Number(o.coupon_discount_amount).toFixed(2))
+      } : {}, {
+        k: o.totalPackageFee > 0
+      }, o.totalPackageFee > 0 ? {
+        l: common_vendor.t(Number(o.totalPackageFee).toFixed(2))
+      } : {}, {
+        m: o.status === "pending_receipt"
       }, o.status === "pending_receipt" ? {
-        i: common_vendor.o(($event) => $options.confirmReceipt(o.orderNo || o.id), o.id)
+        n: common_vendor.o(($event) => $options.confirmReceipt(o.orderNo || o.id), o.id)
       } : {}, {
-        j: ["pending_payment", "pending_shipment"].includes(o.status)
+        o: ["pending_payment", "pending_shipment"].includes(o.status)
       }, ["pending_payment", "pending_shipment"].includes(o.status) ? {
-        k: common_vendor.o(($event) => $options.handleCancelOrder(o.orderNo || o.id), o.id)
+        p: common_vendor.o(($event) => $options.handleCancelOrder(o.orderNo || o.id), o.id)
       } : {}, {
-        l: common_vendor.o(($event) => $options.openDetail(o.id, o.status), o.id),
-        m: o.id
+        q: common_vendor.o(($event) => $options.openDetail(o.id, o.status), o.id),
+        r: o.id
       });
     })
   } : {}), {
-    aa: $data.showOnboarding
+    aj: $data.showOnboarding
   }, $data.showOnboarding ? {
-    ab: common_vendor.o($options.handleOnboardingNext),
-    ac: common_vendor.o($options.handleOnboardingPrev),
-    ad: common_vendor.o($options.closeOnboarding),
-    ae: common_vendor.p({
+    ak: common_vendor.o($options.handleOnboardingNext),
+    al: common_vendor.o($options.handleOnboardingPrev),
+    am: common_vendor.o($options.closeOnboarding),
+    an: common_vendor.p({
       steps: $data.onboardingSteps,
       targets: $data.onboardingRects,
       initialIndex: $data.onboardingIndex

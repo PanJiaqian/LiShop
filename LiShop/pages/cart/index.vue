@@ -150,12 +150,6 @@
       <input v-model="mpOrderNote" maxlength="250" placeholder="填写订单备注" placeholder-style="color:#999" style="box-sizing: border-box; width: 100%; height: 72rpx; line-height: 72rpx; font-size: 28rpx; padding: 0 20rpx; border: 1rpx solid #eee; border-radius: 8rpx; margin-top: 8rpx; background: #fff; color: #000;" @input="onMpOrderNoteInput" />
     </view>
     
-    <view class="mp-note-bar" style="margin: 16rpx 20rpx;" v-if="availableCoupons.length > 0">
-      <view style="display:flex; justify-content:space-between; align-items:center;" @click="showCouponModal = true">
-        <text style="font-size: 26rpx; color: #fff;">优惠券</text>
-        <text style="font-size: 24rpx; color: #ff4d4f;">{{ selectedCouponRecordId ? '已选择1张' : '可使用优惠券 ▾' }}</text>
-      </view>
-    </view>
     <view v-if="cart.length" class="list">
       <view class="group" v-for="(grp, gi) in groups" :key="grp.name">
         <view class="group-header">
@@ -213,7 +207,7 @@
       <view style="display:flex; flex-direction:column; align-items:flex-end; flex:1; padding-right:12px;">
         <text>合计：<text class="sum">¥{{ payable.toFixed(2) }}</text></text>
         <view v-if="summaryData.total_package_fee > 0" style="color:#faa21b; font-size:20rpx;">含包装费 ¥{{ summaryData.total_package_fee.toFixed(2) }}</view>
-        <view v-if="couponDiscount > 0" style="color:#ff4d4f; font-size:20rpx;">已抵扣 ¥{{ Number(couponDiscount).toFixed(2) }}</view>
+        <view v-if="summaryData.total_coupon_discount_amount > 0" style="color:#ff4d4f; font-size:20rpx;">已抵扣 ¥{{ Number(summaryData.total_coupon_discount_amount).toFixed(2) }}</view>
       </view>
       <view class="actions">
         <view class="footer-btn" @click="removeSelected">删除</view>
@@ -280,26 +274,6 @@
       @select="onAddressSelect" 
       @createAddress="onCreateAddress"
     />
-    
-    <!-- 优惠券选择弹窗 -->
-    <view v-if="showCouponModal" class="spec-modal-mask" @mousedown="handleCouponModalMaskMousedown" @mouseup="handleCouponModalMaskMouseup">
-      <view class="spec-modal room-modal" style="background:#222;" @mousedown.stop @mouseup.stop @click.stop>
-        <view class="spec-header">
-          <text class="spec-title">选择优惠券</text>
-          <view class="spec-close" @click="showCouponModal = false">✕</view>
-        </view>
-        <scroll-view scroll-y class="spec-body" style="padding: 20rpx;">
-          <view class="spec-list" style="flex-direction:column; gap:16rpx;">
-            <view class="spec-opt" style="text-align:center;" :class="{ active: selectedCouponRecordId === '' }" @click="selectCoupon('')">不使用优惠券</view>
-            <view v-for="c in availableCoupons" :key="c.record_id" class="spec-opt" style="display:flex; flex-direction:column; align-items:flex-start; text-align:left;" :class="{ active: selectedCouponRecordId === c.record_id }" @click="selectCoupon(c.record_id)">
-              <text style="font-weight:bold;">{{ c.name }}</text>
-              <text style="font-size:24rpx; color:#999;">余额: ¥{{ c.balance }}</text>
-            </view>
-          </view>
-        </scroll-view>
-      </view>
-    </view>
-    
     <!-- 自定义高对比度 Toast -->
     <view v-if="customToastVisible" class="custom-toast">
       <text class="custom-toast-text">{{ customToastMessage }}</text>
@@ -319,7 +293,7 @@ import FloatingNav from '@/components/FloatingNav.vue'
 import RoomSelector from '@/components/RoomSelector.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import LoginPrompt from '@/components/LoginPrompt.vue'
-import { getCartItems, deleteCartItem, updateCartItem, calculateCartPrice, createOrderByIds, exportOrderExcel, getAddresses, addAddress, calculateCoupon, getUserCoupons } from '../../api/index.js'
+import { getCartItems, deleteCartItem, updateCartItem, calculateCartPrice, createOrderByIds, exportOrderExcel, getAddresses, addAddress } from '../../api/index.js'
 export default {
   components: { FloatingNav, RoomSelector, Skeleton, LoginPrompt },
   data() {
@@ -333,13 +307,7 @@ export default {
       showAddressSelector: false,
       orderNote: '',
       mpOrderNote: '',
-      couponDiscount: 0,
       showLoginModal: false,
-      // 优惠券相关
-      availableCoupons: [],
-      selectedCouponRecordId: '',
-      showCouponModal: false,
-      _couponModalMousedownTarget: null,
       _noteLimitMax: 250,
       customToastVisible: false,
       customToastMessage: '',
@@ -349,6 +317,7 @@ export default {
         total_price: 0,
         total_original: 0,
         total_package_fee: 0,
+        total_coupon_discount_amount: 0,
         is_free_shipping: 0,
         items: [],
         package_fee_groups: []
@@ -371,8 +340,12 @@ export default {
     // redReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.redReduce || 0) : 0), 0) },
     // extraReduce() { return this.cart.reduce((s, it) => s + (it.selected ? (it.reduce || 0) : 0), 0) },
     // totalReduce() { return this.officialReduce + this.redReduce + this.extraReduce },
-    totalReduce() { return Math.max(0, (this.summaryData.total_original || 0) - (this.summaryData.total_price || 0)) + this.couponDiscount },
-    payable() { return Math.max(0, (this.summaryData.total_price || 0) - this.couponDiscount) },
+    totalReduce() {
+      const apiDiscount = Number(this.summaryData.total_coupon_discount_amount || 0)
+      if (apiDiscount > 0) return apiDiscount
+      return Math.max(0, Number(this.summaryData.total_original || 0) - Number(this.summaryData.total_price || 0))
+    },
+    payable() { return Math.max(0, Number(this.summaryData.total_price || 0)) },
     needForCoupon() { const need = Math.max(0, 800 - this.payable); return need.toFixed(2) },
     addressRooms() {
       return this.addresses.map(a => ({
@@ -424,7 +397,6 @@ export default {
       }
     } catch (e) {}
     // #endif
-    this.fetchCoupons()
     this.load()
     this.loadAddresses()
     // #ifdef H5
@@ -452,15 +424,6 @@ export default {
     } catch (e) {}
   },
     methods: {
-    handleCouponModalMaskMousedown(e) {
-      this._couponModalMousedownTarget = e.target;
-    },
-    handleCouponModalMaskMouseup(e) {
-      if (this._couponModalMousedownTarget === e.currentTarget && e.target === e.currentTarget) {
-        this.showCouponModal = false;
-      }
-      this._couponModalMousedownTarget = null;
-    },
     onOrderNoteInput(e) {
       const val = e.detail.value || e.target.value || ''
       if (Array.from(val).length >= this._noteLimitMax) {
@@ -481,24 +444,6 @@ export default {
         this.customToastVisible = false
       }, 2000)
     },
-      fetchCoupons() {
-        let token = ''
-        try {
-          const u = uni.getStorageSync('user') || null
-          token = (u && (u.token || (u.data && u.data.token))) || ''
-        } catch (e) {}
-        if (!token) return
-        getUserCoupons({ token }).then(res => {
-          if (res && res.success && res.data && res.data.items) {
-            this.availableCoupons = res.data.items.filter(c => c.status === 1)
-          }
-        }).catch(() => {})
-      },
-      selectCoupon(id) {
-        this.selectedCouponRecordId = id
-        this.showCouponModal = false
-        this.updateCouponDiscount()
-      },
       closeLoginModal() {
         this.showLoginModal = false
         try {
@@ -592,18 +537,6 @@ export default {
       }))
     },
     /**
-     * 清空购物车条目的优惠券使用标记。
-     * @returns {void}
-     * @example
-     * this.clearCouponUsageFlags()
-     */
-    clearCouponUsageFlags() {
-      this.cart = (this.cart || []).map(it => ({
-        ...it,
-        has_used_coupon: false
-      }))
-    },
-    /**
      * 将结算接口返回的聚合明细回填到购物车列表。
      * @param {Array<Object>} items 结算接口返回的明细列表
      * @returns {void}
@@ -624,7 +557,8 @@ export default {
             package_fee_is_group_owner: Number(detail.package_fee_is_group_owner) || 0,
             item_amount: Number(detail.item_amount) || 0,
             item_original: Number(detail.item_original) || 0,
-            item_coupon_discount: Number(detail.coupon_discount_amount) || 0
+            item_coupon_discount: Number(detail.coupon_discount_amount) || 0,
+            has_used_coupon: (Number(detail.coupon_discount_amount) || 0) > 0 || !!current.has_used_coupon
           })
         }
       })
@@ -750,7 +684,7 @@ export default {
                 isBlocked: isOutOfStock || isNoPermission,
                 cart_item_status: cartItemStatus,
                 category_id: x.category_id || '',
-                has_used_coupon: false,
+                has_used_coupon: Number((x && x.has_used_coupon) !== undefined ? x.has_used_coupon : 0) === 1 || (Number((x && x.coupon_discount_amount) !== undefined ? x.coupon_discount_amount : 0) || 0) > 0,
                 package_fee: Number(x.package_fee) || 0,
                 package_fee_group_key: x.package_fee_group_key || '',
                 package_fee_selected_package_id: x.package_fee_selected_package_id || '',
@@ -782,9 +716,7 @@ export default {
         const selectedIds = selectedItems.map(it => it.id)
         this.resetCartAggregationState()
         if (selectedIds.length === 0) {
-            this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, is_free_shipping: 0, items: [], package_fee_groups: [] }
-            this.couponDiscount = 0
-            this.clearCouponUsageFlags()
+            this.summaryData = { total_price: 0, total_original: 0, total_package_fee: 0, total_coupon_discount_amount: 0, is_free_shipping: 0, items: [], package_fee_groups: [] }
             return
         }
         let token = ''
@@ -802,13 +734,12 @@ export default {
                     total_price: res.data.total_amount || 0,
                     total_original: res.data.total_original || 0,
                     total_package_fee: res.data.total_package_fee || 0,
+                    total_coupon_discount_amount: res.data.total_coupon_discount_amount || 0,
                     is_free_shipping: 0,
                     items: Array.isArray(res.data.items) ? res.data.items : [],
                     package_fee_groups: Array.isArray(res.data.package_fee_groups) ? res.data.package_fee_groups : []
                 }
                 this.applySummaryItems(res.data.items)
-                
-                this.updateCouponDiscount()
             }
         }).catch(e => {
             if (requestSeq !== this._summaryRequestSeq) {
@@ -816,60 +747,6 @@ export default {
             }
             console.error(e)
         })
-    },
-    updateCouponDiscount() {
-      if (!this.selectedCouponRecordId || this.summaryData.total_price <= 0) {
-        this.couponDiscount = 0
-        this.clearCouponUsageFlags()
-        return
-      }
-      
-      const coupon = this.availableCoupons.find(c => c.record_id === this.selectedCouponRecordId)
-      let applicable_order_amount = this.summaryData.total_original || 0
-      
-      if (coupon && coupon.rule) {
-        const cats = coupon.rule.applicable_categories || []
-        const isAll = cats.includes('ALL') || cats.length === 0
-        const summaryItemMap = {}
-        ;((this.summaryData && this.summaryData.items) || []).forEach(item => {
-          if (item && item.cart_item_id) summaryItemMap[item.cart_item_id] = item
-        })
-        
-        applicable_order_amount = 0
-        this.cart.forEach(it => {
-          if (!it.selected) {
-            it.has_used_coupon = false
-            return
-          }
-          if (isAll || cats.includes(it.category_id)) {
-            it.has_used_coupon = true
-            const detail = summaryItemMap[it.id] || null
-            applicable_order_amount += Number(detail ? detail.item_original : 0) || 0
-          } else {
-            it.has_used_coupon = false
-          }
-        })
-      }
-
-      let token = ''
-      try {
-        const u = uni.getStorageSync('user') || null
-        token = (u && (u.token || (u.data && u.data.token))) || ''
-      } catch (e) {}
-      calculateCoupon({
-        record_id: this.selectedCouponRecordId,
-        order_amount: this.summaryData.total_price || 0,
-        applicable_order_amount: applicable_order_amount,
-        token
-      }).then(res => {
-        if (res && res.code === 200 && res.data) {
-          this.couponDiscount = res.data.deduct_amount || 0
-        } else {
-          this.couponDiscount = 0
-        }
-      }).catch(() => {
-        this.couponDiscount = 0
-      })
     },
     sync() { uni.setStorageSync('cart', this.cart) },
     findIndexById(id) { return this.cart.findIndex(it => it.id === id) },
@@ -934,6 +811,7 @@ export default {
               it.coupon_discount_amount = Number(found.coupon_discount_amount !== undefined ? found.coupon_discount_amount : it.coupon_discount_amount) || 0
               it.coupon_valid = Number(found.coupon_valid !== undefined ? found.coupon_valid : it.coupon_valid) || 0
               it.coupon_message = found.coupon_message !== undefined ? found.coupon_message : it.coupon_message
+              it.has_used_coupon = Number(found.has_used_coupon !== undefined ? found.has_used_coupon : it.has_used_coupon) === 1 || (Number(found.coupon_discount_amount !== undefined ? found.coupon_discount_amount : it.coupon_discount_amount) || 0) > 0
               it.quantity = Number(found.quantity !== undefined ? found.quantity : it.quantity) || it.quantity
               it.inventory = found.inventory
               it.available = found.available_product_status
@@ -1030,15 +908,12 @@ export default {
       const addressId = this.selectedAddress?.id || ''
       if (!addressId) { uni.showToast({ title: '请先选择收货地址', icon: 'none' }); return }
 
-      // 使用当前选中的优惠券
-      let coupon_record_id = this.selectedCouponRecordId || ''
-
       let token = ''
       try {
         const u = uni.getStorageSync('user') || null
         token = (u && (u.token || (u.data && u.data.token))) || ''
       } catch (e) {}
-      createOrderByIds({ ids: selectedIds, address_id: addressId, note: (this.orderNote || this.mpOrderNote || ''), coupon_record_id, token }).then(res => {
+      createOrderByIds({ ids: selectedIds, address_id: addressId, note: (this.orderNote || this.mpOrderNote || ''), token }).then(res => {
           if (res && res.success) {
              uni.showToast({ title: '下单成功', icon: 'success' })
              // 移除已选商品

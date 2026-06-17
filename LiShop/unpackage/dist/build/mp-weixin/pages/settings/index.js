@@ -1,0 +1,1 @@
+"use strict";const e=require("../../common/vendor.js"),o={components:{Skeleton:()=>"../../components/Skeleton.js"},data:()=>({loading:!0}),onShow(){this.loading=!1}};if(!Array){e.resolveComponent("Skeleton")()}const n=e._export_sfc(o,[["render",function(o,n,t,r,s,a){return{a:e.p({loading:s.loading,showTitle:!0})}}],["__scopeId","data-v-eb416c91"]]);wx.createPage(n);

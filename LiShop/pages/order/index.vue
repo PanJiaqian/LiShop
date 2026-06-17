@@ -19,21 +19,35 @@
     <!-- 订单详情 -->
     <view class="order" v-if="order">
       <view class="header">
-        <text class="title">订单号：{{ order.orderNo || order.id }}</text>
-        <text class="log-title">物流信息</text>
-        <text class="time" v-if="order.createdAt">下单时间：{{ formatTime(order.createdAt) }}</text>
-        <!-- Total moved to footer for H5 and MP -->
-        <!-- #ifndef H5 -->
-        <!-- <text class="total">合计：¥{{ order.total.toFixed(2) }}</text> -->
-        <!-- #endif -->
+        <view class="hero-copy">
+          <text class="hero-label">订单详情</text>
+          <text class="title">{{ order.orderNo || order.id }}</text>
+          <text class="time" v-if="order.createdAt">下单时间 {{ formatTime(order.createdAt) }}</text>
+        </view>
+        <view class="hero-side">
+          <text class="status-pill">{{ orderStatusLabel(order.status) }}</text>
+          <view class="hero-total-block">
+            <text class="hero-total-label">当前实付</text>
+            <view class="order-total-inline">
+              <text class="hero-total-value">¥{{ order.total.toFixed(2) }}</text>
+              <text v-if="order.originalTotal > order.total" class="total-original">¥{{ order.originalTotal.toFixed(2) }}</text>
+            </view>
+          </view>
+        </view>
       </view>
       <view class="logistics">
-        <view class="log-header">
+        <view class="section-top">
+          <view>
+            <text class="section-kicker">配送进度</text>
+            <text class="section-title">物流信息</text>
+          </view>
+          <text class="section-tip" v-if="(order.tracking || []).length">实时更新</text>
+        </view>
+        <view class="log-header" v-if="order.waybillNo">
           <view class="waybill" v-if="order.waybillNo">
             <text>运单号：{{ order.waybillNo }}</text>
             <button size="mini" class="copy" @click="copyWaybill(order.waybillNo)">复制运单号</button>
           </view>
-
         </view>
         <view v-if="(order.tracking || []).length">
           <view class="log-item"
@@ -48,8 +62,12 @@
             </view>
           </view>
         </view>
-        <view v-else class="log-empty">{{ order.trackingMessage || '暂无物流信息' }}</view>
-        <view class="log-toggle-center">
+        <view v-else class="log-empty-state">
+          <view class="log-empty-icon">📦</view>
+          <text class="log-empty-title">物流信息待更新</text>
+          <text class="log-empty-desc">{{ order.trackingMessage || '商家发货后，这里会显示物流轨迹和配送进度' }}</text>
+        </view>
+        <view v-if="(order.tracking || []).length > 1" class="log-toggle-center">
           <text class="toggle-icon" @click="toggleLogistics">{{ logisticsCollapsed ? '展开更多物流明细 ▼' : '收起物流明细 ▲' }}</text>
         </view>
         <view v-if="order.mapUrl" class="logistics-map">
@@ -80,24 +98,36 @@
       <view class="rooms">
         <view class="room" v-for="r in order.rooms" :key="r.name">
           <view class="room-hd">
-            <text class="room-name">{{ r.name }}</text>
-            <text class="room-total">小计：¥{{ r.roomTotal.toFixed(2) }}</text>
+            <view class="room-title-wrap">
+              <text class="room-kicker">空间</text>
+              <text class="room-name">{{ r.name }}</text>
+            </view>
+            <text class="room-total">¥{{ r.roomTotal.toFixed(2) }}</text>
           </view>
           <view class="items">
             <view class="item" v-for="(x, index) in r.items" :key="x.id + '_' + index">
               <view class="meta">
                 <text class="title">{{ x.available_product_name }}</text>
-                <text class="spec">型号：{{ x.title }}｜色温：{{ x.specTemp || '-' }}｜长度：{{ x.specLength || '-' }}</text>
-                <text class="spec" v-if="x.itemNumber || x.nuomiItemNumber">品号：{{ x.itemNumber || '-' }}｜诺米品号：{{ x.nuomiItemNumber || '-' }}</text>
-                <text class="spec" v-if="x.productNote">备注：{{ x.productNote }}</text>
-                <text class="spec" v-if="x.packageFee > 0">同系列包装费：¥{{ Number(x.packageFee).toFixed(2) }}</text>
-                <text class="spec original-line" v-if="x.showOriginalPrice">原价：¥{{ x.originalUnitPrice.toFixed(2) }} × {{ x.quantity }} = ¥{{ x.originalLineTotal.toFixed(2) }}</text>
-                <text class="spec discount-line" v-if="x.couponDiscountAmount > 0">优惠券抵扣：-¥{{ x.couponDiscountAmount.toFixed(2) }}</text>
+                <view class="spec-tags">
+                  <text class="spec-tag" v-if="x.title">型号 {{ x.title }}</text>
+                  <text class="spec-tag">色温 {{ x.specTemp || '-' }}</text>
+                  <text class="spec-tag">长度 {{ x.specLength || '-' }}</text>
+                  <text class="spec-tag" v-if="x.itemNumber">品号 {{ x.itemNumber }}</text>
+                  <text class="spec-tag" v-if="x.nuomiItemNumber">诺米品号 {{ x.nuomiItemNumber }}</text>
+                </view>
+                <text class="spec note-line" v-if="x.productNote">备注：{{ x.productNote }}</text>
+                <view class="item-flags" v-if="x.packageFee > 0 || x.couponDiscountAmount > 0">
+                  <text class="flag-chip package-chip" v-if="x.packageFee > 0">包装费 ¥{{ Number(x.packageFee).toFixed(2) }}</text>
+                  <text class="flag-chip discount-chip" v-if="x.couponDiscountAmount > 0">已优惠 ¥{{ x.couponDiscountAmount.toFixed(2) }}</text>
+                </view>
               </view>
               <view class="price-row">
-                <text class="price">¥{{ x.price.toFixed(2) }}</text>
+                <view class="price-inline">
+                  <text class="price">¥{{ x.price.toFixed(2) }}</text>
+                  <text class="inline-origin-price" v-if="x.showOriginalPrice">¥{{ x.originalUnitPrice.toFixed(2) }}</text>
+                </view>
                 <text class="quantity">× {{ x.quantity }}</text>
-                <text>＝ ¥{{ x.lineTotal.toFixed(2) }}</text>
+                <text class="line-total">小计 ¥{{ x.lineTotal.toFixed(2) }}</text>
                 <!-- #ifndef H5 -->
                 <!-- <text>＝ ¥{{ (x.price * x.quantity).toFixed(2) }}</text> -->
                 <!-- #endif -->
@@ -107,18 +137,33 @@
         </view>
       </view>
       <view class="ops">
-        <view style="display:flex; flex-direction:column; align-items:flex-end;">
-          <text v-if="order.originalTotal > order.total" class="total-original">原总价：¥{{ order.originalTotal.toFixed(2) }}</text>
-          <text class="total-text">合计：¥{{ order.total.toFixed(2) }}</text>
-          <text v-if="order.totalPackageFee > 0" style="color:#faa21b; font-size:24rpx; margin-top:8rpx;">(其中包装费 ¥{{ Number(order.totalPackageFee).toFixed(2) }})</text>
-          <text v-if="order.coupon_discount_amount > 0" style="color:#ff4d4f; font-size:24rpx; margin-top:8rpx;">(已使用优惠券抵扣 ¥{{ Number(order.coupon_discount_amount).toFixed(2) }})</text>
+        <view class="ops-summary">
+          <view class="summary-row" v-if="order.originalTotal > order.total">
+            <text class="summary-label">商品原价</text>
+            <text class="summary-value summary-value-muted">¥{{ order.originalTotal.toFixed(2) }}</text>
+          </view>
+          <view class="summary-row" v-if="order.totalPackageFee > 0">
+            <text class="summary-label">包装费</text>
+            <text class="summary-value summary-value-warm">¥{{ Number(order.totalPackageFee).toFixed(2) }}</text>
+          </view>
+          <view class="summary-row" v-if="order.coupon_discount_amount > 0">
+            <text class="summary-label">优惠抵扣</text>
+            <text class="summary-value summary-value-discount">-¥{{ Number(order.coupon_discount_amount).toFixed(2) }}</text>
+          </view>
+          <view class="summary-row summary-row-total">
+            <text class="summary-label total-text">合计实付</text>
+            <view class="order-total-inline">
+              <text class="hero-total-value">¥{{ order.total.toFixed(2) }}</text>
+              <text v-if="order.originalTotal > order.total" class="total-original">¥{{ order.originalTotal.toFixed(2) }}</text>
+            </view>
+          </view>
         </view>
         <view class="btns">
           <button class="btn-action" v-if="isPendingReceipt(order.status)"
             @click="confirmReceipt(order.id)">确认收货</button>
-          <button class="btn-action" v-if="['pending_payment', 'pending_shipment'].includes(order.status)"
-            @click="handleCancelOrder(order.id)">取消订单</button><button class="btn"
-            @click="exportExcel(order)">导出Excel</button>
+          <button class="btn-action ghost" v-if="['pending_payment', 'pending_shipment'].includes(order.status)"
+            @click="handleCancelOrder(order.id)">取消订单</button>
+          <button class="btn subtle" @click="exportExcel(order)">导出Excel</button>
         </view>
       </view>
     </view>
@@ -128,23 +173,35 @@
       <view v-if="orders.length" id="og-order-list" class="orders-list">
         <view class="order-card" v-for="o in orders" :key="o.id">
           <view class="card-hd">
-            <text class="id">订单号：{{ o.orderNo || o.id }}</text>
-            <text class="time" v-if="o.createdAt">下单时间：{{ formatTime(o.createdAt) }}</text>
-            <view style="display:flex; flex-direction:column; align-items:flex-end;">
-              <text class="total">¥{{ o.total.toFixed(2) }}</text>
-              <text v-if="o.coupon_discount_amount > 0" style="color:#ff4d4f; font-size:20rpx;">已优惠 ¥{{ Number(o.coupon_discount_amount).toFixed(2) }}</text>
+            <view class="card-main">
+              <text class="card-kicker">订单</text>
+              <text class="id">订单号：{{ o.orderNo || o.id }}</text>
+              <text class="time" v-if="o.createdAt">下单时间：{{ formatTime(o.createdAt) }}</text>
             </view>
           </view>
           <view class="card-body">
             <view class="thumbs">
               <image v-for="(src, i) in firstThumbs(o)" :key="i" :src="src" mode="aspectFill" class="thumb" />
             </view>
-            <view class="actions">
-              <button size="mini" class="btn-action" v-if="o.status === 'pending_receipt'"
-                @click.stop="confirmReceipt(o.orderNo || o.id)">确认收货</button>
-              <button size="mini" class="btn-action" v-if="['pending_payment', 'pending_shipment'].includes(o.status)"
-                @click.stop="handleCancelOrder(o.orderNo || o.id)">取消订单</button>
-              <button size="mini" class="btn-action primary" @click.stop="openDetail(o.id, o.status)">查看详情</button>
+            <view class="card-side">
+              <view class="card-amounts">
+                <text class="status-pill small">{{ orderStatusLabel(o.status) }}</text>
+                <view class="order-total-inline">
+                  <text class="total">¥{{ o.total.toFixed(2) }}</text>
+                  <text v-if="o.originalTotal > o.total" class="total-original">¥{{ o.originalTotal.toFixed(2) }}</text>
+                </view>
+                <view class="card-badges">
+                  <text v-if="o.coupon_discount_amount > 0" class="mini-badge discount">已优惠 ¥{{ Number(o.coupon_discount_amount).toFixed(2) }}</text>
+                  <text v-if="o.totalPackageFee > 0" class="mini-badge warm">含包装费 ¥{{ Number(o.totalPackageFee).toFixed(2) }}</text>
+                </view>
+              </view>
+              <view class="actions">
+                <button size="mini" class="btn-action" v-if="o.status === 'pending_receipt'"
+                  @click.stop="confirmReceipt(o.orderNo || o.id)">确认收货</button>
+                <button size="mini" class="btn-action" v-if="['pending_payment', 'pending_shipment'].includes(o.status)"
+                  @click.stop="handleCancelOrder(o.orderNo || o.id)">取消订单</button>
+                <button size="mini" class="btn-action primary" @click.stop="openDetail(o.id, o.status)">查看详情</button>
+              </view>
             </view>
           </view>
         </view>
@@ -431,6 +488,34 @@ export default {
       try { return /\.(png|jpg|jpeg|gif|bmp|webp)(\?.*)?$/i.test(String(url || '')) } catch (e) { return false }
     },
     onMapError() { this.mapError = true; try { uni.showToast({ title: '物流地图加载失败', icon: 'none' }) } catch (e) { } },
+    /**
+     * 将订单状态转换为页面可读的中文标签。
+     * @param {string} status 订单状态标识
+     * @returns {string} 用于界面展示的订单状态文案
+     * @example
+     * this.orderStatusLabel('pending_receipt')
+     */
+    orderStatusLabel(status) {
+      try {
+        const raw = String(status || '').trim()
+        if (!raw) return '订单处理中'
+        const normalized = raw.replace(/^OrderStatus\./, '').toLowerCase()
+        const mapping = {
+          pending_payment: '待付款',
+          pending_shipment: '待发货',
+          pending_receipt: '待收货',
+          cancelled: '已取消',
+          canceled: '已取消',
+          completed: '已完成',
+          shipped: '运输中',
+          paid: '已支付',
+          processing: '订单处理中'
+        }
+        return mapping[normalized] || mapping[raw] || raw
+      } catch (e) {
+        return '订单处理中'
+      }
+    },
     isPendingReceipt(status) {
       try {
         const s = String(status || '')
@@ -938,14 +1023,16 @@ export default {
 <style scoped>
 .page {
   min-height: 100vh;
-  background-color: #1a1a1a;
+  background:
+    radial-gradient(circle at top, rgba(196, 155, 111, 0.16), transparent 32%),
+    linear-gradient(180deg, #131313 0%, #191919 38%, #111111 100%);
 }
 
 /* #ifdef H5 */
 .page {
-  /* background: url('/static/product_detail_background.jpg') no-repeat center center fixed; */
-  /* background-size: cover; */
-  background-color: #1a1a1a;
+  background:
+    radial-gradient(circle at top, rgba(196, 155, 111, 0.16), transparent 32%),
+    linear-gradient(180deg, #131313 0%, #191919 38%, #111111 100%);
 }
 
 /* #endif */
@@ -954,13 +1041,16 @@ export default {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  background: #2c2c2c;
-  height: 88rpx;
-  border-bottom: 1rpx solid #444444;
-  margin-bottom: 20rpx;
+  background: rgba(29, 29, 29, 0.82);
+  height: 96rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.06);
+  border-radius: 28rpx;
+  margin-bottom: 28rpx;
   position: sticky;
   top: 0;
   z-index: 99;
+  backdrop-filter: blur(20rpx);
+  box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.18);
 }
 
 .nav-item {
@@ -970,13 +1060,13 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 28rpx;
-  color: #aaaaaa;
-  padding: 0 10rpx;
+  color: rgba(255, 255, 255, 0.58);
+  padding: 0 16rpx;
 }
 
 .nav-item.active {
   color: #ffffff;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 30rpx;
 }
 
@@ -988,7 +1078,7 @@ export default {
   transform: translateX(-50%);
   width: 40rpx;
   height: 4rpx;
-  background: #e1251b;
+  background: linear-gradient(90deg, #c8a06b 0%, #f2dbb4 100%);
   border-radius: 4rpx;
 }
 
@@ -1008,27 +1098,91 @@ export default {
 /* #endif */
 .order {
   margin: 20rpx 0;
-  background: #ffffff;
-  border-radius: 12rpx;
-  padding: 20rpx;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 28rpx;
+  padding: 28rpx;
   position: relative;
+  box-shadow: 0 24rpx 56rpx rgba(0, 0, 0, 0.18);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 24rpx;
+  margin-bottom: 24rpx;
+  padding: 8rpx 4rpx 12rpx;
+}
+
+.hero-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.hero-label {
+  font-size: 22rpx;
+  letter-spacing: 6rpx;
+  color: #9b7b56;
+}
+
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14rpx;
+}
+
+.hero-total-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+}
+
+.hero-total-label {
+  font-size: 22rpx;
+  color: #8c8c8c;
+}
+
+.hero-total-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.status-pill {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 25rpx;
+  justify-content: center;
+  min-height: 52rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  background: rgba(201, 163, 118, 0.14);
+  color: #8b673f;
+  font-size: 24rpx;
+  font-weight: 600;
+  border: 1rpx solid rgba(201, 163, 118, 0.22);
+}
+
+.status-pill.small {
+  min-height: 44rpx;
+  padding: 0 18rpx;
+  font-size: 20rpx;
 }
 
 .title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333333;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #171717;
+  line-height: 1.35;
+  word-break: break-all;
 }
 
 .time {
-  color: #aaaaaa;
+  color: #909090;
   font-size: 24rpx;
   /* #ifdef MP-WEIXIN */
   white-space: nowrap;
@@ -1042,29 +1196,58 @@ export default {
 }
 
 .room {
-  margin-top: 12rpx;
+  margin-top: 18rpx;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+  border: 1rpx solid #f2f2f2;
+  border-radius: 22rpx;
+  padding: 16rpx;
+  box-shadow: 0 8rpx 24rpx rgba(17, 17, 17, 0.05);
 }
 
 .room-hd {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f8f8f8;
-  padding: 12rpx;
-  border-radius: 10rpx;
+  background: linear-gradient(90deg, rgba(245, 245, 245, 0.9), rgba(255, 255, 255, 0.6));
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
   color: #333333;
 }
 
+.room-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.room-kicker {
+  font-size: 20rpx;
+  color: #9d9d9d;
+}
+
+.room-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #222222;
+}
+
+.room-total {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #202020;
+}
+
 .items {
-  margin-top: 10rpx;
+  margin-top: 14rpx;
 }
 
 .item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12rpx 8rpx;
-  border-bottom: 1rpx solid #eeeeee;
+  align-items: flex-start;
+  gap: 20rpx;
+  padding: 18rpx 8rpx;
+  border-bottom: 1rpx solid #f2f2f2;
 }
 
 .item:last-child {
@@ -1073,37 +1256,106 @@ export default {
 
 .meta {
   flex: 1;
-  max-width: 50%;
+  max-width: 62%;
 }
 
 .meta .title {
   display: block;
-  font-size: 26rpx;
-  color: #333333;
-  margin-bottom: 10rpx;
+  font-size: 28rpx;
+  color: #222222;
+  margin-bottom: 14rpx;
 }
 
 .meta .spec {
   display: block;
   font-size: 22rpx;
-  color: #aaaaaa;
-  margin-top: 4rpx;
+  color: #8c8c8c;
+  margin-top: 8rpx;
 }
 
-.meta .spec.original-line {
-  color: #999999;
-  text-decoration: line-through;
+.spec-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
 }
 
-.meta .spec.discount-line {
-  color: #ff4d4f;
+.spec-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: #f7f7f7;
+  border: 1rpx solid #efefef;
+  color: #666666;
+  font-size: 20rpx;
+  line-height: 1.2;
+}
+
+.note-line {
+  line-height: 1.6;
+}
+
+.item-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 12rpx;
+}
+
+.flag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+}
+
+.package-chip {
+  background: rgba(250, 162, 27, 0.12);
+  color: #c07a0d;
+}
+
+.discount-chip {
+  background: rgba(225, 37, 27, 0.1);
+  color: #d94841;
 }
 
 .price-row {
   display: flex;
-  gap: 12rpx;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
   color: #333333;
+  flex-wrap: wrap;
+  min-width: 180rpx;
+}
+
+.price-inline {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.inline-origin-price {
+  font-size: 22rpx;
+  color: #999999;
+  text-decoration: line-through;
+}
+
+.order-total-inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.price-row .price {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1e1e1e;
 }
 
 .price-row .quantity {
@@ -1111,47 +1363,108 @@ export default {
   color: #666666;
 }
 
+.line-total {
+  font-size: 22rpx;
+  color: #8c8c8c;
+}
+
 .ops {
-  margin-top: 16rpx;
+  margin-top: 24rpx;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
   gap: 20rpx;
+  padding: 12rpx 0 0;
+}
+
+.ops-summary {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14rpx;
+  flex-wrap: wrap;
+}
+
+.summary-row-total {
+  margin-top: 6rpx;
+  padding-top: 14rpx;
+}
+
+.summary-row-total .order-total-inline {
+  gap: 12rpx;
+}
+
+.summary-label {
+  font-size: 24rpx;
+  color: #888888;
+}
+
+.summary-value {
+  font-size: 24rpx;
+  color: #333333;
+  font-weight: 500;
+}
+
+.summary-value-muted {
+  color: #b0b0b0;
+  text-decoration: line-through;
+}
+
+.summary-value-warm {
+  color: #f3be63;
+}
+
+.summary-value-discount {
+  color: #ff8f87;
 }
 
 .total-text {
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: 600;
   color: #333333;
 }
 
 .total-original {
   font-size: 24rpx;
-  color: #999999;
+  color: rgba(119, 119, 119, 0.8);
   text-decoration: line-through;
-  margin-bottom: 6rpx;
 }
 
 .btns {
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
   gap: 20rpx;
 }
 
 .btn {
-  background: #444444;
-  color: #fff;
+  background: #f4f4f4;
+  color: #333333;
   border-radius: 100rpx;
   margin: 0;
-  padding: 0 30rpx;
-  height: 60rpx;
-  line-height: 60rpx;
-  font-size: 26rpx;
+  padding: 0 34rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 24rpx;
+  border: 1rpx solid #e6e6e6;
+}
+
+.btn.subtle {
+  background: #f4f4f4;
 }
 
 .empty {
-  padding: 40rpx;
+  padding: 80rpx 40rpx;
   text-align: center;
-  color: #777777;
+  color: rgba(255, 255, 255, 0.58);
 }
 
 /* 列表样式 */
@@ -1165,33 +1478,95 @@ export default {
 }
 
 .order-card {
-  background: #ffffff;
-  border-radius: 12rpx;
-  padding: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, .3);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 24rpx;
+  padding: 22rpx;
+  box-shadow: 0 18rpx 40rpx rgba(0, 0, 0, 0.18);
+  border: 1rpx solid rgba(255, 255, 255, 0.52);
 }
 
 .card-hd {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 18rpx;
+}
+
+.card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-kicker {
+  display: block;
+  margin-bottom: 8rpx;
+  font-size: 20rpx;
+  letter-spacing: 4rpx;
+  color: #9b7b56;
+}
+
+.card-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: 8rpx;
 }
 
 .card-hd .id {
   font-weight: 600;
   color: #333333;
+  display: block;
+  white-space: normal;
+  word-break: break-all;
 }
 
 .card-hd .total {
-  color: #333333;
+  color: #1f1f1f;
   font-weight: 700;
+}
+
+.card-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+}
+
+.mini-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+}
+
+.mini-badge.discount {
+  background: rgba(225, 37, 27, 0.1);
+  color: #d94841;
+}
+
+.mini-badge.warm {
+  background: rgba(250, 162, 27, 0.12);
+  color: #c07a0d;
 }
 
 .card-body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 12rpx;
+  margin-top: 18rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f3f3f3;
+}
+
+.card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16rpx;
 }
 
 .thumbs {
@@ -1202,8 +1577,9 @@ export default {
 .thumb {
   width: 120rpx;
   height: 120rpx;
-  border-radius: 8rpx;
-  background: #1a1a1a;
+  border-radius: 16rpx;
+  background: #f2f2f2;
+  border: 1rpx solid #efefef;
 }
 
 .actions {
@@ -1213,20 +1589,26 @@ export default {
 
 .btn-action {
   margin: 0;
-  background: #444444;
-  /* border: 1rpx solid #ddd; */
+  background: linear-gradient(135deg, #242424 0%, #3a3a3a 100%);
   color: #ffffff;
   border-radius: 100rpx;
   padding: 0 24rpx;
-  height: 56rpx;
-  line-height: 54rpx;
+  height: 60rpx;
+  line-height: 58rpx;
   font-size: 24rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-action.ghost {
+  background: #f4f4f4;
+  color: #333333;
+  border-color: #e6e6e6;
 }
 
 .btn-action.primary {
-  /* border-color: #333; */
   background-color: #e1251b;
   color: #fff;
+  border-color: rgba(225, 37, 27, 0.28);
 }
 
 /* 运单与物流 */
@@ -1234,11 +1616,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #ffffff;
-  border-radius: 10rpx;
-  padding: 12rpx;
+  background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%);
+  border-radius: 18rpx;
+  padding: 16rpx 18rpx;
   margin: 10rpx 0;
-  border: 1rpx solid #eeeeee;
+  border: 1rpx solid #efefef;
 }
 
 .waybill .copy {
@@ -1248,19 +1630,55 @@ export default {
 }
 
 .logistics {
-  background: #ffffff;
-  border-radius: 10rpx;
-  padding: 12rpx;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 18rpx;
+  border: 1rpx solid #f1f1f1;
+  box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.05);
+}
+
+.section-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
+}
+
+.section-kicker {
+  display: block;
+  font-size: 20rpx;
+  letter-spacing: 4rpx;
+  color: #9b7b56;
   margin-bottom: 8rpx;
-  border: 1rpx solid #eeeeee;
+}
+
+.section-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.section-tip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44rpx;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  background: rgba(201, 163, 118, 0.14);
+  color: #8b673f;
+  font-size: 20rpx;
 }
 
 .log-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 8rpx;
-  border-bottom: 1rpx solid #eeeeee;
+  padding-bottom: 14rpx;
+  margin-bottom: 8rpx;
+  border-bottom: 1rpx solid #f5f5f5;
 }
 
 .log-title {
@@ -1284,7 +1702,7 @@ export default {
   display: flex;
   align-items: flex-start;
   gap: 16rpx;
-  padding: 14rpx 0;
+  padding: 16rpx 0;
   position: relative;
 }
 
@@ -1304,6 +1722,37 @@ export default {
   font-size: 26rpx;
 }
 
+.log-empty-state {
+  min-height: 220rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%);
+  border: 1rpx dashed #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+
+.log-empty-icon {
+  font-size: 48rpx;
+  line-height: 1;
+}
+
+.log-empty-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+.log-empty-desc {
+  font-size: 24rpx;
+  color: #8c8c8c;
+  line-height: 1.6;
+}
+
 .logistics-map {
   margin-top: 12rpx;
 }
@@ -1311,9 +1760,9 @@ export default {
 .map-frame {
   width: 100%;
   height: 420rpx;
-  border-radius: 10rpx;
+  border-radius: 18rpx;
   overflow: hidden;
-  background: #1a1a1a;
+  background: #f5f5f5;
 }
 
 .map-iframe {
@@ -1324,8 +1773,8 @@ export default {
 
 .map-image {
   width: 100%;
-  border-radius: 10rpx;
-  background: #1a1a1a;
+  border-radius: 18rpx;
+  background: #f5f5f5;
 }
 
 .map-webview {
@@ -1354,9 +1803,16 @@ export default {
 }
 
 .toggle-icon {
-  font-size: 28rpx;
-  color: #333333;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  background: #f5f5f5;
+  font-size: 24rpx;
+  color: #555555;
+  font-weight: 600;
 }
 
 .floating-back {
@@ -1382,14 +1838,14 @@ export default {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #777777;
+  background: #c5c5c5;
   margin: 8rpx 0 0 0;
   font-size: 0;
   line-height: 16rpx;
 }
 
 .log-item:first-child .dot {
-  background: #e1251b;
+  background: #c79c66;
 }
 
 .log-meta {
@@ -1424,12 +1880,12 @@ export default {
 }
 
 .log-item:first-child .log-status {
-  color: #e1251b ;
+  color: #9b7b56;
   font-size: 32rpx;
 }
 
 .log-item:first-child .log-time {
-  color: #e1251b ;
+  color: #9b7b56;
 }
 
 .log-item:first-child .log-desc {
@@ -1444,49 +1900,50 @@ export default {
 .waybill {
   position: static;
   margin: 10rpx 0;
-  background: #ffffff;
-  padding: 12rpx;
-  border-radius: 10rpx;
+  background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%);
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
   flex-direction: row;
   align-items: center;
   gap: 20rpx;
   justify-content: flex-start;
-  border: 1rpx solid #eeeeee;
+  border: 1rpx solid #efefef;
 }
 
 .item {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .meta {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 20rpx;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
   flex: 1;
   margin: 0;
-  max-width: 50%;
+  max-width: 62%;
 }
 
 .meta .title {
-  margin-bottom: 0;
+  margin-bottom: 14rpx;
   width: 100%;
   text-align: left;
 }
 
 .meta .spec {
-  margin-top: 0;
+  margin-top: 8rpx;
   margin-left: 0;
   width: 100%;
-  text-align: center;
+  text-align: left;
 }
 
 .price-row {
   font-size: 36rpx;
   font-weight: bold;
+  align-items: flex-end;
 }
 
 .price-row .quantity {
@@ -1517,6 +1974,131 @@ export default {
 /* #endif */
 
 /* #ifdef MP-WEIXIN */
+.header {
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.hero-side {
+  width: 100%;
+  align-items: flex-start;
+}
+
+.hero-total-block {
+  align-items: flex-start;
+}
+
+.logistics {
+  border-radius: 20rpx;
+  padding: 24rpx;
+}
+
+.log-empty-state {
+  min-height: 240rpx;
+  gap: 16rpx;
+}
+
+.log-empty-icon {
+  font-size: 56rpx;
+}
+
+.log-empty-title {
+  font-size: 30rpx;
+}
+
+.log-empty-desc {
+  font-size: 24rpx;
+}
+
+.card-main {
+  width: 100%;
+}
+
+.card-hd {
+  display: block;
+}
+
+.card-side {
+  flex-shrink: 0;
+  min-width: 240rpx;
+  align-items: flex-end;
+}
+
+.card-amounts {
+  width: auto;
+  align-items: flex-end;
+  gap: 6rpx;
+}
+
+.card-hd .id {
+  font-size: 32rpx;
+  line-height: 1.4;
+}
+
+.card-hd .total {
+  font-size: 32rpx;
+}
+
+.card-hd .total-original {
+  font-size: 22rpx;
+  margin-bottom: 0;
+}
+
+.card-hd .time {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #999999;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.card-body {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.thumbs {
+  width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
+.actions {
+  width: auto;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  gap: 12rpx;
+  margin-top: auto;
+}
+
+.btn-action {
+  min-width: 160rpx;
+}
+
+.actions .btn-action {
+  min-width: 148rpx;
+}
+
+.actions .btn-action.primary {
+  background-color: #e1251b;
+  color: #ffffff;
+  border-color: rgba(225, 37, 27, 0.28);
+}
+
+.actions .btn-action:not(.primary) {
+  background: linear-gradient(135deg, #242424 0%, #3a3a3a 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .waybill {
   display: flex;
   flex-direction: column;
@@ -1535,33 +2117,45 @@ export default {
 .header .title {
   font-size: 28rpx;
   font-weight: bold;
-  margin-bottom: 20rpx;
+  margin-bottom: 0;
   display: block;
-}
-.log-title {
-  font-size: 28rpx;
 }
 
 .meta .title {
   display: block;
-  margin-bottom: 10rpx;
+  margin-bottom: 14rpx;
 }
 
 .meta .spec {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 8rpx;
 }
 
 .total {
   font-size: 36rpx;
 }
 
-.price-row .price {
-  color: #e1251b;
-}
-
 .price-row .quantity {
   font-size: 20rpx;
+}
+
+.ops {
+  flex-direction: column;
+}
+
+.btns {
+  width: 100%;
+  align-items: stretch;
+}
+
+.btn,
+.btn-action {
+  width: 100%;
+  text-align: center;
+}
+
+.actions .btn-action {
+  width: auto;
 }
 
 /* #endif */

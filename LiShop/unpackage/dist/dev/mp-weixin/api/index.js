@@ -1300,34 +1300,6 @@ function getAvailableCoupons(options = {}) {
     });
   });
 }
-function calculateCoupon(options = {}) {
-  const { record_id, order_amount, applicable_order_amount, token } = options;
-  const url = `${BASE_URL}/api/user/coupons/calculate`;
-  return new Promise((resolve, reject) => {
-    const auth = getBearer(token);
-    const header = { "Content-Type": "application/json", ...auth ? { "Authorization": auth } : {} };
-    common_vendor.index.request({
-      url,
-      method: "POST",
-      header,
-      data: { record_id, order_amount, applicable_order_amount },
-      success: (res) => {
-        let data = res == null ? void 0 : res.data;
-        if (typeof data === "string") {
-          try {
-            data = JSON.parse(data);
-          } catch (e) {
-          }
-        }
-        if (res && res.statusCode >= 200 && res.statusCode < 300)
-          resolve(data);
-        else
-          reject(res);
-      },
-      fail: (err) => reject(err)
-    });
-  });
-}
 function getCurrentAnnouncement(options = {}) {
   const { token } = options;
   const url = `${BASE_URL}/api/user/announcements/current`;
@@ -1359,7 +1331,6 @@ exports.addAddress = addAddress;
 exports.addCartItem = addCartItem;
 exports.addFavorite = addFavorite;
 exports.calculateCartPrice = calculateCartPrice;
-exports.calculateCoupon = calculateCoupon;
 exports.calculateDirectPrice = calculateDirectPrice;
 exports.cancelOrder = cancelOrder;
 exports.confirmOrderReceipt = confirmOrderReceipt;

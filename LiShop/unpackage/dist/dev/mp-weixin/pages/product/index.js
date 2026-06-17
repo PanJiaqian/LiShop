@@ -448,7 +448,7 @@ const _sfc_main = {
      * 按需加载 HLS 播放库，避免首页等非视频页面首屏额外下载脚本。
      * @returns {Promise<any>}
      * @example
-     * this.ensureHlsLibrary().then((Hls) => { if (Hls) uni.__f__('log','at pages/product/index.vue:828','ready') })
+     * this.ensureHlsLibrary().then((Hls) => { if (Hls) uni.__f__('log','at pages/product/index.vue:827','ready') })
      */
     ensureHlsLibrary() {
       return Promise.resolve(null);
@@ -531,7 +531,7 @@ const _sfc_main = {
           }
         }
       }).catch((err) => {
-        common_vendor.index.__f__("error", "at pages/product/index.vue:931", "实时计价失败", err);
+        common_vendor.index.__f__("error", "at pages/product/index.vue:930", "实时计价失败", err);
         this.realTimePriceData = null;
         const errMsg = (err && typeof err.data === "string" ? err.data : "") || err && err.message || "";
         if (errMsg && errMsg.includes("长度")) {
